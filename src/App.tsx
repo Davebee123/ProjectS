@@ -14,7 +14,7 @@ import {
   type WorldObject,
   type ComboRule,
 } from "./data/bridge";
-import type { RecipeDef } from "./data/loader";
+import type { RecipeDef, StatusEffectDef, EventActionDef } from "./data/loader";
 
 type EquipmentSlot = "weapon" | "armor" | "accessory";
 type WindowKey = "inventory" | "equipment" | "crafting" | "log";
@@ -25,6 +25,12 @@ interface PlacedObject {
   itemId: string;
   itemName: string;
   roomId: string;
+}
+
+interface ActiveEffect {
+  effectId: string;
+  stacks: number;
+  appliedAt: number; // ms timestamp for timed removal
 }
 
 // ActionState, ExploreState, LastAction, etc. are game-specific
@@ -94,6 +100,7 @@ interface GameState {
   objectBatchStartedAt: number;
   openWindow: WindowKey | null;
   placedObjects: PlacedObject[];
+  activeEffects: ActiveEffect[];
   now: number;
   lastTickAt: number;
 }
@@ -191,6 +198,8 @@ function buildEvalContext(state: GameState): EvalContext {
     },
     skillLevel: (id) => state.skills.find((s) => s.id === id)?.level ?? 0,
     skillUnlocked: (id) => state.skills.find((s) => s.id === id)?.unlocked ?? false,
+    hasEffect: (id) => (state.activeEffects ?? []).some((e) => e.effectId === id),
+    effectStacks: (id) => (state.activeEffects ?? []).find((e) => e.effectId === id)?.stacks ?? 0,
     roomId: state.currentRoomId,
     exploreCount: state.exploreCount,
   };
@@ -225,6 +234,132 @@ function applyStorageEffect(
       break;
   }
   return next;
+}
+
+// ── Status effect helpers ──
+
+function applyStatusEffect(
+  activeEffects: ActiveEffect[],
+  def: StatusEffectDef,
+  now: number
+): ActiveEffect[] {
+  const existing = activeEffects.find((e) => e.effectId === def.id);
+  if (existing) {
+    if (!def.stackable) {
+      // Refresh timer only
+      return activeEffects.map((e) =>
+        e.effectId === def.id ? { ...e, appliedAt: now } : e
+      );
+    }
+    const newStacks = Math.min(existing.stacks + 1, def.maxStacks);
+    return activeEffects.map((e) =>
+      e.effectId === def.id ? { ...e, stacks: newStacks, appliedAt: now } : e
+    );
+  }
+  return [...activeEffects, { effectId: def.id, stacks: 1, appliedAt: now }];
+}
+
+function removeStatusEffect(activeEffects: ActiveEffect[], effectId: string): ActiveEffect[] {
+  return activeEffects.filter((e) => e.effectId !== effectId);
+}
+
+// ── Event hook execution ──
+
+function executeEventActions(
+  actions: EventActionDef[],
+  state: GameState,
+  bundle: NonNullable<ReturnType<typeof getBundle>>
+): Partial<{ activeEffects: ActiveEffect[]; playerStorage: Record<string, boolean | number | string>; energy: number; log: string[] }> {
+  let activeEffects = [...(state.activeEffects ?? [])];
+  let playerStorage = state.playerStorage;
+  let energy = state.energy;
+  const logLines: string[] = [];
+
+  for (const action of actions) {
+    switch (action.type) {
+      case "apply_status": {
+        if (!action.statusEffectId) break;
+        const def = bundle.statusEffects?.find((s) => s.id === action.statusEffectId);
+        if (def) {
+          activeEffects = applyStatusEffect(activeEffects, def, state.now);
+          logLines.push(`${def.name} applied.`);
+        }
+        break;
+      }
+      case "remove_status": {
+        if (!action.statusEffectId) break;
+        const def = bundle.statusEffects?.find((s) => s.id === action.statusEffectId);
+        if (def) {
+          activeEffects = removeStatusEffect(activeEffects, action.statusEffectId);
+          logLines.push(`${def.name} removed.`);
+        }
+        break;
+      }
+      case "set_storage": {
+        if (!action.storageKeyId) break;
+        playerStorage = applyStorageEffect(playerStorage, {
+          storageKeyId: action.storageKeyId,
+          operation: action.storageOperation ?? "set",
+          value: action.value,
+        });
+        break;
+      }
+      case "restore_energy": {
+        const amount = typeof action.value === "number" ? action.value : 0;
+        energy = Math.min(state.maxEnergy, energy + amount);
+        if (amount > 0) logLines.push(`+${amount} energy.`);
+        break;
+      }
+    }
+  }
+
+  return { activeEffects, playerStorage, energy, log: logLines };
+}
+
+function executeItemEventHooks(
+  itemIds: string[],
+  eventName: string,
+  state: GameState,
+  bundle: NonNullable<ReturnType<typeof getBundle>>
+): Partial<{ activeEffects: ActiveEffect[]; playerStorage: Record<string, boolean | number | string>; energy: number; log: string[] }> {
+  let activeEffects = [...(state.activeEffects ?? [])];
+  let playerStorage = state.playerStorage;
+  let energy = state.energy;
+  const logLines: string[] = [];
+  const ctx = buildEvalContext(state);
+
+  for (const itemId of itemIds) {
+    const itemDef = bundle.items.find((i) => i.id === itemId);
+    if (!itemDef?.eventHooks) continue;
+    for (const hook of itemDef.eventHooks) {
+      if (hook.event !== eventName) continue;
+      if (hook.condition && !evaluateCondition(hook.condition, ctx)) continue;
+      const result = executeEventActions(hook.actions, state, bundle);
+      if (result.activeEffects) activeEffects = result.activeEffects;
+      if (result.playerStorage) playerStorage = result.playerStorage;
+      if (result.energy !== undefined) energy = result.energy;
+      if (result.log) logLines.push(...result.log);
+    }
+  }
+
+  return { activeEffects, playerStorage, energy, log: logLines };
+}
+
+function mergeHookResult(
+  state: GameState,
+  result: Partial<{ activeEffects: ActiveEffect[]; playerStorage: Record<string, boolean | number | string>; energy: number; log: string[] }>
+): GameState {
+  let nextLog = state.log;
+  for (const line of result.log ?? []) {
+    nextLog = appendLog(nextLog, line);
+  }
+  return {
+    ...state,
+    activeEffects: result.activeEffects ?? state.activeEffects,
+    playerStorage: result.playerStorage ?? state.playerStorage,
+    energy: result.energy ?? state.energy,
+    log: nextLog,
+  };
 }
 
 // ── Combo lookup (uses loaded combos) ──
@@ -335,6 +470,7 @@ function getEquipmentStats(state: GameState): {
   speedMultiplier: number;
   energyCostMultiplier: number;
 } {
+  const bundle = getBundle();
   const equippedItems = getEquippedItems(state);
   const base = equippedItems.reduce(
     (stats, item) => ({
@@ -355,8 +491,44 @@ function getEquipmentStats(state: GameState): {
     }
   );
 
+  // Apply stat modifiers from active status effects
+  if (bundle) {
+    for (const active of state.activeEffects ?? []) {
+      const def = bundle.statusEffects?.find((s) => s.id === active.effectId);
+      if (!def) continue;
+      for (const mod of def.statModifiers) {
+        const multiplier = active.stacks;
+        switch (mod.stat) {
+          case "attack":
+            base.attack += mod.operation === "add" ? mod.value * multiplier : 0;
+            if (mod.operation === "multiply") base.attack *= Math.pow(mod.value, multiplier);
+            break;
+          case "defense":
+            base.defense += mod.operation === "add" ? mod.value * multiplier : 0;
+            if (mod.operation === "multiply") base.defense *= Math.pow(mod.value, multiplier);
+            break;
+          case "energyRegen":
+            base.energyRegen += mod.operation === "add" ? mod.value * multiplier : 0;
+            if (mod.operation === "multiply") base.energyRegen *= Math.pow(mod.value, multiplier);
+            break;
+          case "speedMultiplier":
+            if (mod.operation === "multiply") base.speedMultiplier *= Math.pow(mod.value, multiplier);
+            else base.speedMultiplier += mod.value * multiplier;
+            break;
+          case "energyCostMultiplier":
+            if (mod.operation === "multiply") base.energyCostMultiplier *= Math.pow(mod.value, multiplier);
+            else base.energyCostMultiplier += mod.value * multiplier;
+            break;
+          case "activityPowerMultiplier":
+            if (mod.operation === "multiply") base.activityPowerMultiplier *= Math.pow(mod.value, multiplier);
+            else base.activityPowerMultiplier += mod.value * multiplier;
+            break;
+        }
+      }
+    }
+  }
+
   // Apply stat_aura from placed objects in the current room
-  const bundle = getBundle();
   if (bundle) {
     const roomPlaced = state.placedObjects.filter((p) => p.roomId === state.currentRoomId);
     for (const placed of roomPlaced) {
@@ -779,6 +951,38 @@ function resolveCompletedAction(state: GameState): GameState {
     }
   }
 
+  // ── Item event hooks for equipped items ──
+  let nextActiveEffects = state.activeEffects ?? [];
+  const hookBundle = getBundle();
+  if (hookBundle && didSucceed) {
+    const equippedIds = Object.values(state.equipment).filter((v): v is string => Boolean(v));
+
+    // on_hit: fires on any successful hit
+    if (impact > 0) {
+      const hitResult = executeItemEventHooks(equippedIds, "on_hit", { ...state, activeEffects: nextActiveEffects, playerStorage: nextPlayerStorage, energy: nextEnergy }, hookBundle);
+      if (hitResult.activeEffects) nextActiveEffects = hitResult.activeEffects;
+      if (hitResult.playerStorage) nextPlayerStorage = hitResult.playerStorage;
+      if (hitResult.energy !== undefined) nextEnergy = hitResult.energy;
+      for (const line of hitResult.log ?? []) updatedLog = appendLog(updatedLog, line);
+    }
+
+    // on_kill: fires when interactable is destroyed
+    if (remainingIntegrity <= 0) {
+      const killResult = executeItemEventHooks(equippedIds, "on_kill", { ...state, activeEffects: nextActiveEffects, playerStorage: nextPlayerStorage, energy: nextEnergy }, hookBundle);
+      if (killResult.activeEffects) nextActiveEffects = killResult.activeEffects;
+      if (killResult.playerStorage) nextPlayerStorage = killResult.playerStorage;
+      if (killResult.energy !== undefined) nextEnergy = killResult.energy;
+      for (const line of killResult.log ?? []) updatedLog = appendLog(updatedLog, line);
+    }
+
+    // on_interact: fires on every successful action
+    const interactResult = executeItemEventHooks(equippedIds, "on_interact", { ...state, activeEffects: nextActiveEffects, playerStorage: nextPlayerStorage, energy: nextEnergy }, hookBundle);
+    if (interactResult.activeEffects) nextActiveEffects = interactResult.activeEffects;
+    if (interactResult.playerStorage) nextPlayerStorage = interactResult.playerStorage;
+    if (interactResult.energy !== undefined) nextEnergy = interactResult.energy;
+    for (const line of interactResult.log ?? []) updatedLog = appendLog(updatedLog, line);
+  }
+
   return {
     ...state,
     skills: updatedSkills,
@@ -793,6 +997,7 @@ function resolveCompletedAction(state: GameState): GameState {
     sidePrepDownwardHit: nextSidePrepDownwardHit,
     chopBuffUntil: nextChopBuffUntil,
     playerStorage: nextPlayerStorage,
+    activeEffects: nextActiveEffects,
     action: null,
     lastAction: {
       skillId: usedSkill.id,
@@ -870,6 +1075,7 @@ function createInitialState(): GameState {
     objectBatchStartedAt: now - 10000,
     openWindow: null,
     placedObjects: [],
+    activeEffects: [],
     now,
     lastTickAt: now,
   };
@@ -1024,27 +1230,44 @@ function reducer(state: GameState, action: GameAction): GameState {
       const item = state.inventory.find((entry) => entry.id === action.itemId);
       if (!item?.slot) return state;
 
-      return {
+      const bundle = getBundle();
+      // Fire on_unequip for the item being replaced, then on_equip for new item
+      let nextState: GameState = {
         ...state,
-        equipment: {
-          ...state.equipment,
-          [item.slot]: item.id,
-        },
+        equipment: { ...state.equipment, [item.slot]: item.id },
         log: appendLog(state.log, `${item.name} equipped in ${item.slot}.`),
       };
+
+      if (bundle) {
+        const prevItemId = state.equipment[item.slot];
+        if (prevItemId) {
+          const unequipResult = executeItemEventHooks([prevItemId], "on_unequip", nextState, bundle);
+          nextState = mergeHookResult(nextState, unequipResult);
+        }
+        const equipResult = executeItemEventHooks([item.id], "on_equip", nextState, bundle);
+        nextState = mergeHookResult(nextState, equipResult);
+      }
+
+      return nextState;
     }
 
     case "UNEQUIP_SLOT": {
-      if (!state.equipment[action.slot]) return state;
+      const prevItemId = state.equipment[action.slot];
+      if (!prevItemId) return state;
 
-      return {
+      const bundle = getBundle();
+      let nextState: GameState = {
         ...state,
-        equipment: {
-          ...state.equipment,
-          [action.slot]: null,
-        },
+        equipment: { ...state.equipment, [action.slot]: null },
         log: appendLog(state.log, `${action.slot} slot is now empty.`),
       };
+
+      if (bundle) {
+        const unequipResult = executeItemEventHooks([prevItemId], "on_unequip", nextState, bundle);
+        nextState = mergeHookResult(nextState, unequipResult);
+      }
+
+      return nextState;
     }
 
     case "CRAFT_ITEM": {
@@ -1251,6 +1474,14 @@ function reducer(state: GameState, action: GameAction): GameState {
           objectBatchStartedAt: now,
           log: appendLog(nextState.log, `Exploration #${nextExploreCount} generated ${nextObjects.length} objects.`),
         };
+
+        // Fire on_explore hooks for equipped items
+        const exploreBundle = getBundle();
+        if (exploreBundle) {
+          const equippedIds = Object.values(nextState.equipment).filter((v): v is string => Boolean(v));
+          const exploreResult = executeItemEventHooks(equippedIds, "on_explore", nextState, exploreBundle);
+          nextState = mergeHookResult(nextState, exploreResult);
+        }
       }
 
       if (nextState.action && now >= nextState.action.endsAt) {
@@ -1275,6 +1506,35 @@ function reducer(state: GameState, action: GameAction): GameState {
             action: plan.action,
             energy: plan.nextEnergy,
           };
+        }
+      }
+
+      // ── Status effect expiry ──
+      const tickBundle = getBundle();
+      if (tickBundle && (nextState.activeEffects ?? []).length > 0) {
+        const ctx = buildEvalContext(nextState);
+        const nextActiveEffects = (nextState.activeEffects ?? []).filter((active) => {
+          const def = tickBundle.statusEffects?.find((s) => s.id === active.effectId);
+          if (!def) return false; // remove unknown effects
+          if (def.removalType === "timed" || def.removalType === "both") {
+            if (def.durationMs != null && now - active.appliedAt >= def.durationMs) return false;
+          }
+          if (def.removalType === "conditional" || def.removalType === "both") {
+            if (def.removeCondition && evaluateCondition(def.removeCondition, ctx)) return false;
+          }
+          return true;
+        });
+        if (nextActiveEffects.length !== (nextState.activeEffects ?? []).length) {
+          nextState = { ...nextState, activeEffects: nextActiveEffects };
+        }
+      }
+
+      // ── on_tick hooks for equipped items ──
+      if (tickBundle) {
+        const equippedIds = Object.values(nextState.equipment).filter((v): v is string => Boolean(v));
+        const tickResult = executeItemEventHooks(equippedIds, "on_tick", nextState, tickBundle);
+        if (tickResult.activeEffects || tickResult.playerStorage || tickResult.energy !== undefined) {
+          nextState = mergeHookResult(nextState, tickResult);
         }
       }
 
