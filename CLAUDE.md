@@ -61,3 +61,4 @@ Both must pass with zero errors.
 - After editing code, verify with `preview_*` tools — no manual checks
 - Run typecheck before committing
 - Don't commit `.claude/` directory
+-No unnecessary comments in code
