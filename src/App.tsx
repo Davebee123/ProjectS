@@ -1,58 +1,24 @@
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
+import { getBundle, loadBundle } from "./data/loader";
+import { evaluateCondition, type EvalContext } from "./data/evaluator";
+import {
+  skillDefsToStates,
+  comboDefsToRules,
+  buildStartingInventory,
+  generateObjectsFromRoom,
+  resolveItemNames,
+  checkSkillUnlocks,
+  type SkillState,
+  type InventoryItem,
+  type WorldObject,
+  type ComboRule,
+} from "./data/bridge";
 
-type ActivityTag = "tree";
-type SkillKind = "passive" | "active";
-type AbilityTag = "chop";
 type EquipmentSlot = "weapon" | "armor" | "accessory";
 type WindowKey = "inventory" | "equipment" | "log";
 type FloatingZone = "skills" | "objects";
 
-interface SkillState {
-  id: string;
-  name: string;
-  kind: SkillKind;
-  unlocked: boolean;
-  tags: ActivityTag[];
-  abilityTags: AbilityTag[];
-  linkedPassiveId?: string;
-  level: number;
-  xp: number;
-  xpToNext: number;
-  baseDurationMs: number;
-  baseEnergyCost: number;
-  basePower: number;
-  powerPerLevel: number;
-  barColor: string;
-  accentColor: string;
-  description: string;
-}
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  qty: number;
-  slot?: EquipmentSlot;
-  attack?: number;
-  activityPowerMultiplier?: number;
-  defense?: number;
-  energyRegen?: number;
-  speedMultiplier?: number;
-  energyCostMultiplier?: number;
-}
-
-interface WorldObject {
-  id: string;
-  name: string;
-  tag: ActivityTag;
-  requiredLevel: number;
-  maxIntegrity: number;
-  integrity: number;
-  barColor: string;
-  accentColor: string;
-  meterLabel: string;
-  drops: InventoryItem[];
-}
-
+// ActionState, ExploreState, LastAction, etc. are game-specific
 interface ActionState {
   skillId: string;
   objectId: string;
@@ -72,18 +38,8 @@ interface ExploreState {
 interface LastAction {
   skillId: string;
   objectId: string;
-  tag: ActivityTag;
+  tag: string;
   at: number;
-}
-
-interface ComboRule {
-  from: string;
-  to: string;
-  tag: ActivityTag;
-  windowMs: number;
-  timeMultiplier: number;
-  energyMultiplier: number;
-  label: string;
 }
 
 interface FloatingText {
@@ -104,6 +60,8 @@ interface UnlockCue {
 interface GameState {
   seed: number;
   exploreCount: number;
+  currentRoomId: string;
+  playerStorage: Record<string, boolean | number | string>;
   skills: SkillState[];
   objects: WorldObject[];
   selectedObjectId: string | null;
@@ -150,122 +108,10 @@ interface ActionPlan {
   nextEnergy: number;
 }
 
-const COMBOS: ComboRule[] = [
-  {
-    from: "upward_chop",
-    to: "downward_chop",
-    tag: "tree",
-    windowMs: 5000,
-    timeMultiplier: 0.5,
-    energyMultiplier: 0.5,
-    label: "UPWARD -> DOWNWARD",
-  },
-];
+// ── Loaded game data (set once at startup) ──
+let _combos: ComboRule[] = [];
 
-const INITIAL_INVENTORY: InventoryItem[] = [
-  {
-    id: "rusty_hatchet",
-    name: "Rusty Hatchet",
-    qty: 1,
-    slot: "weapon",
-    attack: 2,
-    activityPowerMultiplier: 1.05,
-    speedMultiplier: 0.94,
-    energyCostMultiplier: 0.95,
-  },
-  {
-    id: "cloth_tunic",
-    name: "Cloth Tunic",
-    qty: 1,
-    slot: "armor",
-    defense: 3,
-  },
-];
-
-const TREE_SKILL_COLOR = "#415236";
-const TREE_SKILL_ACCENT = "#678752";
-const TREE_OBJECT_COLOR = "#524436";
-const TREE_OBJECT_ACCENT = "#796652";
-
-function createInitialSkills(): SkillState[] {
-  return [
-    {
-      id: "treecutting",
-      name: "Treecutting",
-      kind: "passive",
-      unlocked: true,
-      tags: ["tree"],
-      abilityTags: [],
-      level: 1,
-      xp: 0,
-      xpToNext: 30,
-      baseDurationMs: 0,
-      baseEnergyCost: 0,
-      basePower: 0,
-      powerPerLevel: 0,
-      barColor: TREE_SKILL_COLOR,
-      accentColor: TREE_SKILL_ACCENT,
-      description: "Passive efficiency for tree actions.",
-    },
-    {
-      id: "upward_chop",
-      name: "Upward Chop",
-      kind: "active",
-      unlocked: true,
-      tags: ["tree"],
-      abilityTags: ["chop"],
-      linkedPassiveId: "treecutting",
-      level: 1,
-      xp: 0,
-      xpToNext: 25,
-      baseDurationMs: 2000,
-      baseEnergyCost: 12,
-      basePower: 5,
-      powerPerLevel: 1,
-      barColor: TREE_SKILL_COLOR,
-      accentColor: TREE_SKILL_ACCENT,
-      description: "Auto-cast opener for tree damage.",
-    },
-    {
-      id: "downward_chop",
-      name: "Downward Chop",
-      kind: "active",
-      unlocked: false,
-      tags: ["tree"],
-      abilityTags: ["chop"],
-      linkedPassiveId: "treecutting",
-      level: 1,
-      xp: 0,
-      xpToNext: 25,
-      baseDurationMs: 4000,
-      baseEnergyCost: 15,
-      basePower: 10,
-      powerPerLevel: 2,
-      barColor: TREE_SKILL_COLOR,
-      accentColor: TREE_SKILL_ACCENT,
-      description: "Unlocks at Treecutting Lv 3. Bonus arms after 3 successful Upward Chops.",
-    },
-    {
-      id: "side_chop",
-      name: "Side Chop",
-      kind: "active",
-      unlocked: false,
-      tags: ["tree"],
-      abilityTags: ["chop"],
-      linkedPassiveId: "treecutting",
-      level: 1,
-      xp: 0,
-      xpToNext: 25,
-      baseDurationMs: 1000,
-      baseEnergyCost: 11,
-      basePower: 7,
-      powerPerLevel: 1,
-      barColor: TREE_SKILL_COLOR,
-      accentColor: TREE_SKILL_ACCENT,
-      description: "Unlocks at Treecutting Lv 5.",
-    },
-  ];
-}
+// ── Utility functions ──
 
 function seededRandom(seed: number): () => number {
   let value = seed >>> 0;
@@ -276,10 +122,6 @@ function seededRandom(seed: number): () => number {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-}
-
-function rollInt(rng: () => number, min: number, max: number): number {
-  return Math.floor(rng() * (max - min + 1)) + min;
 }
 
 function appendLog(log: string[], line: string): string[] {
@@ -317,18 +159,71 @@ function addUnlockCue(cues: UnlockCue[], skillId: string, now: number): UnlockCu
   return [...filtered, { skillId, expiresAt: now + 1200 }];
 }
 
+// ── Build evaluation context from game state ──
+
+function buildEvalContext(state: GameState): EvalContext {
+  return {
+    hasItem: (id) => state.inventory.some((i) => i.id === id),
+    itemCount: (id) => state.inventory.find((i) => i.id === id)?.qty ?? 0,
+    flag: (id) => state.playerStorage[id] === true,
+    counter: (id) => {
+      const v = state.playerStorage[id];
+      return typeof v === "number" ? v : 0;
+    },
+    value: (id) => {
+      const v = state.playerStorage[id];
+      if (typeof v === "boolean") return v ? 1 : 0;
+      return v ?? "";
+    },
+    skillLevel: (id) => state.skills.find((s) => s.id === id)?.level ?? 0,
+    skillUnlocked: (id) => state.skills.find((s) => s.id === id)?.unlocked ?? false,
+    roomId: state.currentRoomId,
+    exploreCount: state.exploreCount,
+  };
+}
+
+// ── Storage effect processing ──
+
+function applyStorageEffect(
+  storage: Record<string, boolean | number | string>,
+  effect: { storageKeyId: string; operation: string; value?: number | string | boolean }
+): Record<string, boolean | number | string> {
+  const next = { ...storage };
+  const current = next[effect.storageKeyId];
+  switch (effect.operation) {
+    case "set":
+      next[effect.storageKeyId] = effect.value ?? true;
+      break;
+    case "increment": {
+      const num = typeof current === "number" ? current : 0;
+      const amount = typeof effect.value === "number" ? effect.value : 1;
+      next[effect.storageKeyId] = num + amount;
+      break;
+    }
+    case "decrement": {
+      const num = typeof current === "number" ? current : 0;
+      const amount = typeof effect.value === "number" ? effect.value : 1;
+      next[effect.storageKeyId] = num - amount;
+      break;
+    }
+    case "toggle":
+      next[effect.storageKeyId] = current !== true;
+      break;
+  }
+  return next;
+}
+
+// ── Combo lookup (uses loaded combos) ──
+
 function findCombo(
   lastAction: LastAction | null,
   skillId: string,
-  tag: ActivityTag,
+  tag: string,
   now: number
 ): ComboRule | null {
-  if (!lastAction) {
-    return null;
-  }
-
+  if (!lastAction) return null;
   return (
-    COMBOS.find(
+    _combos.find(
       (rule) =>
         rule.from === lastAction.skillId &&
         rule.to === skillId &&
@@ -338,19 +233,20 @@ function findCombo(
   );
 }
 
+// ── Skill helpers ──
+
 function getSkill(skills: SkillState[], skillId: string): SkillState | null {
   return skills.find((entry) => entry.id === skillId) ?? null;
 }
 
-function getTreecuttingLevel(skills: SkillState[]): number {
-  return getSkill(skills, "treecutting")?.level ?? 1;
+function getRelevantPassiveLevel(skills: SkillState[], tag: string): number {
+  const passives = skills.filter((s) => s.kind === "passive" && s.tags.includes(tag));
+  if (passives.length === 0) return 1;
+  return Math.max(...passives.map((s) => s.level));
 }
 
 function getSuccessChance(playerLevel: number, objectLevel: number): number {
-  if (playerLevel >= objectLevel) {
-    return 100;
-  }
-
+  if (playerLevel >= objectLevel) return 100;
   const deficit = objectLevel - playerLevel;
   return Math.max(25, 100 - deficit * 12);
 }
@@ -362,6 +258,8 @@ function isSideChopReady(state: GameState): boolean {
 function isChopBuffActive(state: GameState): boolean {
   return state.now < state.chopBuffUntil;
 }
+
+// ── Inventory helpers ──
 
 function mergeDrops(inventory: InventoryItem[], drops: InventoryItem[]): InventoryItem[] {
   const next = [...inventory];
@@ -385,121 +283,28 @@ function awardSkillXp(
   let levelUps = 0;
   let newLevel = 0;
   const nextSkills = skills.map((skill) => {
-    if (skill.id !== skillId) {
-      return skill;
-    }
+    if (skill.id !== skillId) return skill;
 
     let nextXp = skill.xp + amount;
     let nextXpToNext = skill.xpToNext;
     let nextLevel = skill.level;
+    const scaling = skill.xpScaling ?? 1.18;
 
     while (nextXp >= nextXpToNext) {
       nextXp -= nextXpToNext;
       nextLevel += 1;
       levelUps += 1;
-      nextXpToNext = Math.max(25, Math.round(nextXpToNext * 1.18));
+      nextXpToNext = Math.max(25, Math.round(nextXpToNext * scaling));
     }
 
     newLevel = nextLevel;
-    return {
-      ...skill,
-      xp: nextXp,
-      xpToNext: nextXpToNext,
-      level: nextLevel,
-    };
+    return { ...skill, xp: nextXp, xpToNext: nextXpToNext, level: nextLevel };
   });
 
-  return {
-    skills: nextSkills,
-    levelUps,
-    newLevel,
-  };
+  return { skills: nextSkills, levelUps, newLevel };
 }
 
-function buildTreeDrops(rng: () => number): InventoryItem[] {
-  const drops: InventoryItem[] = [
-    { id: "log", name: "Logs", qty: rollInt(rng, 8, 16) },
-    { id: "sap", name: "Tree Sap", qty: rollInt(rng, 1, 3) },
-  ];
-
-  if (rng() > 0.85) {
-    drops.push({
-      id: "amber_band",
-      name: "Amber Band",
-      qty: 1,
-      slot: "accessory",
-      energyRegen: 1,
-      energyCostMultiplier: 0.95,
-    });
-  }
-
-  return drops;
-}
-
-function generateObjects(seed: number, forceStarterOak = false): WorldObject[] {
-  const rng = seededRandom(seed);
-  const createOak = (index: number): WorldObject => {
-    const integrity = rollInt(rng, 92, 132);
-    return {
-      id: `oak_${seed}_${index}`,
-      name: "Oak Tree",
-      tag: "tree",
-      requiredLevel: 1,
-      maxIntegrity: integrity,
-      integrity,
-      barColor: TREE_OBJECT_COLOR,
-      accentColor: TREE_OBJECT_ACCENT,
-      meterLabel: "Logs",
-      drops: buildTreeDrops(rng),
-    };
-  };
-
-  const createBirch = (index: number): WorldObject => {
-    const integrity = rollInt(rng, 130, 176);
-    return {
-      id: `birch_${seed}_${index}`,
-      name: "Birch Tree",
-      tag: "tree",
-      requiredLevel: 5,
-      maxIntegrity: integrity,
-      integrity,
-      barColor: "#5a4d3f",
-      accentColor: "#8c7459",
-      meterLabel: "Logs",
-      drops: buildTreeDrops(rng),
-    };
-  };
-
-  if (forceStarterOak) {
-    const starter = createOak(0);
-    const starterIntegrity = rollInt(rng, 90, 118);
-    return [{ ...starter, maxIntegrity: starterIntegrity, integrity: starterIntegrity }];
-  }
-
-  const count = rollInt(rng, 1, 3);
-  const objects: WorldObject[] = [];
-  let birchCount = 0;
-
-  for (let index = 0; index < count; index += 1) {
-    const birchRoll = rng();
-    const isBirch = birchRoll < 0.25;
-
-    if (isBirch) {
-      objects.push(createBirch(index));
-      birchCount += 1;
-      continue;
-    }
-
-    objects.push(createOak(index));
-  }
-
-  if (birchCount === 0 && rng() < 0.4) {
-    const replaceIndex = rollInt(rng, 0, objects.length - 1);
-    objects[replaceIndex] = createBirch(replaceIndex);
-  }
-
-  return objects;
-}
+// ── Equipment stats ──
 
 function getEquippedItems(state: GameState): InventoryItem[] {
   const ids = Object.values(state.equipment).filter((value): value is string => Boolean(value));
@@ -517,7 +322,6 @@ function getEquipmentStats(state: GameState): {
   energyCostMultiplier: number;
 } {
   const equippedItems = getEquippedItems(state);
-
   return equippedItems.reduce(
     (stats, item) => ({
       attack: stats.attack + (item.attack ?? 0),
@@ -546,6 +350,8 @@ function getActivityProgressValue(
   return Math.max(1, Math.round((scaled + gear.attack) * gear.activityPowerMultiplier));
 }
 
+// ── Cast metrics ──
+
 function getCastMetrics(
   state: GameState,
   skill: SkillState,
@@ -573,41 +379,23 @@ function getCastMetrics(
   return { durationMs, energyCost, combo };
 }
 
-function makeActionPlan(state: GameState, skillId: string, now: number): ActionPlan | null {
-  if (state.action) {
-    return null;
-  }
+// ── Action planning ──
 
-  if (state.exploreAction) {
-    return null;
-  }
+function makeActionPlan(state: GameState, skillId: string, now: number): ActionPlan | null {
+  if (state.action) return null;
+  if (state.exploreAction) return null;
 
   const target = state.objects.find((entry) => entry.id === state.selectedObjectId);
-  if (!target) {
-    return null;
-  }
+  if (!target) return null;
 
   const skill = state.skills.find((entry) => entry.id === skillId && entry.kind === "active");
-  if (!skill) {
-    return null;
-  }
-
-  if (!skill.unlocked) {
-    return null;
-  }
-
-  if (skill.id === "side_chop" && !isSideChopReady(state)) {
-    return null;
-  }
-
-  if (!skill.tags.includes(target.tag)) {
-    return null;
-  }
+  if (!skill) return null;
+  if (!skill.unlocked) return null;
+  if (skill.id === "side_chop" && !isSideChopReady(state)) return null;
+  if (!skill.tags.includes(target.tag)) return null;
 
   const metrics = getCastMetrics(state, skill, target, now);
-  if (state.energy < metrics.energyCost) {
-    return null;
-  }
+  if (state.energy < metrics.energyCost) return null;
 
   return {
     action: {
@@ -623,20 +411,65 @@ function makeActionPlan(state: GameState, skillId: string, now: number): ActionP
   };
 }
 
-function resolveCompletedAction(state: GameState): GameState {
-  if (!state.action) {
-    return state;
+// ── Object generation from room ──
+
+function generateObjectsForRoom(
+  roomId: string,
+  seed: number,
+  state: GameState,
+  forceStarter = false
+): WorldObject[] {
+  const bundle = getBundle();
+  if (!bundle) return [];
+
+  const world = bundle.world;
+  const room = world.rooms.find((r) => r.id === roomId);
+  if (!room) return [];
+
+  const rng = seededRandom(seed);
+  const ctx = buildEvalContext(state);
+  const itemDefs = bundle.items;
+
+  const objects = generateObjectsFromRoom(
+    room.spawnTable,
+    bundle.interactables,
+    seed,
+    rng,
+    ctx
+  );
+
+  // Resolve item names on drops
+  for (const obj of objects) {
+    obj.drops = resolveItemNames(obj.drops, itemDefs);
   }
+
+  // Cap to room slot count
+  const slotCount = room.slotCount || world.defaultSlotCount || 5;
+  const capped = objects.slice(0, slotCount);
+
+  // If forceStarter and we got objects, keep just the first
+  if (forceStarter && capped.length > 0) {
+    return [capped[0]];
+  }
+
+  return capped;
+}
+
+// ── Resolve completed action ──
+
+function resolveCompletedAction(state: GameState): GameState {
+  if (!state.action) return state;
 
   const usedSkill = state.skills.find((entry) => entry.id === state.action?.skillId);
   const targetObject = state.objects.find((entry) => entry.id === state.action?.objectId);
+  if (!usedSkill || !targetObject) return { ...state, action: null };
 
-  if (!usedSkill || !targetObject) {
-    return { ...state, action: null };
-  }
-
-  const treecuttingLevel = getTreecuttingLevel(state.skills);
-  const successChance = getSuccessChance(treecuttingLevel, targetObject.requiredLevel);
+  // Find the linked passive for success chance
+  const linkedPassive = usedSkill.linkedPassiveId
+    ? getSkill(state.skills, usedSkill.linkedPassiveId)
+    : null;
+  const passiveLevel = linkedPassive?.level ?? 1;
+  const successChance = getSuccessChance(passiveLevel, targetObject.requiredLevel);
   const didSucceed = Math.random() * 100 < successChance;
 
   const gear = getEquipmentStats(state);
@@ -657,7 +490,9 @@ function resolveCompletedAction(state: GameState): GameState {
   let nextSidePrepDownwardHit = state.sidePrepDownwardHit;
   let nextChopBuffUntil = state.chopBuffUntil;
   let nextUnlockCues = state.unlockCues;
+  let nextPlayerStorage = state.playerStorage;
 
+  // Downward bonus expiry logic (legacy mechanic for existing content)
   const missedDownwardBonusWindow = state.downwardBonusReady && usedSkill.id !== "downward_chop";
   if (missedDownwardBonusWindow) {
     nextDownwardBonusReady = false;
@@ -676,72 +511,93 @@ function resolveCompletedAction(state: GameState): GameState {
       `-${impact}`,
       state.now,
       remainingIntegrity <= 0
-        ? {
-            durationMs: 1000,
-            zone: "objects",
-          }
-        : {
-            durationMs: 1000,
-            zone: "objects",
-            objectId: targetObject.id,
-          }
+        ? { durationMs: 1000, zone: "objects" }
+        : { durationMs: 1000, zone: "objects", objectId: targetObject.id }
     );
   }
 
   if (didSucceed) {
-    const primaryXpGain = 2;
-    const primaryXp = awardSkillXp(updatedSkills, usedSkill.id, primaryXpGain);
-    updatedSkills = primaryXp.skills;
-    updatedFloatTexts = pushFloatingText(updatedFloatTexts, `+${primaryXpGain} ${usedSkill.name} XP`, state.now, {
-      zone: "skills",
-      skillId: usedSkill.id,
-    });
-    if (primaryXp.levelUps > 0) {
-      updatedLog = appendLog(updatedLog, `${usedSkill.name} reached Lv ${primaryXp.newLevel}.`);
-    }
-
-    if (usedSkill.linkedPassiveId) {
-      const passiveXpGain = 3;
-      const passiveXp = awardSkillXp(updatedSkills, usedSkill.linkedPassiveId, passiveXpGain);
-      updatedSkills = passiveXp.skills;
-      const passiveName = updatedSkills.find((entry) => entry.id === usedSkill.linkedPassiveId)?.name;
-      if (passiveName) {
-        updatedFloatTexts = pushFloatingText(updatedFloatTexts, `+${passiveXpGain} ${passiveName} XP`, state.now, {
-          zone: "skills",
-          skillId: usedSkill.linkedPassiveId,
-        });
+    // Award XP — data-driven via xpRewards, fallback to legacy behavior
+    const xpRewards = targetObject.xpRewards ?? [];
+    if (xpRewards.length > 0) {
+      for (const reward of xpRewards) {
+        const xpResult = awardSkillXp(updatedSkills, reward.skillId, reward.amount);
+        updatedSkills = xpResult.skills;
+        const rewardSkillName = updatedSkills.find((s) => s.id === reward.skillId)?.name ?? reward.skillId;
+        updatedFloatTexts = pushFloatingText(
+          updatedFloatTexts,
+          `+${reward.amount} ${rewardSkillName} XP`,
+          state.now,
+          { zone: "skills", skillId: reward.skillId }
+        );
+        if (xpResult.levelUps > 0) {
+          updatedLog = appendLog(updatedLog, `${rewardSkillName} reached Lv ${xpResult.newLevel}.`);
+        }
       }
-      if (passiveXp.levelUps > 0 && passiveName) {
-        updatedLog = appendLog(updatedLog, `${passiveName} reached Lv ${passiveXp.newLevel}.`);
-      }
-    }
-
-    const treecuttingLevelAfterXp = getTreecuttingLevel(updatedSkills);
-    const downwardSkillAfterXp = getSkill(updatedSkills, "downward_chop");
-    let unlockedDownwardThisAction = false;
-    if (downwardSkillAfterXp && !downwardSkillAfterXp.unlocked && treecuttingLevelAfterXp >= 3) {
-      updatedSkills = updatedSkills.map((skill) =>
-        skill.id === "downward_chop" ? { ...skill, unlocked: true } : skill
+    } else {
+      // Fallback: give XP to the used skill + its linked passive
+      const primaryXpGain = 2;
+      const primaryXp = awardSkillXp(updatedSkills, usedSkill.id, primaryXpGain);
+      updatedSkills = primaryXp.skills;
+      updatedFloatTexts = pushFloatingText(
+        updatedFloatTexts,
+        `+${primaryXpGain} ${usedSkill.name} XP`,
+        state.now,
+        { zone: "skills", skillId: usedSkill.id }
       );
-      unlockedDownwardThisAction = true;
-      nextUnlockCues = addUnlockCue(nextUnlockCues, "downward_chop", state.now);
-      nextSuccessfulUpwardHits = 0;
-      nextDownwardBonusReady = false;
-      updatedLog = appendLog(updatedLog, "Learned Downward Chop.");
-      updatedFloatTexts = pushFloatingText(updatedFloatTexts, "NEW SKILL: DOWNWARD CHOP", state.now, {
-        durationMs: 2000,
-        zone: "skills",
-        skillId: "downward_chop",
-      });
-      updatedFloatTexts = pushFloatingText(updatedFloatTexts, "NEW ABILITY LEARNED: DOWNWARD CHOP", state.now, {
-        durationMs: 2200,
-        zone: "skills",
-      });
+      if (primaryXp.levelUps > 0) {
+        updatedLog = appendLog(updatedLog, `${usedSkill.name} reached Lv ${primaryXp.newLevel}.`);
+      }
+
+      if (usedSkill.linkedPassiveId) {
+        const passiveXpGain = 3;
+        const passiveXp = awardSkillXp(updatedSkills, usedSkill.linkedPassiveId, passiveXpGain);
+        updatedSkills = passiveXp.skills;
+        const passiveName = updatedSkills.find((entry) => entry.id === usedSkill.linkedPassiveId)?.name;
+        if (passiveName) {
+          updatedFloatTexts = pushFloatingText(
+            updatedFloatTexts,
+            `+${passiveXpGain} ${passiveName} XP`,
+            state.now,
+            { zone: "skills", skillId: usedSkill.linkedPassiveId }
+          );
+        }
+        if (passiveXp.levelUps > 0 && passiveName) {
+          updatedLog = appendLog(updatedLog, `${passiveName} reached Lv ${passiveXp.newLevel}.`);
+        }
+      }
     }
-    const downwardUnlockedNow = (downwardSkillAfterXp?.unlocked ?? false) || unlockedDownwardThisAction;
+
+    // Check skill unlocks via DSL conditions (data-driven)
+    const ctx = buildEvalContext({ ...state, skills: updatedSkills });
+    const newlyUnlocked = checkSkillUnlocks(updatedSkills, ctx);
+    for (const skillId of newlyUnlocked) {
+      updatedSkills = updatedSkills.map((skill) =>
+        skill.id === skillId ? { ...skill, unlocked: true } : skill
+      );
+      nextUnlockCues = addUnlockCue(nextUnlockCues, skillId, state.now);
+      const unlockName = updatedSkills.find((s) => s.id === skillId)?.name ?? skillId;
+      updatedLog = appendLog(updatedLog, `Learned ${unlockName}.`);
+      updatedFloatTexts = pushFloatingText(
+        updatedFloatTexts,
+        `NEW SKILL: ${unlockName.toUpperCase()}`,
+        state.now,
+        { durationMs: 2000, zone: "skills", skillId }
+      );
+      updatedFloatTexts = pushFloatingText(
+        updatedFloatTexts,
+        `NEW ABILITY LEARNED: ${unlockName.toUpperCase()}`,
+        state.now,
+        { durationMs: 2200, zone: "skills" }
+      );
+    }
+
+    // Legacy bonus mechanics (keep for existing content compatibility)
+    const downwardSkill = getSkill(updatedSkills, "downward_chop");
+    const downwardUnlockedNow = downwardSkill?.unlocked ?? false;
     if (usedSkill.id === "upward_chop") {
       if (!nextDownwardBonusReady && downwardUnlockedNow && !missedDownwardBonusWindow) {
-        if (!unlockedDownwardThisAction) {
+        if (!newlyUnlocked.includes("downward_chop")) {
           nextSuccessfulUpwardHits = Math.min(3, nextSuccessfulUpwardHits + 1);
         }
         if (nextSuccessfulUpwardHits >= 3) {
@@ -769,24 +625,7 @@ function resolveCompletedAction(state: GameState): GameState {
       nextSidePrepUpwardStreak = 0;
     }
 
-    const sideSkill = getSkill(updatedSkills, "side_chop");
-    if (sideSkill && !sideSkill.unlocked && treecuttingLevelAfterXp >= 5) {
-      updatedSkills = updatedSkills.map((skill) =>
-        skill.id === "side_chop" ? { ...skill, unlocked: true } : skill
-      );
-      nextUnlockCues = addUnlockCue(nextUnlockCues, "side_chop", state.now);
-      updatedLog = appendLog(updatedLog, "Learned Side Chop.");
-      updatedFloatTexts = pushFloatingText(updatedFloatTexts, "NEW SKILL: SIDE CHOP", state.now, {
-        durationMs: 2000,
-        zone: "skills",
-        skillId: "side_chop",
-      });
-      updatedFloatTexts = pushFloatingText(updatedFloatTexts, "NEW ABILITY LEARNED: SIDE CHOP", state.now, {
-        durationMs: 2200,
-        zone: "skills",
-      });
-    }
-
+    // Side chop buff (only fires if side_chop skill exists in content)
     if (usedSkill.id === "side_chop") {
       nextChopBuffUntil = state.now + 10000;
       nextSidePrepUpwardStreak = 0;
@@ -818,6 +657,7 @@ function resolveCompletedAction(state: GameState): GameState {
   let nextAutoSkillId = state.autoSkillId;
   let nextEnergy = state.energy;
 
+  // Downward bonus energy restore (legacy mechanic)
   if (usedSkill.id === "downward_chop" && nextDownwardBonusReady) {
     const restoredEnergy = 25;
     nextEnergy = Math.min(state.maxEnergy, state.energy + restoredEnergy);
@@ -845,13 +685,35 @@ function resolveCompletedAction(state: GameState): GameState {
     const dropText = targetObject.drops.map((drop) => `${drop.qty} ${drop.name}`).join(", ");
     updatedLog = appendLog(updatedLog, `${targetObject.name} completed. Loot: ${dropText}.`);
 
+    // Process onDestroy storage effects
+    if (targetObject.interactableId) {
+      const bundle = getBundle();
+      const interDef = bundle?.interactables.find((i) => i.id === targetObject.interactableId);
+      if (interDef?.onDestroyEffects) {
+        for (const effect of interDef.onDestroyEffects) {
+          nextPlayerStorage = applyStorageEffect(nextPlayerStorage, effect);
+        }
+      }
+    }
+
     if (targetObject.id === state.selectedObjectId) {
       nextSelectedObjectId = null;
       nextAutoSkillId = null;
-      updatedLog = appendLog(updatedLog, "Selected tree no longer exists. Auto-cast stopped.");
+      updatedLog = appendLog(updatedLog, "Target destroyed. Auto-cast stopped.");
     }
   } else if (didSucceed) {
     updatedLog = appendLog(updatedLog, `${usedSkill.name} dealt ${impact} to ${targetObject.name}.`);
+
+    // Process onInteract storage effects
+    if (targetObject.interactableId) {
+      const bundle = getBundle();
+      const interDef = bundle?.interactables.find((i) => i.id === targetObject.interactableId);
+      if (interDef?.onInteractEffects) {
+        for (const effect of interDef.onInteractEffects) {
+          nextPlayerStorage = applyStorageEffect(nextPlayerStorage, effect);
+        }
+      }
+    }
   }
 
   return {
@@ -867,6 +729,7 @@ function resolveCompletedAction(state: GameState): GameState {
     sidePrepUpwardStreak: nextSidePrepUpwardStreak,
     sidePrepDownwardHit: nextSidePrepDownwardHit,
     chopBuffUntil: nextChopBuffUntil,
+    playerStorage: nextPlayerStorage,
     action: null,
     lastAction: {
       skillId: usedSkill.id,
@@ -880,23 +743,52 @@ function resolveCompletedAction(state: GameState): GameState {
   };
 }
 
-function createInitialState(): GameState {
-  const seed = 9103;
-  const now = Date.now();
-  const objects = generateObjects(seed, true);
+// ── Create initial state from loaded bundle ──
 
-  return {
+function createInitialState(): GameState {
+  const bundle = getBundle();
+  const now = Date.now();
+
+  // Skills from bundle
+  const skills = bundle ? skillDefsToStates(bundle.skills) : [];
+
+  // Starting inventory from bundle (equippable items)
+  const inventory = bundle ? buildStartingInventory(bundle) : [];
+
+  // World info
+  const world = bundle?.world;
+  const startingRoomId = world?.startingRoomId ?? "";
+  const roomName = world?.rooms.find((r) => r.id === startingRoomId)?.name ?? "Unknown";
+
+  // Initialize player storage from bundle defaults
+  const playerStorage: Record<string, boolean | number | string> = {};
+  if (bundle?.storageKeys) {
+    for (const key of bundle.storageKeys) {
+      playerStorage[key.id] = key.defaultValue;
+    }
+  }
+
+  // Auto-equip items that have slots
+  const equipment: Record<EquipmentSlot, string | null> = { weapon: null, armor: null, accessory: null };
+  for (const item of inventory) {
+    if (item.slot && !equipment[item.slot]) {
+      equipment[item.slot] = item.id;
+    }
+  }
+
+  const seed = 9103;
+
+  // Build a temporary state for object generation
+  const tempState: GameState = {
     seed,
     exploreCount: 1,
-    skills: createInitialSkills(),
-    objects,
-    selectedObjectId: objects[0]?.id ?? null,
-    inventory: INITIAL_INVENTORY.map((item) => ({ ...item })),
-    equipment: {
-      weapon: "rusty_hatchet",
-      armor: "cloth_tunic",
-      accessory: null,
-    },
+    currentRoomId: startingRoomId,
+    playerStorage,
+    skills,
+    objects: [],
+    selectedObjectId: null,
+    inventory,
+    equipment,
     energy: 100,
     maxEnergy: 100,
     baseEnergyRegen: 3,
@@ -909,7 +801,7 @@ function createInitialState(): GameState {
     sidePrepDownwardHit: false,
     chopBuffUntil: 0,
     lastAction: null,
-    log: ["Entered Verdant Outskirts."],
+    log: [`Entered ${roomName}.`],
     floatTexts: [],
     unlockCues: [],
     objectBatchStartedAt: now - 10000,
@@ -917,7 +809,17 @@ function createInitialState(): GameState {
     now,
     lastTickAt: now,
   };
+
+  const objects = generateObjectsForRoom(startingRoomId, seed, tempState, true);
+
+  return {
+    ...tempState,
+    objects,
+    selectedObjectId: objects[0]?.id ?? null,
+  };
 }
+
+// ── Reducer ──
 
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -929,11 +831,33 @@ function reducer(state: GameState, action: GameAction): GameState {
         };
       }
 
-      if (state.exploreAction) {
-        return state;
+      if (state.exploreAction) return state;
+
+      // Check for seed overrides from the current room
+      const bundle = getBundle();
+      const room = bundle?.world.rooms.find((r) => r.id === state.currentRoomId);
+      let nextSeed: number;
+
+      if (room?.seedOverrides && room.seedOverrides.length > 0) {
+        const ctx = buildEvalContext(state);
+        const sorted = [...room.seedOverrides].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+        let overrideSeed: number | null = null;
+        for (const override of sorted) {
+          if (evaluateCondition(override.condition, ctx)) {
+            if (typeof override.seed === "number") {
+              overrideSeed = override.seed;
+            } else {
+              const val = state.playerStorage[override.seed];
+              overrideSeed = typeof val === "number" ? val : state.seed + 7919;
+            }
+            break;
+          }
+        }
+        nextSeed = overrideSeed ?? state.seed + 7919;
+      } else {
+        nextSeed = state.seed + 7919;
       }
 
-      const nextSeed = state.seed + 7919;
       return {
         ...state,
         exploreAction: {
@@ -976,15 +900,10 @@ function reducer(state: GameState, action: GameAction): GameState {
       }
 
       const skill = state.skills.find((entry) => entry.id === action.skillId && entry.kind === "active");
-      if (!skill) {
-        return state;
-      }
+      if (!skill) return state;
 
       if (!skill.unlocked) {
-        const lockMessage =
-          skill.id === "side_chop"
-            ? "Skill is locked. Reach Treecutting Lv 5 to learn Side Chop."
-            : "Skill is locked. Reach Treecutting Lv 3 to learn Downward Chop.";
+        const lockMessage = `${skill.name} is locked. ${skill.description}`;
         return {
           ...state,
           log: appendLog(state.log, lockMessage),
@@ -1039,9 +958,7 @@ function reducer(state: GameState, action: GameAction): GameState {
 
     case "EQUIP_ITEM": {
       const item = state.inventory.find((entry) => entry.id === action.itemId);
-      if (!item?.slot) {
-        return state;
-      }
+      if (!item?.slot) return state;
 
       return {
         ...state,
@@ -1054,9 +971,7 @@ function reducer(state: GameState, action: GameAction): GameState {
     }
 
     case "UNEQUIP_SLOT": {
-      if (!state.equipment[action.slot]) {
-        return state;
-      }
+      if (!state.equipment[action.slot]) return state;
 
       return {
         ...state,
@@ -1087,7 +1002,11 @@ function reducer(state: GameState, action: GameAction): GameState {
           return nextState;
         }
 
-        const nextObjects = generateObjects(nextState.exploreAction.seed);
+        const nextObjects = generateObjectsForRoom(
+          nextState.currentRoomId,
+          nextState.exploreAction.seed,
+          nextState
+        );
         const nextExploreCount = nextState.exploreCount + 1;
         nextState = {
           ...nextState,
@@ -1097,7 +1016,7 @@ function reducer(state: GameState, action: GameAction): GameState {
           selectedObjectId: nextObjects[0]?.id ?? null,
           exploreAction: null,
           objectBatchStartedAt: now,
-          log: appendLog(nextState.log, `Exploration #${nextExploreCount} generated ${nextObjects.length} trees.`),
+          log: appendLog(nextState.log, `Exploration #${nextExploreCount} generated ${nextObjects.length} objects.`),
         };
       }
 
@@ -1133,6 +1052,8 @@ function reducer(state: GameState, action: GameAction): GameState {
       return state;
   }
 }
+
+// ── UI Components ──
 
 interface MeterRowProps {
   name: string;
@@ -1225,7 +1146,9 @@ function MeterRow({
   );
 }
 
-function App() {
+// ── Game App (renders after content is loaded) ──
+
+function GameApp() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
 
   useEffect(() => {
@@ -1237,6 +1160,12 @@ function App() {
       window.clearInterval(timer);
     };
   }, []);
+
+  // Get room name from bundle
+  const roomName = useMemo(() => {
+    const bundle = getBundle();
+    return bundle?.world.rooms.find((r) => r.id === state.currentRoomId)?.name ?? "Unknown Location";
+  }, [state.currentRoomId]);
 
   const selectedObject = useMemo(
     () => state.objects.find((entry) => entry.id === state.selectedObjectId) ?? null,
@@ -1258,8 +1187,6 @@ function App() {
     [state.unlockCues, state.now]
   );
 
-  const treecuttingLevel = useMemo(() => getTreecuttingLevel(state.skills), [state.skills]);
-
   const equipmentStats = useMemo(() => getEquipmentStats(state), [state]);
 
   const actionProgress = state.action
@@ -1276,9 +1203,7 @@ function App() {
   const skillFloatMap = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const entry of state.floatTexts) {
-      if (entry.zone !== "skills" || !entry.skillId) {
-        continue;
-      }
+      if (entry.zone !== "skills" || !entry.skillId) continue;
       const existing = map.get(entry.skillId) ?? [];
       existing.push(entry.text);
       map.set(entry.skillId, existing);
@@ -1289,9 +1214,7 @@ function App() {
   const objectFloatMap = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const entry of state.floatTexts) {
-      if (entry.zone !== "objects" || !entry.objectId) {
-        continue;
-      }
+      if (entry.zone !== "objects" || !entry.objectId) continue;
       const existing = map.get(entry.objectId) ?? [];
       existing.push(entry.text);
       map.set(entry.objectId, existing);
@@ -1335,7 +1258,7 @@ function App() {
       <header className="hud animate-in">
         <div className="hud-block">
           <p className="eyebrow">Location</p>
-          <h1>Verdant Outskirts</h1>
+          <h1>{roomName}</h1>
           <p className="seed-line">
             Seed <strong>{state.seed}</strong> | Explore #{state.exploreCount}
           </p>
@@ -1577,7 +1500,8 @@ function App() {
           <div className="interactables-list">
             {state.objects.length > 0 ? (
               state.objects.map((object, index) => {
-                const successChance = getSuccessChance(treecuttingLevel, object.requiredLevel);
+                const objectPassiveLevel = getRelevantPassiveLevel(state.skills, object.tag);
+                const successChance = getSuccessChance(objectPassiveLevel, object.requiredLevel);
                 const justCompletedChopOnObject =
                   state.lastAction?.objectId === object.id &&
                   state.now - state.lastAction.at <= 220 &&
@@ -1611,7 +1535,7 @@ function App() {
                 );
               })
             ) : (
-              <p className="empty-text">No trees nearby. Press Explore.</p>
+              <p className="empty-text">No objects nearby. Press Explore.</p>
             )}
           </div>
         </aside>
@@ -1636,5 +1560,52 @@ function App() {
   );
 }
 
-export default App;
+// ── App wrapper (handles loading) ──
 
+function App() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch("/data/game-content.json");
+        if (res.ok) {
+          const data = await res.json();
+          loadBundle(data);
+          _combos = comboDefsToRules(data.combos ?? []);
+        } else {
+          setError("No game-content.json found. Export one from the Content Editor.");
+        }
+      } catch (err) {
+        console.warn("Failed to load game content:", err);
+        setError("Failed to load game content. Make sure game-content.json exists in public/data/.");
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="app-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <p style={{ color: "#aaa", fontFamily: "monospace" }}>Loading game content...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app-shell" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: "1rem" }}>
+        <p style={{ color: "#ff6b6b", fontFamily: "monospace", fontSize: "1.1rem" }}>⚠ {error}</p>
+        <p style={{ color: "#888", fontFamily: "monospace", fontSize: "0.9rem" }}>
+          Place game-content.json in public/data/ and reload.
+        </p>
+      </div>
+    );
+  }
+
+  return <GameApp />;
+}
+
+export default App;

@@ -1,0 +1,324 @@
+import { useState, useMemo } from "react";
+import { PageShell } from "../layout/PageShell";
+import { useProjectStore } from "../../stores/projectStore";
+import { useTagStore } from "../../stores/tagStore";
+import { useStorageKeyStore } from "../../stores/storageKeyStore";
+import { useItemStore } from "../../stores/itemStore";
+import { useSkillStore } from "../../stores/skillStore";
+import { useStatusEffectStore } from "../../stores/statusEffectStore";
+import { useInteractableStore } from "../../stores/interactableStore";
+import { useComboStore } from "../../stores/comboStore";
+import { useWorldStore } from "../../stores/worldStore";
+import { parse } from "../../dsl/parser";
+
+interface ValidationIssue {
+  severity: "error" | "warning";
+  message: string;
+}
+
+function useValidation(): ValidationIssue[] {
+  const { activityTags, abilityTags } = useTagStore();
+  const { storageKeys } = useStorageKeyStore();
+  const { items } = useItemStore();
+  const { skills } = useSkillStore();
+  const { statusEffects } = useStatusEffectStore();
+  const { interactables } = useInteractableStore();
+  const { combos } = useComboStore();
+  const { world } = useWorldStore();
+
+  return useMemo(() => {
+    const issues: ValidationIssue[] = [];
+
+    // Check IDs are unique within each entity type
+    const checkDupes = (list: { id: string }[], label: string) => {
+      const ids = new Set<string>();
+      for (const item of list) {
+        if (ids.has(item.id)) {
+          issues.push({ severity: "error", message: `Duplicate ${label} ID: "${item.id}"` });
+        }
+        ids.add(item.id);
+      }
+    };
+    checkDupes(items, "item");
+    checkDupes(skills, "skill");
+    checkDupes(statusEffects, "status effect");
+    checkDupes(interactables, "interactable");
+    checkDupes(combos, "combo");
+    checkDupes(world.rooms, "room");
+
+    // Skills: check unlock conditions parse
+    for (const skill of skills) {
+      if (skill.unlockCondition) {
+        const result = parse(skill.unlockCondition);
+        if (result.errors.length > 0) {
+          issues.push({
+            severity: "error",
+            message: `Skill "${skill.name}" has invalid unlock condition: ${result.errors[0].message}`,
+          });
+        }
+      }
+    }
+
+    // Active skills should have a linked passive
+    for (const skill of skills) {
+      if (skill.kind === "active" && !skill.linkedPassiveId) {
+        issues.push({
+          severity: "warning",
+          message: `Active skill "${skill.name}" has no linked passive skill`,
+        });
+      }
+    }
+
+    // Combos: check from/to skill refs
+    const skillIds = new Set(skills.map((s) => s.id));
+    for (const combo of combos) {
+      if (combo.fromSkillId && !skillIds.has(combo.fromSkillId)) {
+        issues.push({
+          severity: "error",
+          message: `Combo "${combo.label}" references unknown from-skill "${combo.fromSkillId}"`,
+        });
+      }
+      if (combo.toSkillId && !skillIds.has(combo.toSkillId)) {
+        issues.push({
+          severity: "error",
+          message: `Combo "${combo.label}" references unknown to-skill "${combo.toSkillId}"`,
+        });
+      }
+      if (!combo.fromSkillId || !combo.toSkillId) {
+        issues.push({
+          severity: "warning",
+          message: `Combo "${combo.label || combo.id}" is incomplete (missing from/to skill)`,
+        });
+      }
+    }
+
+    // Interactables: check loot table item refs
+    const itemIds = new Set(items.map((i) => i.id));
+    for (const inter of interactables) {
+      for (const entry of inter.lootTable) {
+        if (entry.itemId && !itemIds.has(entry.itemId)) {
+          issues.push({
+            severity: "error",
+            message: `Interactable "${inter.name}" loot references unknown item "${entry.itemId}"`,
+          });
+        }
+      }
+      // Check activity tag exists
+      const tagIds = new Set(activityTags.map((t) => t.id));
+      if (inter.activityTag && !tagIds.has(inter.activityTag)) {
+        issues.push({
+          severity: "warning",
+          message: `Interactable "${inter.name}" references unknown activity tag "${inter.activityTag}"`,
+        });
+      }
+    }
+
+    // World: check starting room
+    if (world.rooms.length > 0 && !world.startingRoomId) {
+      issues.push({
+        severity: "warning",
+        message: "World has rooms but no starting room is set",
+      });
+    }
+    if (world.startingRoomId && !world.rooms.find((r) => r.id === world.startingRoomId)) {
+      issues.push({
+        severity: "error",
+        message: `Starting room "${world.startingRoomId}" not found`,
+      });
+    }
+
+    // Room spawn table refs
+    const interIds = new Set(interactables.map((i) => i.id));
+    for (const room of world.rooms) {
+      for (const entry of room.spawnTable) {
+        if (entry.interactableId && !interIds.has(entry.interactableId)) {
+          issues.push({
+            severity: "error",
+            message: `Room "${room.name}" spawn table references unknown interactable "${entry.interactableId}"`,
+          });
+        }
+      }
+    }
+
+    // Empty content warnings
+    if (items.length === 0) {
+      issues.push({ severity: "warning", message: "No items defined" });
+    }
+    if (skills.length === 0) {
+      issues.push({ severity: "warning", message: "No skills defined" });
+    }
+    if (interactables.length === 0) {
+      issues.push({ severity: "warning", message: "No interactables defined" });
+    }
+
+    return issues;
+  }, [activityTags, abilityTags, storageKeys, items, skills, statusEffects, interactables, combos, world]);
+}
+
+export function ExportPage() {
+  const { exportBundle, downloadJson, importBundle, resetAllStores } = useProjectStore();
+  const [preview, setPreview] = useState<string | null>(null);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const issues = useValidation();
+
+  const errors = issues.filter((i) => i.severity === "error");
+  const warnings = issues.filter((i) => i.severity === "warning");
+
+  // Counts for the summary
+  const { items } = useItemStore();
+  const { skills } = useSkillStore();
+  const { statusEffects } = useStatusEffectStore();
+  const { interactables } = useInteractableStore();
+  const { combos } = useComboStore();
+  const { world } = useWorldStore();
+  const { storageKeys } = useStorageKeyStore();
+
+  const handlePreview = () => {
+    const bundle = exportBundle();
+    setPreview(JSON.stringify(bundle, null, 2));
+  };
+
+  const handleImport = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const bundle = JSON.parse(text);
+        importBundle(bundle);
+        setImportStatus(`Imported successfully from ${file.name}`);
+        setTimeout(() => setImportStatus(null), 3000);
+      } catch (err) {
+        setImportStatus(`Import failed: ${err}`);
+      }
+    };
+    input.click();
+  };
+
+  return (
+    <PageShell title="Export / Import">
+      {/* Content Summary */}
+      <section className="editor-section">
+        <h3 className="section-title">Content Summary</h3>
+        <div className="summary-grid">
+          <div className="summary-item">
+            <span className="summary-count">{items.length}</span>
+            <span className="summary-label">Items</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{skills.length}</span>
+            <span className="summary-label">Skills</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{statusEffects.length}</span>
+            <span className="summary-label">Effects</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{interactables.length}</span>
+            <span className="summary-label">Interactables</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{combos.length}</span>
+            <span className="summary-label">Combos</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{world.rooms.length}</span>
+            <span className="summary-label">Rooms</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{storageKeys.length}</span>
+            <span className="summary-label">Storage Keys</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Validation */}
+      <section className="editor-section">
+        <h3 className="section-title">
+          Validation
+          {errors.length === 0 && warnings.length === 0 && (
+            <span className="kind-badge kind-badge--passive" style={{ marginLeft: 8 }}>
+              All clear
+            </span>
+          )}
+          {errors.length > 0 && (
+            <span className="removal-badge removal-badge--timed" style={{ marginLeft: 8 }}>
+              {errors.length} error{errors.length !== 1 ? "s" : ""}
+            </span>
+          )}
+          {warnings.length > 0 && (
+            <span className="removal-badge removal-badge--both" style={{ marginLeft: 8 }}>
+              {warnings.length} warning{warnings.length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </h3>
+        {issues.length === 0 ? (
+          <p className="section-desc">No issues found. Ready to export!</p>
+        ) : (
+          <div className="validation-list">
+            {errors.map((issue, i) => (
+              <div key={`e${i}`} className="validation-item validation-item--error">
+                {issue.message}
+              </div>
+            ))}
+            {warnings.map((issue, i) => (
+              <div key={`w${i}`} className="validation-item validation-item--warning">
+                {issue.message}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Export */}
+      <section className="editor-section">
+        <h3 className="section-title">Export</h3>
+        <p className="section-desc">
+          Export all content as a single JSON file for the game to load.
+        </p>
+        <div className="button-row">
+          <button className="btn btn--primary" onClick={downloadJson}>
+            Download game-content.json
+          </button>
+          <button className="btn" onClick={handlePreview}>
+            {preview ? "Refresh Preview" : "Preview JSON"}
+          </button>
+        </div>
+        {preview && <pre className="json-preview">{preview}</pre>}
+      </section>
+
+      {/* Import */}
+      <section className="editor-section">
+        <h3 className="section-title">Import</h3>
+        <p className="section-desc">
+          Load an existing game-content.json file to continue editing.
+        </p>
+        <button className="btn" onClick={handleImport}>
+          Import JSON File
+        </button>
+        {importStatus && <p className="status-msg">{importStatus}</p>}
+      </section>
+
+      {/* Reset */}
+      <section className="editor-section">
+        <h3 className="section-title">Reset</h3>
+        <p className="section-desc">
+          Clear all editor data and start fresh. This cannot be undone.
+        </p>
+        <button
+          className="btn btn--danger"
+          onClick={() => {
+            if (window.confirm("Are you sure? All editor content will be permanently deleted.")) {
+              resetAllStores();
+            }
+          }}
+        >
+          Reset to Defaults
+        </button>
+      </section>
+    </PageShell>
+  );
+}
