@@ -8,6 +8,11 @@ npm install      # first time only
 npm run dev      # opens at http://localhost:5174
 ```
 
+> **Windows / PowerShell note:** If you get a scripts disabled error, run this once:
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
+
 The game loads content from `public/data/game-content.json`. After editing, export from the **Export / Import** page and replace that file.
 
 ---
