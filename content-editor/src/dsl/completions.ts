@@ -44,6 +44,8 @@ const PLAYER_METHODS = [
   { label: "counter", type: "function", detail: "(keyId) → number" },
   { label: "value", type: "function", detail: "(keyId) → string/number" },
   { label: "storage", type: "function", detail: "(keyId) → any" },
+  { label: "has_effect", type: "function", detail: "(effectId) → boolean" },
+  { label: "effect_stacks", type: "function", detail: "(effectId) → number" },
 ];
 
 const SKILL_PROPS = [
@@ -126,6 +128,21 @@ export function conditionCompletions(
         label: id,
         type: "text",
         detail: "Storage Key",
+      })),
+    };
+  }
+
+  const effectArgMatch = textBefore.match(
+    /player\.(has_effect|effect_stacks)\(\s*"([^"]*)$/
+  );
+  if (effectArgMatch) {
+    const from = context.pos - effectArgMatch[2].length;
+    return {
+      from,
+      options: providers.statusEffectIds.map((id) => ({
+        label: id,
+        type: "text",
+        detail: "Status Effect ID",
       })),
     };
   }

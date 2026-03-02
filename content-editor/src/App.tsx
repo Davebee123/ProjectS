@@ -17,6 +17,7 @@ import { WorldMapPage } from "./components/world/WorldMapPage";
 import { RoomEditPage } from "./components/world/RoomEditPage";
 import { ExportPage } from "./components/project/ExportPage";
 import { TestConditionPage } from "./components/testing/TestConditionPage";
+import { DslDictionaryPage } from "./components/testing/DslDictionaryPage";
 import { useHistoryStore } from "./stores/historyStore";
 import "./styles/editor.css";
 
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="/world/rooms/:id" element={<RoomEditPage />} />
             <Route path="/export" element={<ExportPage />} />
             <Route path="/test" element={<TestConditionPage />} />
+            <Route path="/dsl" element={<DslDictionaryPage />} />
           </Routes>
         </main>
       </div>

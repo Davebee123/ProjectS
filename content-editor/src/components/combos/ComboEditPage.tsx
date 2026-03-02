@@ -64,6 +64,15 @@ export function ComboEditPage() {
               placeholder="e.g. Double Chop"
             />
           </div>
+          <div className="form-field">
+            <label className="field-label">Folder</label>
+            <input
+              className="input"
+              value={combo.folder || ""}
+              onChange={(e) => update({ folder: e.target.value || undefined })}
+              placeholder="e.g. Combat, Utility..."
+            />
+          </div>
         </div>
       </section>
 

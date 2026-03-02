@@ -73,6 +73,15 @@ export function SkillEditPage() {
               placeholder="Skill description..."
             />
           </div>
+          <div className="form-field">
+            <label className="field-label">Folder</label>
+            <input
+              className="input"
+              value={skill.folder || ""}
+              onChange={(e) => updateSkill(skill.id, { folder: e.target.value || undefined })}
+              placeholder="e.g. Combat, Gathering..."
+            />
+          </div>
         </div>
       </section>
 

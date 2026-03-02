@@ -4,6 +4,7 @@ import { useSkillStore } from "../../stores/skillStore";
 import { useItemStore } from "../../stores/itemStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";
 import { useWorldStore } from "../../stores/worldStore";
+import { useStatusEffectStore } from "../../stores/statusEffectStore";
 import { parse } from "../../dsl/parser";
 import { testEvaluate, createEmptyContext } from "../../dsl/testEvaluator";
 import type { MockContext } from "../../dsl/testEvaluator";
@@ -13,6 +14,7 @@ export function TestConditionPage() {
   const { items } = useItemStore();
   const { storageKeys } = useStorageKeyStore();
   const { world } = useWorldStore();
+  const { statusEffects } = useStatusEffectStore();
 
   const [condition, setCondition] = useState("");
   const [mockCtx, setMockCtx] = useState<MockContext>(createEmptyContext);
@@ -63,6 +65,13 @@ export function TestConditionPage() {
     setMockCtx((prev) => ({
       ...prev,
       values: { ...prev.values, [id]: val },
+    }));
+  };
+
+  const setEffectStacks = (id: string, stacks: number) => {
+    setMockCtx((prev) => ({
+      ...prev,
+      effects: { ...prev.effects, [id]: stacks },
     }));
   };
 
@@ -187,6 +196,37 @@ export function TestConditionPage() {
                     style={{ width: 120 }}
                   />
                 )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Mock Active Effects */}
+      {statusEffects.length > 0 && (
+        <section className="editor-section">
+          <h3 className="section-title">Active Effects</h3>
+          <p className="section-desc">
+            Set stack count per effect. 0 = not active (has_effect returns false).
+          </p>
+          <div className="mock-state-grid">
+            {statusEffects.map((fx) => (
+              <div key={fx.id} className="mock-state-row">
+                <label className="mock-state-label">
+                  <span
+                    className="fx-dot"
+                    style={{ backgroundColor: fx.color }}
+                  />
+                  {fx.name || fx.id}
+                </label>
+                <input
+                  type="number"
+                  className="form-input form-input--sm"
+                  min={0}
+                  value={mockCtx.effects[fx.id] ?? 0}
+                  onChange={(e) => setEffectStacks(fx.id, Number(e.target.value))}
+                  style={{ width: 64 }}
+                />
               </div>
             ))}
           </div>

@@ -64,6 +64,7 @@ export interface ItemTemplate {
   id: string;
   name: string;
   description: string;
+  folder?: string;
   slot?: EquipmentSlot;
   stackable: boolean;
   stats: ItemStats;
@@ -119,6 +120,7 @@ export interface StatusEffectTemplate {
   id: string;
   name: string;
   description: string;
+  folder?: string;
   removalType: StatusRemovalType;
   durationMs?: number;          // for timed / both
   removeCondition?: string;     // DSL condition for conditional / both
@@ -140,6 +142,7 @@ export interface StatModifier {
 export interface SkillTemplate {
   id: string;
   name: string;
+  folder?: string;
   kind: "passive" | "active";
   activityTags: string[];
   abilityTags: string[];
@@ -161,6 +164,7 @@ export interface SkillTemplate {
 // ============================================================
 export interface ComboRuleTemplate {
   id: string;
+  folder?: string;
   fromSkillId: string;
   toSkillId: string;
   activityTag: string;
@@ -177,6 +181,7 @@ export interface InteractableTemplate {
   id: string;
   name: string;
   description: string;
+  folder?: string;
   activityTag: string;
   allowedAbilityTags: string[];
   requiredLevel: number;

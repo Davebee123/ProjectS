@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: "/world", label: "World Map" },
   { to: "/export", label: "Export / Import" },
   { to: "/test", label: "Test Conditions" },
+  { to: "/dsl", label: "DSL Reference" },
 ];
 
 export function Sidebar() {

@@ -9,6 +9,7 @@ export interface MockContext {
   flags: Record<string, boolean>;
   counters: Record<string, number>;
   values: Record<string, string | number>;
+  effects: Record<string, number>; // effectId → stack count (0 = not active)
   roomId: string;
   exploreCount: number;
   targetTag: string;
@@ -21,6 +22,7 @@ export function createEmptyContext(): MockContext {
     flags: {},
     counters: {},
     values: {},
+    effects: {},
     roomId: "",
     exploreCount: 0,
     targetTag: "",
@@ -118,6 +120,8 @@ function resolveCall(callee: Val, args: Val[], ctx: MockContext): Val {
   if (fn === "player.counter") return ctx.counters[String(args[0])] ?? 0;
   if (fn === "player.value") return ctx.values[String(args[0])] ?? "";
   if (fn === "player.storage") return ctx.values[String(args[0])] ?? "";
+  if (fn === "player.has_effect") return (ctx.effects[String(args[0])] ?? 0) > 0;
+  if (fn === "player.effect_stacks") return ctx.effects[String(args[0])] ?? 0;
   throw new Error(`Unknown function: ${fn}`);
 }
 

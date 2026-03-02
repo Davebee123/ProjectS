@@ -85,6 +85,15 @@ export function InteractableEditPage() {
               }
             />
           </div>
+          <div className="form-field">
+            <label className="field-label">Folder</label>
+            <input
+              className="input"
+              value={item.folder || ""}
+              onChange={(e) => update({ folder: e.target.value || undefined })}
+              placeholder="e.g. Trees, Enemies..."
+            />
+          </div>
         </div>
 
         <div style={{ marginTop: 16 }}>

@@ -102,6 +102,17 @@ export function StatusEffectEditPage() {
               onChange={(v) => updateStatusEffect(fx.id, { color: v })}
             />
           </div>
+          <div className="form-field">
+            <label className="field-label">Folder</label>
+            <input
+              className="input"
+              value={fx.folder || ""}
+              onChange={(e) =>
+                updateStatusEffect(fx.id, { folder: e.target.value || undefined })
+              }
+              placeholder="e.g. Buffs, Debuffs..."
+            />
+          </div>
         </div>
       </section>
 

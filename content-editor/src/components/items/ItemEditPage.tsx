@@ -104,6 +104,15 @@ export function ItemEditPage() {
               Can stack in inventory
             </label>
           </div>
+          <div className="form-field">
+            <label className="field-label">Folder</label>
+            <input
+              className="input"
+              value={item.folder || ""}
+              onChange={(e) => updateItem(item.id, { folder: e.target.value || undefined })}
+              placeholder="e.g. Weapons, Materials..."
+            />
+          </div>
         </div>
       </section>
 

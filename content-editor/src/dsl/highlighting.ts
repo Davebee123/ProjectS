@@ -54,7 +54,8 @@ const conditionDSL: StreamParser<Record<string, never>> = {
       if (
         word === "has_item" || word === "item_count" ||
         word === "flag" || word === "counter" || word === "value" ||
-        word === "storage" || word === "level" || word === "unlocked" ||
+        word === "storage" || word === "has_effect" || word === "effect_stacks" ||
+        word === "level" || word === "unlocked" ||
         word === "id" || word === "explore_count" || word === "tag"
       ) {
         return "function";

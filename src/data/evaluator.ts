@@ -8,6 +8,8 @@
  *   player.flag("keyId")             → boolean
  *   player.counter("keyId")          → number
  *   player.value("keyId")            → string/number
+ *   player.has_effect("effectId")    → boolean
+ *   player.effect_stacks("effectId") → number
  *   skill("skillId").level           → number
  *   skill("skillId").unlocked        → boolean
  *   room.id                          → string
@@ -93,6 +95,10 @@ export interface EvalContext {
   skillLevel: (id: string) => number;
   /** Is skill unlocked? */
   skillUnlocked: (id: string) => boolean;
+  /** Check if player has an active status effect */
+  hasEffect?: (id: string) => boolean;
+  /** Get stack count of an active status effect (0 if not active) */
+  effectStacks?: (id: string) => number;
   /** Current room ID */
   roomId: string;
   /** Room explore count */
@@ -216,6 +222,8 @@ export function evaluateCondition(expr: string, ctx: EvalContext): boolean {
     if (fn === "player.counter") return ctx.counter(String(args[0]));
     if (fn === "player.value") return ctx.value(String(args[0]));
     if (fn === "player.storage") return ctx.value(String(args[0]));
+    if (fn === "player.has_effect") return ctx.hasEffect?.(String(args[0])) ?? false;
+    if (fn === "player.effect_stacks") return ctx.effectStacks?.(String(args[0])) ?? 0;
     throw new Error(`Unknown function: ${fn}`);
   }
 
