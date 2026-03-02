@@ -10,6 +10,8 @@ import { parse } from "../../dsl/parser";
 import { useItemStore } from "../../stores/itemStore";
 import { useSkillStore } from "../../stores/skillStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";
+import { useStatusEffectStore } from "../../stores/statusEffectStore";
+import { useWorldStore } from "../../stores/worldStore";
 
 interface Props {
   value: string;
@@ -121,16 +123,18 @@ export function ConditionEditor({ value, onChange, placeholder }: Props) {
   const items = useItemStore((s) => s.items);
   const skills = useSkillStore((s) => s.skills);
   const storageKeys = useStorageKeyStore((s) => s.storageKeys);
+  const statusEffects = useStatusEffectStore((s) => s.statusEffects);
+  const rooms = useWorldStore((s) => s.world.rooms);
 
   useMemo(() => {
     setEntityProviders({
       itemIds: items.map((i) => i.id),
       skillIds: skills.map((s) => s.id),
       storageKeyIds: storageKeys.map((k) => k.id),
-      statusEffectIds: [],
-      roomIds: [],
+      statusEffectIds: statusEffects.map((e) => e.id),
+      roomIds: rooms.map((r) => r.id),
     });
-  }, [items, skills, storageKeys]);
+  }, [items, skills, storageKeys, statusEffects, rooms]);
 
   // Create editor once
   useEffect(() => {

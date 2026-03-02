@@ -12,6 +12,7 @@ export interface GameContentBundle {
   combos: ComboRuleTemplate[];
   interactables: InteractableTemplate[];
   world: WorldTemplate;
+  recipes: RecipeTemplate[];
 }
 
 // ============================================================
@@ -69,6 +70,8 @@ export interface ItemTemplate {
   stackable: boolean;
   stats: ItemStats;
   eventHooks: ItemEventHook[];
+  placeable?: boolean;
+  placementEffects?: PlacementEffect[];
 }
 
 // ============================================================
@@ -279,4 +282,40 @@ export interface SeedOverride {
   condition: string;
   seed: number | string;
   priority: number;
+}
+
+// ============================================================
+// CRAFTING
+// ============================================================
+
+export type PlacementEffectType = "stat_aura" | "spawn_modifier";
+
+export interface PlacementEffect {
+  id: string;
+  type: PlacementEffectType;
+  // stat_aura: which stat to add a flat bonus to while item is placed in the room
+  stat?: keyof ItemStats;
+  value?: number;
+  // spawn_modifier: multiply spawn chance of interactables with this activity tag
+  targetTag?: string;
+  spawnChanceMultiplier?: number;
+}
+
+export interface RecipeIngredient {
+  itemId: string;
+  qty: number;
+}
+
+export interface RecipeTemplate {
+  id: string;
+  name: string;
+  folder?: string;
+  /** Activity tag of an interactable required to use this recipe. Empty = craft anywhere. */
+  stationTag?: string;
+  /** DSL condition that must be true for the recipe to be visible/usable. */
+  unlockCondition?: string;
+  ingredients: RecipeIngredient[];
+  /** Single output item + quantity. */
+  outputItemId: string;
+  outputQty: number;
 }

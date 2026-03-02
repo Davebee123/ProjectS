@@ -18,6 +18,8 @@ import { RoomEditPage } from "./components/world/RoomEditPage";
 import { ExportPage } from "./components/project/ExportPage";
 import { TestConditionPage } from "./components/testing/TestConditionPage";
 import { DslDictionaryPage } from "./components/testing/DslDictionaryPage";
+import { RecipeListPage } from "./components/recipes/RecipeListPage";
+import { RecipeEditPage } from "./components/recipes/RecipeEditPage";
 import { useHistoryStore } from "./stores/historyStore";
 import "./styles/editor.css";
 
@@ -68,6 +70,8 @@ export default function App() {
             <Route path="/world" element={<WorldMapPage />} />
             <Route path="/world/rooms/:id" element={<RoomEditPage />} />
             <Route path="/export" element={<ExportPage />} />
+            <Route path="/recipes" element={<RecipeListPage />} />
+            <Route path="/recipes/:id" element={<RecipeEditPage />} />
             <Route path="/test" element={<TestConditionPage />} />
             <Route path="/dsl" element={<DslDictionaryPage />} />
           </Routes>

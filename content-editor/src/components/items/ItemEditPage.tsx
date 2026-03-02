@@ -2,7 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PageShell } from "../layout/PageShell";
 import { useItemStore } from "../../stores/itemStore";
 import { EventHooksPanel } from "./EventHooksPanel";
-import type { EquipmentSlot, ItemStats } from "../../schema/types";
+import type { EquipmentSlot, ItemStats, PlacementEffect, PlacementEffectType } from "../../schema/types";
+import { useTagStore } from "../../stores/tagStore";
 
 const SLOT_OPTIONS: { value: string; label: string }[] = [
   { value: "", label: "None (material/consumable)" },
@@ -24,6 +25,7 @@ export function ItemEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { items, updateItem } = useItemStore();
+  const { activityTags } = useTagStore();
   const item = items.find((i) => i.id === id);
 
   if (!item) {
@@ -136,6 +138,132 @@ export function ItemEditPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Placement */}
+      <section className="editor-section">
+        <h3 className="section-title">World Placement</h3>
+        <p className="section-desc">
+          Placeable items can be placed in a room from the inventory. While placed, they emit
+          ongoing effects (stat auras or spawn modifiers) until removed by the player.
+        </p>
+        <div className="form-field" style={{ marginBottom: 16 }}>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={item.placeable ?? false}
+              onChange={(e) =>
+                updateItem(item.id, {
+                  placeable: e.target.checked || undefined,
+                  placementEffects: e.target.checked ? (item.placementEffects ?? []) : undefined,
+                })
+              }
+            />
+            Item can be placed in the world
+          </label>
+        </div>
+
+        {item.placeable && (
+          <>
+            {(item.placementEffects ?? []).length > 0 && (
+              <table className="editor-table" style={{ marginBottom: 12 }}>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Detail</th>
+                    <th>Value</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(item.placementEffects ?? []).map((fx, i) => {
+                    const effects = item.placementEffects ?? [];
+                    const updateFx = (patch: Partial<PlacementEffect>) => {
+                      const next = effects.map((e, idx) => idx === i ? { ...e, ...patch } : e);
+                      updateItem(item.id, { placementEffects: next });
+                    };
+                    const removeFx = () =>
+                      updateItem(item.id, { placementEffects: effects.filter((_, idx) => idx !== i) });
+
+                    return (
+                      <tr key={fx.id}>
+                        <td>
+                          <select
+                            className="input"
+                            value={fx.type}
+                            onChange={(e) => updateFx({ type: e.target.value as PlacementEffectType })}
+                          >
+                            <option value="stat_aura">Stat Aura</option>
+                            <option value="spawn_modifier">Spawn Modifier</option>
+                          </select>
+                        </td>
+                        <td>
+                          {fx.type === "stat_aura" ? (
+                            <select
+                              className="input"
+                              value={fx.stat ?? ""}
+                              onChange={(e) => updateFx({ stat: e.target.value as keyof ItemStats || undefined })}
+                            >
+                              <option value="">(choose stat)</option>
+                              {STAT_FIELDS.map((sf) => (
+                                <option key={sf.key} value={sf.key}>{sf.label}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <select
+                              className="input"
+                              value={fx.targetTag ?? ""}
+                              onChange={(e) => updateFx({ targetTag: e.target.value || undefined })}
+                            >
+                              <option value="">(any tag)</option>
+                              {activityTags.map((t) => (
+                                <option key={t.id} value={t.id}>{t.label || t.id}</option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            className="input"
+                            step="0.01"
+                            style={{ width: 80 }}
+                            value={fx.type === "stat_aura" ? (fx.value ?? "") : (fx.spawnChanceMultiplier ?? "")}
+                            placeholder={fx.type === "stat_aura" ? "flat bonus" : "multiplier"}
+                            onChange={(e) => {
+                              const n = e.target.value === "" ? undefined : Number(e.target.value);
+                              if (fx.type === "stat_aura") updateFx({ value: n });
+                              else updateFx({ spawnChanceMultiplier: n });
+                            }}
+                          />
+                        </td>
+                        <td>
+                          <button className="btn btn--danger btn--sm" onClick={removeFx}>
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            <button
+              className="btn btn--sm"
+              onClick={() => {
+                const newFx: PlacementEffect = {
+                  id: `fx_${Date.now()}`,
+                  type: "stat_aura",
+                };
+                updateItem(item.id, {
+                  placementEffects: [...(item.placementEffects ?? []), newFx],
+                });
+              }}
+            >
+              + Add Placement Effect
+            </button>
+          </>
+        )}
       </section>
 
       <EventHooksPanel

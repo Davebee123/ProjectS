@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/skills", label: "Skills" },
   { to: "/combos", label: "Combos" },
   { to: "/interactables", label: "Interactables" },
+  { to: "/recipes", label: "Recipes" },
   { to: "/world", label: "World Map" },
   { to: "/export", label: "Export / Import" },
   { to: "/test", label: "Test Conditions" },

@@ -8,6 +8,7 @@ import type {
   ItemDef,
   ComboDef,
   InteractableDef,
+  RecipeDef,
 } from "./loader";
 import { evaluateCondition, type EvalContext } from "./evaluator";
 
@@ -52,6 +53,7 @@ export interface WorldObject {
   id: string;
   name: string;
   tag: string;
+  allowedAbilityTags: string[];
   requiredLevel: number;
   maxIntegrity: number;
   integrity: number;
@@ -226,6 +228,7 @@ export function generateObjectsFromRoom(
         id: `${def.id}_${seed}_${objects.length}`,
         name: def.name,
         tag: def.activityTag,
+        allowedAbilityTags: def.allowedAbilityTags ?? [],
         requiredLevel: def.requiredLevel,
         maxIntegrity: integrity,
         integrity,
@@ -304,4 +307,46 @@ export function buildStartingInventory(bundle: GameContentBundle): InventoryItem
   return bundle.items
     .filter((item) => item.slot)
     .map((item) => itemDefToInventory(item, 1));
+}
+
+/**
+ * Filter recipes that are currently craftable:
+ * - unlockCondition passes (or is empty)
+ * - player has enough of each ingredient
+ * - stationTag matches the active station (or recipe has no station requirement)
+ */
+export function getAvailableRecipes(
+  recipes: RecipeDef[],
+  inventory: InventoryItem[],
+  ctx: EvalContext,
+  activeStationTag?: string
+): RecipeDef[] {
+  return recipes.filter((recipe) => {
+    // Station check
+    if (recipe.stationTag && recipe.stationTag !== activeStationTag) return false;
+    // Unlock condition
+    if (recipe.unlockCondition && !evaluateCondition(recipe.unlockCondition, ctx)) return false;
+    // Ingredient check
+    for (const ing of recipe.ingredients) {
+      const held = inventory.find((i) => i.id === ing.itemId)?.qty ?? 0;
+      if (held < ing.qty) return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * Filter recipes visible to the player (unlock condition passes, regardless of ingredients).
+ * Used to show greyed-out recipes the player knows about but can't craft yet.
+ */
+export function getKnownRecipes(
+  recipes: RecipeDef[],
+  ctx: EvalContext,
+  activeStationTag?: string
+): RecipeDef[] {
+  return recipes.filter((recipe) => {
+    if (recipe.stationTag && recipe.stationTag !== activeStationTag) return false;
+    if (recipe.unlockCondition && !evaluateCondition(recipe.unlockCondition, ctx)) return false;
+    return true;
+  });
 }

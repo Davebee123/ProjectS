@@ -8,6 +8,7 @@ import { useInteractableStore } from "./interactableStore";
 import { useComboStore } from "./comboStore";
 import { useWorldStore } from "./worldStore";
 import { useProjectStore } from "./projectStore";
+import { useRecipeStore } from "./recipeStore";
 
 import type { ActivityTagDef, AbilityTagDef } from "../schema/types";
 import type { StorageKeyDef } from "../schema/types";
@@ -17,6 +18,7 @@ import type { StatusEffectTemplate } from "../schema/types";
 import type { InteractableTemplate } from "../schema/types";
 import type { ComboRuleTemplate } from "../schema/types";
 import type { WorldTemplate } from "../schema/types";
+import type { RecipeTemplate } from "../schema/types";
 
 interface Snapshot {
   activityTags: ActivityTagDef[];
@@ -27,6 +29,7 @@ interface Snapshot {
   statusEffects: StatusEffectTemplate[];
   interactables: InteractableTemplate[];
   combos: ComboRuleTemplate[];
+  recipes: RecipeTemplate[];
   world: WorldTemplate;
   projectName: string;
 }
@@ -53,6 +56,7 @@ function takeSnapshot(): Snapshot {
     statusEffects: structuredClone(useStatusEffectStore.getState().statusEffects),
     interactables: structuredClone(useInteractableStore.getState().interactables),
     combos: structuredClone(useComboStore.getState().combos),
+    recipes: structuredClone(useRecipeStore.getState().recipes),
     world: structuredClone(useWorldStore.getState().world),
     projectName: useProjectStore.getState().projectName,
   };
@@ -67,6 +71,7 @@ function restoreSnapshot(snap: Snapshot) {
   useStatusEffectStore.setState({ statusEffects: snap.statusEffects });
   useInteractableStore.setState({ interactables: snap.interactables });
   useComboStore.setState({ combos: snap.combos });
+  useRecipeStore.setState({ recipes: snap.recipes });
   useWorldStore.setState({ world: snap.world });
   useProjectStore.setState({ projectName: snap.projectName });
   _isRestoring = false;
@@ -130,6 +135,7 @@ const stores = [
   useStatusEffectStore,
   useInteractableStore,
   useComboStore,
+  useRecipeStore,
   useWorldStore,
   useProjectStore,
 ];

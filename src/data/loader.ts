@@ -18,6 +18,7 @@ export interface GameContentBundle {
   combos: ComboDef[];
   interactables: InteractableDef[];
   world: WorldDef;
+  recipes: RecipeDef[];
 }
 
 export interface StorageKeyDef {
@@ -40,6 +41,15 @@ export interface StatusEffectDef {
   color: string;
 }
 
+export interface PlacementEffectDef {
+  id: string;
+  type: "stat_aura" | "spawn_modifier";
+  stat?: string;
+  value?: number;
+  targetTag?: string;
+  spawnChanceMultiplier?: number;
+}
+
 export interface ItemDef {
   id: string;
   name: string;
@@ -55,6 +65,18 @@ export interface ItemDef {
     energyCostMultiplier?: number;
   };
   eventHooks: EventHookDef[];
+  placeable?: boolean;
+  placementEffects?: PlacementEffectDef[];
+}
+
+export interface RecipeDef {
+  id: string;
+  name: string;
+  stationTag?: string;
+  unlockCondition?: string;
+  ingredients: { itemId: string; qty: number }[];
+  outputItemId: string;
+  outputQty: number;
 }
 
 export interface EventHookDef {
@@ -254,4 +276,12 @@ export function getSkillDef(id: string): SkillDef | undefined {
 
 export function getInteractableDef(id: string): InteractableDef | undefined {
   return _bundle?.interactables.find((t) => t.id === id);
+}
+
+export function getRecipeDefs(): RecipeDef[] {
+  return _bundle?.recipes ?? [];
+}
+
+export function getRecipeDef(id: string): RecipeDef | undefined {
+  return _bundle?.recipes.find((r) => r.id === id);
 }

@@ -8,15 +8,24 @@ import {
   generateObjectsFromRoom,
   resolveItemNames,
   checkSkillUnlocks,
+  getAvailableRecipes,
   type SkillState,
   type InventoryItem,
   type WorldObject,
   type ComboRule,
 } from "./data/bridge";
+import type { RecipeDef } from "./data/loader";
 
 type EquipmentSlot = "weapon" | "armor" | "accessory";
-type WindowKey = "inventory" | "equipment" | "log";
+type WindowKey = "inventory" | "equipment" | "crafting" | "log";
 type FloatingZone = "skills" | "objects";
+
+interface PlacedObject {
+  instanceId: string;
+  itemId: string;
+  itemName: string;
+  roomId: string;
+}
 
 // ActionState, ExploreState, LastAction, etc. are game-specific
 interface ActionState {
@@ -84,6 +93,7 @@ interface GameState {
   unlockCues: UnlockCue[];
   objectBatchStartedAt: number;
   openWindow: WindowKey | null;
+  placedObjects: PlacedObject[];
   now: number;
   lastTickAt: number;
 }
@@ -95,6 +105,10 @@ type GameAction =
   | { type: "TOGGLE_WINDOW"; window: WindowKey }
   | { type: "EQUIP_ITEM"; itemId: string }
   | { type: "UNEQUIP_SLOT"; slot: EquipmentSlot }
+  | { type: "CRAFT_ITEM"; recipeId: string }
+  | { type: "PLACE_ITEM"; itemId: string }
+  | { type: "REMOVE_PLACED_ITEM"; instanceId: string }
+  | { type: "TRAVEL"; roomId: string }
   | { type: "TICK"; now: number };
 
 interface CastMetrics {
@@ -322,7 +336,7 @@ function getEquipmentStats(state: GameState): {
   energyCostMultiplier: number;
 } {
   const equippedItems = getEquippedItems(state);
-  return equippedItems.reduce(
+  const base = equippedItems.reduce(
     (stats, item) => ({
       attack: stats.attack + (item.attack ?? 0),
       activityPowerMultiplier: stats.activityPowerMultiplier * (item.activityPowerMultiplier ?? 1),
@@ -340,6 +354,29 @@ function getEquipmentStats(state: GameState): {
       energyCostMultiplier: 1,
     }
   );
+
+  // Apply stat_aura from placed objects in the current room
+  const bundle = getBundle();
+  if (bundle) {
+    const roomPlaced = state.placedObjects.filter((p) => p.roomId === state.currentRoomId);
+    for (const placed of roomPlaced) {
+      const itemDef = bundle.items.find((i) => i.id === placed.itemId);
+      if (!itemDef?.placementEffects) continue;
+      for (const fx of itemDef.placementEffects) {
+        if (fx.type !== "stat_aura" || !fx.stat || fx.value == null) continue;
+        switch (fx.stat) {
+          case "attack": base.attack += fx.value; break;
+          case "defense": base.defense += fx.value; break;
+          case "energyRegen": base.energyRegen += fx.value; break;
+          case "speedMultiplier": base.speedMultiplier *= fx.value; break;
+          case "energyCostMultiplier": base.energyCostMultiplier *= fx.value; break;
+          case "activityPowerMultiplier": base.activityPowerMultiplier *= fx.value; break;
+        }
+      }
+    }
+  }
+
+  return base;
 }
 
 function getActivityProgressValue(
@@ -393,6 +430,7 @@ function makeActionPlan(state: GameState, skillId: string, now: number): ActionP
   if (!skill.unlocked) return null;
   if (skill.id === "side_chop" && !isSideChopReady(state)) return null;
   if (!skill.tags.includes(target.tag)) return null;
+  if (target.allowedAbilityTags.length > 0 && !target.allowedAbilityTags.some((t) => skill.abilityTags.includes(t))) return null;
 
   const metrics = getCastMetrics(state, skill, target, now);
   if (state.energy < metrics.energyCost) return null;
@@ -443,13 +481,38 @@ function generateObjectsForRoom(
     obj.drops = resolveItemNames(obj.drops, itemDefs);
   }
 
-  // Cap to room slot count
-  const slotCount = room.slotCount || world.defaultSlotCount || 5;
-  const capped = objects.slice(0, slotCount);
+  // Prepend fixed interactables (always present, condition-gated)
+  const fixedObjects: WorldObject[] = [];
+  for (const fixed of room.fixedInteractables ?? []) {
+    if (fixed.condition && !evaluateCondition(fixed.condition, ctx)) continue;
+    const def = bundle.interactables.find((d) => d.id === fixed.interactableId);
+    if (!def) continue;
+    const integrity = def.effectiveHealth.min;
+    fixedObjects.push({
+      id: `fixed_${def.id}_${roomId}`,
+      name: def.name,
+      tag: def.activityTag,
+      allowedAbilityTags: def.allowedAbilityTags ?? [],
+      requiredLevel: def.requiredLevel,
+      maxIntegrity: integrity,
+      integrity,
+      barColor: def.barColor,
+      accentColor: def.accentColor,
+      meterLabel: def.meterLabel,
+      drops: [],
+      interactableId: def.id,
+      xpRewards: def.xpRewards,
+    });
+  }
 
-  // If forceStarter and we got objects, keep just the first
-  if (forceStarter && capped.length > 0) {
-    return [capped[0]];
+  // Fixed interactables are always present; random spawn table is capped to slotCount
+  const slotCount = room.slotCount || world.defaultSlotCount || 5;
+  const capped = [...fixedObjects, ...objects.slice(0, slotCount)];
+
+  // If forceStarter and we got objects, keep fixed + first spawn
+  if (forceStarter) {
+    const firstSpawn = objects[0];
+    return firstSpawn ? [...fixedObjects, firstSpawn] : fixedObjects;
   }
 
   return capped;
@@ -806,6 +869,7 @@ function createInitialState(): GameState {
     unlockCues: [],
     objectBatchStartedAt: now - 10000,
     openWindow: null,
+    placedObjects: [],
     now,
     lastTickAt: now,
   };
@@ -980,6 +1044,175 @@ function reducer(state: GameState, action: GameAction): GameState {
           [action.slot]: null,
         },
         log: appendLog(state.log, `${action.slot} slot is now empty.`),
+      };
+    }
+
+    case "CRAFT_ITEM": {
+      const bundle = getBundle();
+      if (!bundle) return state;
+
+      const recipe = (bundle.recipes ?? []).find((r) => r.id === action.recipeId);
+      if (!recipe) return state;
+
+      const ctx = buildEvalContext(state);
+      const available = getAvailableRecipes(bundle.recipes ?? [], state.inventory, ctx, undefined);
+      if (!available.find((r) => r.id === action.recipeId)) {
+        return { ...state, log: appendLog(state.log, "Cannot craft: missing ingredients or conditions not met.") };
+      }
+
+      // Consume ingredients
+      let nextInventory = [...state.inventory];
+      for (const ing of recipe.ingredients) {
+        const idx = nextInventory.findIndex((i) => i.id === ing.itemId);
+        if (idx === -1) return state;
+        const held = nextInventory[idx];
+        if (held.qty <= ing.qty) {
+          nextInventory = nextInventory.filter((_, i) => i !== idx);
+        } else {
+          nextInventory = nextInventory.map((item, i) =>
+            i === idx ? { ...item, qty: item.qty - ing.qty } : item
+          );
+        }
+      }
+
+      // Add output
+      const outputDef = bundle.items.find((i) => i.id === recipe.outputItemId);
+      if (!outputDef) return state;
+
+      const existingIdx = nextInventory.findIndex((i) => i.id === recipe.outputItemId);
+      if (existingIdx !== -1) {
+        nextInventory = nextInventory.map((item, i) =>
+          i === existingIdx ? { ...item, qty: item.qty + recipe.outputQty } : item
+        );
+      } else {
+        nextInventory = [
+          ...nextInventory,
+          {
+            id: outputDef.id,
+            name: outputDef.name,
+            qty: recipe.outputQty,
+            slot: outputDef.slot,
+            attack: outputDef.stats.attack,
+            defense: outputDef.stats.defense,
+            energyRegen: outputDef.stats.energyRegen,
+            activityPowerMultiplier: outputDef.stats.activityPowerMultiplier,
+            speedMultiplier: outputDef.stats.speedMultiplier,
+            energyCostMultiplier: outputDef.stats.energyCostMultiplier,
+          },
+        ];
+      }
+
+      return {
+        ...state,
+        inventory: nextInventory,
+        log: appendLog(state.log, `Crafted ${recipe.outputQty}x ${outputDef.name}.`),
+      };
+    }
+
+    case "PLACE_ITEM": {
+      const bundle = getBundle();
+      if (!bundle) return state;
+
+      const itemDef = bundle.items.find((i) => i.id === action.itemId);
+      if (!itemDef?.placeable) return state;
+
+      // Consume 1 from inventory
+      const idx = state.inventory.findIndex((i) => i.id === action.itemId);
+      if (idx === -1) return state;
+
+      const held = state.inventory[idx];
+      let nextInventory: InventoryItem[];
+      if (held.qty <= 1) {
+        nextInventory = state.inventory.filter((_, i) => i !== idx);
+      } else {
+        nextInventory = state.inventory.map((item, i) =>
+          i === idx ? { ...item, qty: item.qty - 1 } : item
+        );
+      }
+
+      const newPlaced: PlacedObject = {
+        instanceId: `placed_${action.itemId}_${state.now}`,
+        itemId: action.itemId,
+        itemName: itemDef.name,
+        roomId: state.currentRoomId,
+      };
+
+      return {
+        ...state,
+        inventory: nextInventory,
+        placedObjects: [...state.placedObjects, newPlaced],
+        log: appendLog(state.log, `Placed ${itemDef.name} in ${state.currentRoomId}.`),
+      };
+    }
+
+    case "REMOVE_PLACED_ITEM": {
+      const bundle = getBundle();
+      const placed = state.placedObjects.find((p) => p.instanceId === action.instanceId);
+      if (!placed) return state;
+
+      // Return item to inventory
+      const existingIdx = state.inventory.findIndex((i) => i.id === placed.itemId);
+      let nextInventory: InventoryItem[];
+      if (existingIdx !== -1) {
+        nextInventory = state.inventory.map((item, i) =>
+          i === existingIdx ? { ...item, qty: item.qty + 1 } : item
+        );
+      } else {
+        const itemDef = bundle?.items.find((i) => i.id === placed.itemId);
+        nextInventory = [
+          ...state.inventory,
+          {
+            id: placed.itemId,
+            name: placed.itemName,
+            qty: 1,
+            slot: itemDef?.slot,
+            attack: itemDef?.stats.attack,
+            defense: itemDef?.stats.defense,
+            energyRegen: itemDef?.stats.energyRegen,
+            activityPowerMultiplier: itemDef?.stats.activityPowerMultiplier,
+            speedMultiplier: itemDef?.stats.speedMultiplier,
+            energyCostMultiplier: itemDef?.stats.energyCostMultiplier,
+          },
+        ];
+      }
+
+      return {
+        ...state,
+        inventory: nextInventory,
+        placedObjects: state.placedObjects.filter((p) => p.instanceId !== action.instanceId),
+        log: appendLog(state.log, `Picked up ${placed.itemName}.`),
+      };
+    }
+
+    case "TRAVEL": {
+      if (state.action) {
+        return { ...state, log: appendLog(state.log, "Finish the current action before travelling.") };
+      }
+
+      const bundle = getBundle();
+      const targetRoom = bundle?.world.rooms.find((r) => r.id === action.roomId);
+      if (!targetRoom) return state;
+
+      // Check entry condition
+      if (targetRoom.entryCondition) {
+        const ctx = buildEvalContext(state);
+        if (!evaluateCondition(targetRoom.entryCondition, ctx)) {
+          return { ...state, log: appendLog(state.log, `Cannot enter ${targetRoom.name}.`) };
+        }
+      }
+
+      const nextObjects = generateObjectsForRoom(action.roomId, state.seed, { ...state, currentRoomId: action.roomId });
+
+      return {
+        ...state,
+        currentRoomId: action.roomId,
+        objects: nextObjects,
+        selectedObjectId: nextObjects[0]?.id ?? null,
+        action: null,
+        exploreAction: null,
+        autoSkillId: null,
+        objectBatchStartedAt: state.now,
+        log: appendLog(state.log, `Travelled to ${targetRoom.name}.`),
       };
     }
 
@@ -1167,6 +1400,14 @@ function GameApp() {
     return bundle?.world.rooms.find((r) => r.id === state.currentRoomId)?.name ?? "Unknown Location";
   }, [state.currentRoomId]);
 
+  const roomExits = useMemo(() => {
+    const bundle = getBundle();
+    const room = bundle?.world.rooms.find((r) => r.id === state.currentRoomId);
+    if (!room?.specialConnections?.length) return [];
+    const ctx = buildEvalContext(state);
+    return room.specialConnections.filter((c) => !c.condition || evaluateCondition(c.condition, ctx));
+  }, [state.currentRoomId, state.playerStorage, state.skills]);
+
   const selectedObject = useMemo(
     () => state.objects.find((entry) => entry.id === state.selectedObjectId) ?? null,
     [state.objects, state.selectedObjectId]
@@ -1188,6 +1429,24 @@ function GameApp() {
   );
 
   const equipmentStats = useMemo(() => getEquipmentStats(state), [state]);
+
+  const availableRecipes = useMemo(() => {
+    const bundle = getBundle();
+    if (!bundle) return [] as RecipeDef[];
+    const ctx = buildEvalContext(state);
+    return getAvailableRecipes(bundle.recipes ?? [], state.inventory, ctx, undefined);
+  }, [state.inventory, state.playerStorage, state.skills, state.currentRoomId]);
+
+  const roomPlacedObjects = useMemo(
+    () => state.placedObjects.filter((p) => p.roomId === state.currentRoomId),
+    [state.placedObjects, state.currentRoomId]
+  );
+
+  const placeableInventoryItems = useMemo(() => {
+    const bundle = getBundle();
+    if (!bundle) return [] as InventoryItem[];
+    return state.inventory.filter((item) => bundle.items.find((d) => d.id === item.id)?.placeable);
+  }, [state.inventory]);
 
   const actionProgress = state.action
     ? Math.max(0, Math.min(100, ((state.now - state.action.startedAt) / state.action.durationMs) * 100))
@@ -1262,6 +1521,20 @@ function GameApp() {
           <p className="seed-line">
             Seed <strong>{state.seed}</strong> | Explore #{state.exploreCount}
           </p>
+          {roomExits.length > 0 && (
+            <div className="exits-strip">
+              {roomExits.map((exit) => (
+                <button
+                  key={exit.targetRoomId}
+                  type="button"
+                  className="exit-button"
+                  onClick={() => dispatch({ type: "TRAVEL", roomId: exit.targetRoomId })}
+                >
+                  {exit.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="hud-block hud-energy">
           <p className="eyebrow">Player Energy</p>
@@ -1311,6 +1584,13 @@ function GameApp() {
           onClick={() => dispatch({ type: "TOGGLE_WINDOW", window: "equipment" })}
         >
           Equipment
+        </button>
+        <button
+          type="button"
+          className={`window-toggle ${state.openWindow === "crafting" ? "is-open" : ""}`}
+          onClick={() => dispatch({ type: "TOGGLE_WINDOW", window: "crafting" })}
+        >
+          Crafting
         </button>
         <button
           type="button"
@@ -1383,6 +1663,83 @@ function GameApp() {
                 <p>Energy Regen Bonus: +{equipmentStats.energyRegen.toFixed(1)}</p>
                 <p>Action Speed Multiplier: x{equipmentStats.speedMultiplier.toFixed(2)}</p>
               </div>
+            </>
+          ) : null}
+
+          {state.openWindow === "crafting" ? (
+            <>
+              <p className="panel-title">Crafting</p>
+              {availableRecipes.length === 0 ? (
+                <p className="empty-text">No recipes available. Gather materials to unlock crafting.</p>
+              ) : (
+                <ul className="inventory-list">
+                  {availableRecipes.map((recipe) => {
+                    const bundle = getBundle();
+                    const outputName = bundle?.items.find((i) => i.id === recipe.outputItemId)?.name ?? recipe.outputItemId;
+                    const ingredientText = recipe.ingredients
+                      .map((ing) => {
+                        const iName = bundle?.items.find((i) => i.id === ing.itemId)?.name ?? ing.itemId;
+                        return `${ing.qty}x ${iName}`;
+                      })
+                      .join(", ");
+                    return (
+                      <li key={recipe.id} className="inventory-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                          <span style={{ fontWeight: 600 }}>{recipe.name || outputName} → {recipe.outputQty}x {outputName}</span>
+                          <button
+                            type="button"
+                            className="equip-button"
+                            onClick={() => dispatch({ type: "CRAFT_ITEM", recipeId: recipe.id })}
+                          >
+                            Craft
+                          </button>
+                        </div>
+                        {ingredientText ? (
+                          <span style={{ fontSize: 12, color: "var(--text-muted, #888)" }}>{ingredientText}</span>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {placeableInventoryItems.length > 0 && (
+                <>
+                  <p className="panel-title" style={{ marginTop: 16 }}>Place Items</p>
+                  <ul className="inventory-list">
+                    {placeableInventoryItems.map((item) => (
+                      <li key={item.id} className="inventory-row">
+                        <span>{item.name} x{item.qty}</span>
+                        <button
+                          type="button"
+                          className="equip-button"
+                          onClick={() => dispatch({ type: "PLACE_ITEM", itemId: item.id })}
+                        >
+                          Place
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {roomPlacedObjects.length > 0 && (
+                <>
+                  <p className="panel-title" style={{ marginTop: 16 }}>Placed Here</p>
+                  <ul className="inventory-list">
+                    {roomPlacedObjects.map((placed) => (
+                      <li key={placed.instanceId} className="inventory-row">
+                        <span>{placed.itemName}</span>
+                        <button
+                          type="button"
+                          className="unequip-button"
+                          onClick={() => dispatch({ type: "REMOVE_PLACED_ITEM", instanceId: placed.instanceId })}
+                        >
+                          Pick up
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </>
           ) : null}
 

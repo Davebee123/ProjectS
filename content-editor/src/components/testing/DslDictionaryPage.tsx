@@ -183,7 +183,7 @@ export function DslDictionaryPage() {
       <section className="editor-section">
         <h3 className="section-title">Usage Notes</h3>
         <ul className="section-desc" style={{ paddingLeft: 20, lineHeight: 1.8 }}>
-          <li>String arguments must use <code>double quotes</code> — single quotes are not supported.</li>
+          <li>String arguments may use <code>double quotes</code> or <code>single quotes</code> — both are supported.</li>
           <li>IDs passed to functions must exactly match the ID field of the entity (case-sensitive).</li>
           <li><code>AND</code> / <code>OR</code> / <code>NOT</code> are uppercase keywords.</li>
           <li>Parentheses can be used to group sub-expressions and control precedence.</li>

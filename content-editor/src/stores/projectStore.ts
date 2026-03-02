@@ -9,6 +9,7 @@ import { useStatusEffectStore } from "./statusEffectStore";
 import { useInteractableStore } from "./interactableStore";
 import { useWorldStore } from "./worldStore";
 import { useComboStore } from "./comboStore";
+import { useRecipeStore } from "./recipeStore";
 
 interface ProjectState {
   projectName: string;
@@ -48,6 +49,7 @@ export const useProjectStore = create<ProjectState>()(
           items: itemState.items,
           skills: skillState.skills,
           combos: comboState.combos,
+          recipes: useRecipeStore.getState().recipes,
           interactables: interactState.interactables,
           world: worldState.world,
         };
@@ -80,6 +82,9 @@ export const useProjectStore = create<ProjectState>()(
         if (bundle.combos) {
           useComboStore.getState().loadCombos(bundle.combos);
         }
+        if (bundle.recipes) {
+          useRecipeStore.getState().loadRecipes(bundle.recipes);
+        }
         if (bundle.world) {
           useWorldStore.getState().loadWorld(bundle.world);
         }
@@ -102,7 +107,7 @@ export const useProjectStore = create<ProjectState>()(
         const keys = [
           "editor-tags", "editor-storage-keys", "editor-items",
           "editor-skills", "editor-status-effects", "editor-interactables",
-          "editor-combos", "editor-world", "editor-project",
+          "editor-combos", "editor-recipes", "editor-world", "editor-project",
         ];
         for (const key of keys) {
           localStorage.removeItem(key);
