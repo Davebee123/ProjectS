@@ -160,6 +160,8 @@ export interface SkillTemplate {
   accentColor: string;
   description: string;
   unlockCondition?: string;
+  castSound?: string;
+  hitSound?: string;
 }
 
 // ============================================================
@@ -198,6 +200,11 @@ export interface InteractableTemplate {
   abilities: InteractableAbility[];
   onInteractEffects: StorageEffect[];
   onDestroyEffects: StorageEffect[];
+  sounds?: {
+    onHit?: string;
+    onDestroy?: string;
+    onAbilityCast?: string;
+  };
 }
 
 export interface InteractableAbility {

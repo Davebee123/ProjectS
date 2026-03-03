@@ -113,6 +113,8 @@ export interface SkillDef {
   accentColor: string;
   description: string;
   unlockCondition?: string;
+  castSound?: string;
+  hitSound?: string;
 }
 
 export interface ComboDef {
@@ -143,6 +145,11 @@ export interface InteractableDef {
   onInteractEffects: StorageEffectDef[];
   onDestroyEffects: StorageEffectDef[];
   spawnCondition?: string;
+  sounds?: {
+    onHit?: string;
+    onDestroy?: string;
+    onAbilityCast?: string;
+  };
 }
 
 export interface LootEntryDef {

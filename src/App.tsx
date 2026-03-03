@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { getBundle, loadBundle } from "./data/loader";
+import { playSound } from "./audio";
 import { evaluateCondition, type EvalContext } from "./data/evaluator";
 import {
   skillDefsToStates,
@@ -749,6 +750,12 @@ function resolveCompletedAction(state: GameState): GameState {
         ? { durationMs: 1000, zone: "objects" }
         : { durationMs: 1000, zone: "objects", objectId: targetObject.id }
     );
+    // Play skill hit sound and interactable on_hit sound
+    const soundBundle = getBundle();
+    const hitSkillDef = soundBundle?.skills.find((s) => s.id === usedSkill.id);
+    if (hitSkillDef?.hitSound) playSound(hitSkillDef.hitSound);
+    const hitInterDef = soundBundle?.interactables.find((i) => i.id === targetObject.interactableId);
+    if (hitInterDef?.sounds?.onHit) playSound(hitInterDef.sounds.onHit);
   }
 
   if (didSucceed) {
@@ -920,7 +927,7 @@ function resolveCompletedAction(state: GameState): GameState {
     const dropText = targetObject.drops.map((drop) => `${drop.qty} ${drop.name}`).join(", ");
     updatedLog = appendLog(updatedLog, `${targetObject.name} completed. Loot: ${dropText}.`);
 
-    // Process onDestroy storage effects
+    // Process onDestroy storage effects + destroy sound
     if (targetObject.interactableId) {
       const bundle = getBundle();
       const interDef = bundle?.interactables.find((i) => i.id === targetObject.interactableId);
@@ -929,6 +936,7 @@ function resolveCompletedAction(state: GameState): GameState {
           nextPlayerStorage = applyStorageEffect(nextPlayerStorage, effect);
         }
       }
+      if (interDef?.sounds?.onDestroy) playSound(interDef.sounds.onDestroy);
     }
 
     if (targetObject.id === state.selectedObjectId) {
@@ -1148,6 +1156,8 @@ function reducer(state: GameState, action: GameAction): GameState {
       if (nextState.autoSkillId && !nextState.action) {
         const plan = makeActionPlan(nextState, nextState.autoSkillId, state.now);
         if (plan) {
+          const castDef = getBundle()?.skills.find((s) => s.id === nextState.autoSkillId);
+          if (castDef?.castSound) playSound(castDef.castSound);
           nextState = {
             ...nextState,
             action: plan.action,
@@ -1209,6 +1219,8 @@ function reducer(state: GameState, action: GameAction): GameState {
 
       const plan = makeActionPlan(nextState, action.skillId, state.now);
       if (plan) {
+        const castDef = getBundle()?.skills.find((s) => s.id === action.skillId);
+        if (castDef?.castSound) playSound(castDef.castSound);
         nextState = {
           ...nextState,
           action: plan.action,
@@ -1501,6 +1513,8 @@ function reducer(state: GameState, action: GameAction): GameState {
 
         const plan = makeActionPlan(nextState, nextState.autoSkillId, now);
         if (plan) {
+          const castDef = getBundle()?.skills.find((s) => s.id === nextState.autoSkillId);
+          if (castDef?.castSound) playSound(castDef.castSound);
           nextState = {
             ...nextState,
             action: plan.action,

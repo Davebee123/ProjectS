@@ -197,6 +197,54 @@ export function InteractableEditPage() {
         effects={item.onDestroyEffects}
         onChange={(onDestroyEffects) => update({ onDestroyEffects })}
       />
+
+      {/* ── Sound Effects ── */}
+      <section className="editor-section">
+        <h3 className="section-title">Sound Effects</h3>
+        <p className="section-desc">
+          Paths to audio files (relative to <code>public/</code>). Leave blank to play no sound.
+        </p>
+        <div className="form-row">
+          <div className="form-field">
+            <label className="field-label">On Hit Sound</label>
+            <input
+              className="text-input"
+              type="text"
+              value={item.sounds?.onHit || ""}
+              onChange={(e) =>
+                update({ sounds: { ...item.sounds, onHit: e.target.value || undefined } })
+              }
+              placeholder="audio/hit.ogg"
+            />
+          </div>
+          <div className="form-field">
+            <label className="field-label">On Destroy Sound</label>
+            <input
+              className="text-input"
+              type="text"
+              value={item.sounds?.onDestroy || ""}
+              onChange={(e) =>
+                update({ sounds: { ...item.sounds, onDestroy: e.target.value || undefined } })
+              }
+              placeholder="audio/destroy.ogg"
+            />
+          </div>
+          <div className="form-field">
+            <label className="field-label">On Ability Cast Sound</label>
+            <input
+              className="text-input"
+              type="text"
+              value={item.sounds?.onAbilityCast || ""}
+              onChange={(e) =>
+                update({
+                  sounds: { ...item.sounds, onAbilityCast: e.target.value || undefined },
+                })
+              }
+              placeholder="audio/cast.ogg"
+            />
+          </div>
+        </div>
+      </section>
     </PageShell>
   );
 }
