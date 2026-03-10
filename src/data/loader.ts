@@ -201,6 +201,7 @@ export interface RoomDef {
   specialConnections: { targetRoomId: string; label: string; condition?: string }[];
   seedOverrides: { condition: string; seed: number | string; priority: number }[];
   entryCondition?: string;
+  ambientSound?: string;
 }
 
 export interface SpawnEntryDef {

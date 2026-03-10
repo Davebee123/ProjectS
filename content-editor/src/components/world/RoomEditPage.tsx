@@ -111,6 +111,25 @@ export function RoomEditPage() {
         </div>
       </section>
 
+      {/* ── Ambient Sound ── */}
+      <section className="editor-section">
+        <h3 className="section-title">Ambient Sound</h3>
+        <p className="section-desc">
+          Looping background audio played when the player enters this room. Path is relative to{" "}
+          <code>public/</code>. Leave blank for silence.
+        </p>
+        <div className="form-field">
+          <label className="field-label">Audio File</label>
+          <input
+            className="text-input"
+            type="text"
+            value={room.ambientSound || ""}
+            onChange={(e) => update({ ambientSound: e.target.value || undefined })}
+            placeholder="audio/forest_ambience.ogg"
+          />
+        </div>
+      </section>
+
       {/* ── Entry Condition ── */}
       <section className="editor-section">
         <h3 className="section-title">Entry Condition</h3>

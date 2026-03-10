@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { getBundle, loadBundle } from "./data/loader";
-import { playSound } from "./audio";
+import { playAmbient, playSound } from "./audio";
 import { evaluateCondition, type EvalContext } from "./data/evaluator";
 import {
   skillDefsToStates,
@@ -1438,6 +1438,8 @@ function reducer(state: GameState, action: GameAction): GameState {
 
       const nextObjects = generateObjectsForRoom(action.roomId, state.seed, { ...state, currentRoomId: action.roomId });
 
+      playAmbient(targetRoom.ambientSound ?? "");
+
       return {
         ...state,
         currentRoomId: action.roomId,
@@ -2205,6 +2207,8 @@ function App() {
           const data = await res.json();
           loadBundle(data);
           _combos = comboDefsToRules(data.combos ?? []);
+          const startRoom = data.world?.rooms?.find((r: { id: string }) => r.id === data.world?.startingRoomId);
+          if (startRoom?.ambientSound) playAmbient(startRoom.ambientSound);
         } else {
           setError("No game-content.json found. Export one from the Content Editor.");
         }

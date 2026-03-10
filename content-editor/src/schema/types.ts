@@ -259,6 +259,7 @@ export interface RoomTemplate {
   gridY: number;
   slotCount: number;
   entryCondition?: string;
+  ambientSound?: string;
   spawnTable: SpawnTableEntry[];
   fixedInteractables: FixedInteractable[];
   specialConnections: RoomConnection[];
