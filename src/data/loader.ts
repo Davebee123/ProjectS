@@ -145,6 +145,7 @@ export interface InteractableDef {
   onInteractEffects: StorageEffectDef[];
   onDestroyEffects: StorageEffectDef[];
   spawnCondition?: string;
+  image?: string;
   sounds?: {
     onHit?: string;
     onDestroy?: string;

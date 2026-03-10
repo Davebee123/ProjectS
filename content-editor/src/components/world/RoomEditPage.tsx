@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PageShell } from "../layout/PageShell";
 import { useWorldStore } from "../../stores/worldStore";
 import { ConditionEditor } from "../shared/ConditionEditor";
+import { FilePathInput } from "../shared/FilePathInput";
 import { SpawnTablePanel } from "./SpawnTablePanel";
 import { FixedInteractablesPanel } from "./FixedInteractablesPanel";
 import { RoomConnectionsPanel } from "./RoomConnectionsPanel";
@@ -118,16 +119,14 @@ export function RoomEditPage() {
           Looping background audio played when the player enters this room. Path is relative to{" "}
           <code>public/</code>. Leave blank for silence.
         </p>
-        <div className="form-field">
-          <label className="field-label">Audio File</label>
-          <input
-            className="text-input"
-            type="text"
-            value={room.ambientSound || ""}
-            onChange={(e) => update({ ambientSound: e.target.value || undefined })}
-            placeholder="audio/forest_ambience.ogg"
-          />
-        </div>
+        <FilePathInput
+          label="Audio File"
+          value={room.ambientSound || ""}
+          onChange={(v) => update({ ambientSound: v || undefined })}
+          placeholder="audio/forest_ambience.ogg"
+          accept="audio/*"
+          pathPrefix="audio"
+        />
       </section>
 
       {/* ── Entry Condition ── */}

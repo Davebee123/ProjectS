@@ -10,6 +10,7 @@ import { LootTablePanel } from "./LootTablePanel";
 import { XpRewardsPanel } from "./XpRewardsPanel";
 import { StorageEffectsPanel } from "./StorageEffectsPanel";
 import { ConditionEditor } from "../shared/ConditionEditor";
+import { FilePathInput } from "../shared/FilePathInput";
 
 export function InteractableEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,6 +105,33 @@ export function InteractableEditPage() {
             onChange={(allowedAbilityTags) => update({ allowedAbilityTags })}
           />
         </div>
+      </section>
+
+      {/* ── Image ── */}
+      <section className="editor-section">
+        <h3 className="section-title">Image</h3>
+        <p className="section-desc">
+          Path to an image displayed on the interactable card (relative to{" "}
+          <code>public/</code>). Leave blank for no image.
+        </p>
+        <FilePathInput
+          label="Image Path"
+          value={item.image || ""}
+          onChange={(v) => update({ image: v || undefined })}
+          placeholder="images/interactables/dirty_frank.png"
+          accept="image/*"
+          pathPrefix="images/interactables"
+        />
+        {item.image && (
+          <div style={{ marginTop: 8, borderRadius: 6, overflow: "hidden", maxWidth: 320 }}>
+            <img
+              src={`/${item.image}`}
+              alt={item.name}
+              style={{ width: "100%", display: "block", objectFit: "cover" }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          </div>
+        )}
       </section>
 
       {/* ── Health + Appearance ── */}
@@ -205,44 +233,36 @@ export function InteractableEditPage() {
           Paths to audio files (relative to <code>public/</code>). Leave blank to play no sound.
         </p>
         <div className="form-row">
-          <div className="form-field">
-            <label className="field-label">On Hit Sound</label>
-            <input
-              className="text-input"
-              type="text"
-              value={item.sounds?.onHit || ""}
-              onChange={(e) =>
-                update({ sounds: { ...item.sounds, onHit: e.target.value || undefined } })
-              }
-              placeholder="audio/hit.ogg"
-            />
-          </div>
-          <div className="form-field">
-            <label className="field-label">On Destroy Sound</label>
-            <input
-              className="text-input"
-              type="text"
-              value={item.sounds?.onDestroy || ""}
-              onChange={(e) =>
-                update({ sounds: { ...item.sounds, onDestroy: e.target.value || undefined } })
-              }
-              placeholder="audio/destroy.ogg"
-            />
-          </div>
-          <div className="form-field">
-            <label className="field-label">On Ability Cast Sound</label>
-            <input
-              className="text-input"
-              type="text"
-              value={item.sounds?.onAbilityCast || ""}
-              onChange={(e) =>
-                update({
-                  sounds: { ...item.sounds, onAbilityCast: e.target.value || undefined },
-                })
-              }
-              placeholder="audio/cast.ogg"
-            />
-          </div>
+          <FilePathInput
+            label="On Hit Sound"
+            value={item.sounds?.onHit || ""}
+            onChange={(v) =>
+              update({ sounds: { ...item.sounds, onHit: v || undefined } })
+            }
+            placeholder="audio/hit.ogg"
+            accept="audio/*"
+            pathPrefix="audio"
+          />
+          <FilePathInput
+            label="On Destroy Sound"
+            value={item.sounds?.onDestroy || ""}
+            onChange={(v) =>
+              update({ sounds: { ...item.sounds, onDestroy: v || undefined } })
+            }
+            placeholder="audio/destroy.ogg"
+            accept="audio/*"
+            pathPrefix="audio"
+          />
+          <FilePathInput
+            label="On Ability Cast Sound"
+            value={item.sounds?.onAbilityCast || ""}
+            onChange={(v) =>
+              update({ sounds: { ...item.sounds, onAbilityCast: v || undefined } })
+            }
+            placeholder="audio/cast.ogg"
+            accept="audio/*"
+            pathPrefix="audio"
+          />
         </div>
       </section>
     </PageShell>

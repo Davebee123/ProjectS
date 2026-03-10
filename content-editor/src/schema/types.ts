@@ -200,6 +200,7 @@ export interface InteractableTemplate {
   abilities: InteractableAbility[];
   onInteractEffects: StorageEffect[];
   onDestroyEffects: StorageEffect[];
+  image?: string;
   sounds?: {
     onHit?: string;
     onDestroy?: string;

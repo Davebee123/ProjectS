@@ -6,6 +6,7 @@ import { TagPicker } from "../shared/TagPicker";
 import { ColorPicker } from "../shared/ColorPicker";
 import { EntitySelect } from "../shared/EntitySelect";
 import { ConditionEditor } from "../shared/ConditionEditor";
+import { FilePathInput } from "../shared/FilePathInput";
 
 export function SkillEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -218,26 +219,22 @@ export function SkillEditPage() {
           Paths to audio files (relative to <code>public/</code>). Leave blank to play no sound.
         </p>
         <div className="form-row">
-          <div className="form-field">
-            <label className="field-label">Cast Sound</label>
-            <input
-              className="text-input"
-              type="text"
-              value={skill.castSound || ""}
-              onChange={(e) => updateSkill(skill.id, { castSound: e.target.value || undefined })}
-              placeholder="audio/cast.ogg"
-            />
-          </div>
-          <div className="form-field">
-            <label className="field-label">Hit Sound</label>
-            <input
-              className="text-input"
-              type="text"
-              value={skill.hitSound || ""}
-              onChange={(e) => updateSkill(skill.id, { hitSound: e.target.value || undefined })}
-              placeholder="audio/hit.ogg"
-            />
-          </div>
+          <FilePathInput
+            label="Cast Sound"
+            value={skill.castSound || ""}
+            onChange={(v) => updateSkill(skill.id, { castSound: v || undefined })}
+            placeholder="audio/cast.ogg"
+            accept="audio/*"
+            pathPrefix="audio"
+          />
+          <FilePathInput
+            label="Hit Sound"
+            value={skill.hitSound || ""}
+            onChange={(v) => updateSkill(skill.id, { hitSound: v || undefined })}
+            placeholder="audio/hit.ogg"
+            accept="audio/*"
+            pathPrefix="audio"
+          />
         </div>
       </section>
 
