@@ -5,7 +5,7 @@ import { useItemStore } from "../../stores/itemStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";
 import { useWorldStore } from "../../stores/worldStore";
 import { useStatusEffectStore } from "../../stores/statusEffectStore";
-import { parse } from "../../dsl/parser";
+import { parse } from "../../../../shared/dsl/parser";
 import { testEvaluate, createEmptyContext } from "../../dsl/testEvaluator";
 import type { MockContext } from "../../dsl/testEvaluator";
 

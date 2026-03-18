@@ -1,0 +1,11 @@
+{
+  "id": "cloth_tunic",
+  "name": "Cloth Tunic",
+  "description": "A simple cloth tunic.",
+  "slot": "chest",
+  "stackable": false,
+  "stats": {
+    "defense": 3
+  },
+  "eventHooks": []
+}

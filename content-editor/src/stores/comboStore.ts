@@ -26,7 +26,19 @@ export function createDefaultCombo(id: string): ComboRuleTemplate {
 export const useComboStore = create<ComboState>()(
   persist(
     (set) => ({
-      combos: [],
+      combos: [
+        {
+          id: "upward_to_downward",
+          folder: "tree",
+          fromSkillId: "upward_chop",
+          toSkillId: "downward_chop",
+          activityTag: "tree",
+          windowMs: 5000,
+          timeMultiplier: 0.5,
+          energyMultiplier: 0.5,
+          label: "UPWARD -> DOWNWARD",
+        },
+      ],
 
       addCombo: (combo) =>
         set((s) => ({ combos: [...s.combos, combo] })),

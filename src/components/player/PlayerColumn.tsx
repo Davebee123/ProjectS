@@ -3,11 +3,13 @@ import { VitalsGauges } from "./VitalsGauges";
 import { EquipmentGrid } from "./EquipmentGrid";
 import { FeyRunes } from "./FeyRunes";
 import { BackpackGrid } from "./BackpackGrid";
+import { ChangelogPanel } from "./ChangelogPanel";
 
 export function PlayerColumn() {
   return (
     <div className="column column-player">
       <PlayerHeader />
+      <ChangelogPanel />
       <VitalsGauges />
       <div className="equip-runes-row">
         <div className="equip-runes-left">

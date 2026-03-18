@@ -1,0 +1,8 @@
+{
+  "id": "log",
+  "name": "Logs",
+  "description": "Rough-cut logs from a felled tree.",
+  "stackable": true,
+  "stats": {},
+  "eventHooks": []
+}

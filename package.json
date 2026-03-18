@@ -4,10 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run content:build && vite",
+    "build": "npm run content:build && tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "content:build": "tsc -p tsconfig.tools.json && node tools-dist/tools/content/build.js",
+    "content:validate": "tsc -p tsconfig.tools.json && node tools-dist/tools/content/validate.js",
+    "content:split": "tsc -p tsconfig.tools.json && node tools-dist/tools/content/split.js",
+    "changelog:snapshot": "tsc -p tsconfig.tools.json && node tools-dist/tools/content/changelog-snapshot.js"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -17,6 +21,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "@types/node": "^22.10.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.10"
   }

@@ -1,0 +1,14 @@
+{
+  "id": "rusty_hatchet",
+  "name": "Rusty Hatchet",
+  "description": "A basic hatchet. Better than nothing.",
+  "slot": "mainHand",
+  "stackable": false,
+  "stats": {
+    "attack": 2,
+    "activityPowerMultiplier": 1.05,
+    "speedMultiplier": 0.94,
+    "energyCostMultiplier": 0.95
+  },
+  "eventHooks": []
+}

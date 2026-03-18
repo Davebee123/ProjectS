@@ -1,19 +1,6 @@
-import { tokenize } from "./grammar";
-import type { Token, ASTNode, ParseResult, ParseError } from "./types";
+import { tokenize } from "./grammar.js";
+import type { ASTNode, ParseError, ParseResult, Token } from "./types.js";
 
-/**
- * Recursive descent parser for the condition DSL.
- *
- * Grammar (precedence low → high):
- *   expr       = orExpr
- *   orExpr     = andExpr ( "OR" andExpr )*
- *   andExpr    = notExpr ( "AND" notExpr )*
- *   notExpr    = "NOT" notExpr | compareExpr
- *   compareExpr= accessExpr ( ( "==" | "!=" | ">=" | "<=" | ">" | "<" ) accessExpr )?
- *   accessExpr = primary ( "." IDENT | "(" argList ")" )*
- *   primary    = NUMBER | STRING | BOOLEAN | IDENT | "(" expr ")"
- *   argList    = expr ( "," expr )*
- */
 export function parse(input: string): ParseResult {
   if (!input.trim()) {
     return { ast: null, errors: [] };
@@ -28,18 +15,18 @@ export function parse(input: string): ParseResult {
   }
 
   function advance(): Token {
-    const t = tokens[pos];
-    pos++;
-    return t;
+    const token = tokens[pos];
+    pos += 1;
+    return token;
   }
 
   function expect(type: string): Token {
-    const t = peek();
-    if (t.type !== type) {
+    const token = peek();
+    if (token.type !== type) {
       errors.push({
-        message: `Expected ${type} but got ${t.type}${t.value ? ` "${t.value}"` : ""}`,
-        start: t.start,
-        end: t.end,
+        message: `Expected ${type} but got ${token.type}${token.value ? ` "${token.value}"` : ""}`,
+        start: token.start,
+        end: token.end,
       });
     }
     return advance();
@@ -100,20 +87,20 @@ export function parse(input: string): ParseResult {
 
   function parseCompare(): ASTNode {
     const left = parseAccess();
-    const t = peek();
+    const token = peek();
     if (
-      t.type === "EQ" ||
-      t.type === "NEQ" ||
-      t.type === "GTE" ||
-      t.type === "LTE" ||
-      t.type === "GT" ||
-      t.type === "LT"
+      token.type === "EQ" ||
+      token.type === "NEQ" ||
+      token.type === "GTE" ||
+      token.type === "LTE" ||
+      token.type === "GT" ||
+      token.type === "LT"
     ) {
-      const opToken = advance();
+      const operator = advance();
       const right = parseAccess();
       return {
         type: "CompareExpr",
-        op: opToken.value as "==" | "!=" | ">=" | "<=" | ">" | "<",
+        op: operator.value as "==" | "!=" | ">=" | "<=" | ">" | "<",
         left,
         right,
         start: left.start,
@@ -129,15 +116,18 @@ export function parse(input: string): ParseResult {
     while (true) {
       if (peek().type === "DOT") {
         advance();
-        const prop = expect("IDENT");
+        const property = expect("IDENT");
         node = {
           type: "PropertyAccess",
           object: node,
-          property: prop.value,
+          property: property.value,
           start: node.start,
-          end: prop.end,
+          end: property.end,
         };
-      } else if (peek().type === "LPAREN") {
+        continue;
+      }
+
+      if (peek().type === "LPAREN") {
         advance();
         const args: ASTNode[] = [];
         if (peek().type !== "RPAREN") {
@@ -147,73 +137,65 @@ export function parse(input: string): ParseResult {
             args.push(parseExpr());
           }
         }
-        const rp = expect("RPAREN");
+        const endParen = expect("RPAREN");
         node = {
           type: "FunctionCall",
           callee: node,
           args,
           start: node.start,
-          end: rp.end,
+          end: endParen.end,
         };
-      } else {
-        break;
+        continue;
       }
+
+      break;
     }
 
     return node;
   }
 
   function parsePrimary(): ASTNode {
-    const t = peek();
+    const token = peek();
 
-    if (t.type === "NUMBER") {
+    if (token.type === "NUMBER") {
       advance();
-      return { type: "NumberLiteral", value: Number(t.value), start: t.start, end: t.end };
+      return { type: "NumberLiteral", value: Number(token.value), start: token.start, end: token.end };
     }
-
-    if (t.type === "STRING") {
+    if (token.type === "STRING") {
       advance();
-      return { type: "StringLiteral", value: t.value, start: t.start, end: t.end };
+      return { type: "StringLiteral", value: token.value, start: token.start, end: token.end };
     }
-
-    if (t.type === "BOOLEAN") {
+    if (token.type === "BOOLEAN") {
       advance();
-      return { type: "BooleanLiteral", value: t.value === "true", start: t.start, end: t.end };
+      return { type: "BooleanLiteral", value: token.value === "true", start: token.start, end: token.end };
     }
-
-    if (t.type === "IDENT") {
+    if (token.type === "IDENT") {
       advance();
-      return { type: "Identifier", name: t.value, start: t.start, end: t.end };
+      return { type: "Identifier", name: token.value, start: token.start, end: token.end };
     }
-
-    if (t.type === "LPAREN") {
+    if (token.type === "LPAREN") {
       advance();
       const expr = parseExpr();
       expect("RPAREN");
       return expr;
     }
 
-    // Error recovery — skip token and try again
     errors.push({
-      message: `Unexpected token "${t.value || t.type}"`,
-      start: t.start,
-      end: t.end,
+      message: `Unexpected token "${token.value || token.type}"`,
+      start: token.start,
+      end: token.end,
     });
     advance();
-
-    // Return a placeholder to keep parsing
-    return { type: "BooleanLiteral", value: false, start: t.start, end: t.end };
+    return { type: "BooleanLiteral", value: false, start: token.start, end: token.end };
   }
 
   const ast = parseExpr();
-
-  // Check for leftover tokens
   if (peek().type !== "EOF") {
-    const t = peek();
+    const token = peek();
     errors.push({
-      message: `Unexpected token "${t.value || t.type}" after expression`,
-      start: t.start,
-      end: t.end,
+      message: `Unexpected token "${token.value || token.type}" after expression`,
+      start: token.start,
+      end: token.end,
     });
   }
 

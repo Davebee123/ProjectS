@@ -1,41 +1,50 @@
 {
   "version": "1.0.0",
-  "exportedAt": "2026-03-01T00:00:00.000Z",
+  "exportedAt": "2026-03-18T19:37:37.226Z",
   "tags": {
     "activityTags": [
-      { "id": "tree", "label": "Tree", "color": "#5a8a5e" }
+      {
+        "id": "tree",
+        "label": "Tree",
+        "description": "Woodcutting activities",
+        "color": "#415236"
+      }
     ],
     "abilityTags": [
-      { "id": "chop", "label": "Chop" }
+      {
+        "id": "chop",
+        "label": "Chop",
+        "description": "Chopping abilities"
+      }
     ]
   },
   "storageKeys": [],
   "statusEffects": [],
   "items": [
     {
-      "id": "rusty_hatchet",
-      "name": "Rusty Hatchet",
-      "description": "A basic hatchet. Better than nothing.",
-      "slot": "weapon",
+      "id": "amber_band",
+      "name": "Amber Band",
+      "description": "A ring of hardened amber. Hums with faint energy.",
+      "slot": "offHand",
       "stackable": false,
       "stats": {
-        "attack": 2,
-        "activityPowerMultiplier": 1.05,
-        "speedMultiplier": 0.94,
+        "energyRegen": 1,
         "energyCostMultiplier": 0.95
       },
-      "eventHooks": []
+      "eventHooks": [],
+      "folder": "accessories"
     },
     {
       "id": "cloth_tunic",
       "name": "Cloth Tunic",
       "description": "A simple cloth tunic.",
-      "slot": "armor",
+      "slot": "chest",
       "stackable": false,
       "stats": {
         "defense": 3
       },
-      "eventHooks": []
+      "eventHooks": [],
+      "folder": "armor"
     },
     {
       "id": "log",
@@ -43,7 +52,23 @@
       "description": "Rough-cut logs from a felled tree.",
       "stackable": true,
       "stats": {},
-      "eventHooks": []
+      "eventHooks": [],
+      "folder": "resources"
+    },
+    {
+      "id": "rusty_hatchet",
+      "name": "Rusty Hatchet",
+      "description": "A basic hatchet. Better than nothing.",
+      "slot": "mainHand",
+      "stackable": false,
+      "stats": {
+        "attack": 2,
+        "activityPowerMultiplier": 1.05,
+        "speedMultiplier": 0.94,
+        "energyCostMultiplier": 0.95
+      },
+      "eventHooks": [],
+      "folder": "tools"
     },
     {
       "id": "sap",
@@ -51,61 +76,21 @@
       "description": "Sticky sap harvested from tree bark.",
       "stackable": true,
       "stats": {},
-      "eventHooks": []
-    },
-    {
-      "id": "amber_band",
-      "name": "Amber Band",
-      "description": "A ring of hardened amber. Hums with faint energy.",
-      "slot": "accessory",
-      "stackable": false,
-      "stats": {
-        "energyRegen": 1,
-        "energyCostMultiplier": 0.95
-      },
-      "eventHooks": []
+      "eventHooks": [],
+      "folder": "resources"
     }
   ],
   "skills": [
     {
-      "id": "treecutting",
-      "name": "Treecutting",
-      "kind": "passive",
-      "activityTags": ["tree"],
-      "abilityTags": [],
-      "baseDurationMs": 0,
-      "baseEnergyCost": 0,
-      "basePower": 0,
-      "powerPerLevel": 0,
-      "baseXpToNext": 30,
-      "xpScaling": 1.18,
-      "barColor": "#415236",
-      "accentColor": "#678752",
-      "description": "Passive efficiency for tree actions."
-    },
-    {
-      "id": "upward_chop",
-      "name": "Upward Chop",
-      "kind": "active",
-      "activityTags": ["tree"],
-      "abilityTags": ["chop"],
-      "linkedPassiveId": "treecutting",
-      "baseDurationMs": 2000,
-      "baseEnergyCost": 12,
-      "basePower": 5,
-      "powerPerLevel": 1,
-      "baseXpToNext": 25,
-      "xpScaling": 1.18,
-      "barColor": "#415236",
-      "accentColor": "#678752",
-      "description": "Auto-cast opener for tree damage."
-    },
-    {
       "id": "downward_chop",
       "name": "Downward Chop",
       "kind": "active",
-      "activityTags": ["tree"],
-      "abilityTags": ["chop"],
+      "activityTags": [
+        "tree"
+      ],
+      "abilityTags": [
+        "chop"
+      ],
       "linkedPassiveId": "treecutting",
       "baseDurationMs": 4000,
       "baseEnergyCost": 15,
@@ -116,14 +101,19 @@
       "barColor": "#415236",
       "accentColor": "#678752",
       "description": "Unlocks at Treecutting Lv 3. Bonus arms after 3 successful Upward Chops.",
-      "unlockCondition": "skill(\"treecutting\").level >= 3"
+      "unlockCondition": "skill(\"treecutting\").level >= 3",
+      "folder": "active"
     },
     {
       "id": "side_chop",
       "name": "Side Chop",
       "kind": "active",
-      "activityTags": ["tree"],
-      "abilityTags": ["chop"],
+      "activityTags": [
+        "tree"
+      ],
+      "abilityTags": [
+        "chop"
+      ],
       "linkedPassiveId": "treecutting",
       "baseDurationMs": 1000,
       "baseEnergyCost": 11,
@@ -134,7 +124,49 @@
       "barColor": "#415236",
       "accentColor": "#678752",
       "description": "Unlocks at Treecutting Lv 5.",
-      "unlockCondition": "skill(\"treecutting\").level >= 5"
+      "unlockCondition": "skill(\"treecutting\").level >= 5",
+      "folder": "active"
+    },
+    {
+      "id": "treecutting",
+      "name": "Treecutting",
+      "kind": "passive",
+      "activityTags": [
+        "tree"
+      ],
+      "abilityTags": [],
+      "baseDurationMs": 0,
+      "baseEnergyCost": 0,
+      "basePower": 0,
+      "powerPerLevel": 0,
+      "baseXpToNext": 30,
+      "xpScaling": 1.18,
+      "barColor": "#415236",
+      "accentColor": "#678752",
+      "description": "Passive efficiency for tree actions.",
+      "folder": "passive"
+    },
+    {
+      "id": "upward_chop",
+      "name": "Upward Chop",
+      "kind": "active",
+      "activityTags": [
+        "tree"
+      ],
+      "abilityTags": [
+        "chop"
+      ],
+      "linkedPassiveId": "treecutting",
+      "baseDurationMs": 2000,
+      "baseEnergyCost": 12,
+      "basePower": 5,
+      "powerPerLevel": 1,
+      "baseXpToNext": 25,
+      "xpScaling": 1.18,
+      "barColor": "#415236",
+      "accentColor": "#678752",
+      "description": "Auto-cast opener for tree damage.",
+      "folder": "active"
     }
   ],
   "combos": [
@@ -146,61 +178,24 @@
       "windowMs": 5000,
       "timeMultiplier": 0.5,
       "energyMultiplier": 0.5,
-      "label": "UPWARD -> DOWNWARD"
+      "label": "UPWARD -> DOWNWARD",
+      "folder": "tree"
     }
   ],
   "interactables": [
-    {
-      "id": "oak_tree",
-      "name": "Oak Tree",
-      "description": "A sturdy oak. Yields logs and sap when felled.",
-      "activityTag": "tree",
-      "allowedAbilityTags": ["chop"],
-      "requiredLevel": 1,
-      "effectiveHealth": { "min": 92, "max": 132 },
-      "image": "/oak-tree.png",
-      "barColor": "#524436",
-      "accentColor": "#796652",
-      "meterLabel": "Logs",
-      "lootTable": [
-        {
-          "id": "lt_oak_log",
-          "itemId": "log",
-          "quantityMin": 8,
-          "quantityMax": 16,
-          "dropChance": 100,
-          "weight": 1
-        },
-        {
-          "id": "lt_oak_sap",
-          "itemId": "sap",
-          "quantityMin": 1,
-          "quantityMax": 3,
-          "dropChance": 100,
-          "weight": 1
-        },
-        {
-          "id": "lt_oak_amber",
-          "itemId": "amber_band",
-          "quantityMin": 1,
-          "quantityMax": 1,
-          "dropChance": 15,
-          "weight": 1
-        }
-      ],
-      "xpRewards": [],
-      "abilities": [],
-      "onInteractEffects": [],
-      "onDestroyEffects": []
-    },
     {
       "id": "birch_tree",
       "name": "Birch Tree",
       "description": "A tall birch. Harder to fell than oak.",
       "activityTag": "tree",
-      "allowedAbilityTags": ["chop"],
+      "allowedAbilityTags": [
+        "chop"
+      ],
       "requiredLevel": 5,
-      "effectiveHealth": { "min": 130, "max": 176 },
+      "effectiveHealth": {
+        "min": 130,
+        "max": 176
+      },
       "barColor": "#5a4d3f",
       "accentColor": "#8c7459",
       "meterLabel": "Logs",
@@ -233,7 +228,57 @@
       "xpRewards": [],
       "abilities": [],
       "onInteractEffects": [],
-      "onDestroyEffects": []
+      "onDestroyEffects": [],
+      "folder": "trees"
+    },
+    {
+      "id": "oak_tree",
+      "name": "Oak Tree",
+      "description": "A sturdy oak. Yields logs and sap when felled.",
+      "activityTag": "tree",
+      "allowedAbilityTags": [
+        "chop"
+      ],
+      "requiredLevel": 1,
+      "effectiveHealth": {
+        "min": 92,
+        "max": 132
+      },
+      "barColor": "#524436",
+      "accentColor": "#796652",
+      "meterLabel": "Logs",
+      "lootTable": [
+        {
+          "id": "lt_oak_log",
+          "itemId": "log",
+          "quantityMin": 8,
+          "quantityMax": 16,
+          "dropChance": 100,
+          "weight": 1
+        },
+        {
+          "id": "lt_oak_sap",
+          "itemId": "sap",
+          "quantityMin": 1,
+          "quantityMax": 3,
+          "dropChance": 100,
+          "weight": 1
+        },
+        {
+          "id": "lt_oak_amber",
+          "itemId": "amber_band",
+          "quantityMin": 1,
+          "quantityMax": 1,
+          "dropChance": 15,
+          "weight": 1
+        }
+      ],
+      "xpRewards": [],
+      "abilities": [],
+      "onInteractEffects": [],
+      "onDestroyEffects": [],
+      "image": "/oak-tree.png",
+      "folder": "trees"
     }
   ],
   "world": {
@@ -241,6 +286,12 @@
     "name": "Verdant Outskirts",
     "gridWidth": 5,
     "gridHeight": 5,
+    "startingRoomId": "verdant_outskirts",
+    "defaultSlotCount": 4,
+    "startingItemIds": [
+      "rusty_hatchet",
+      "cloth_tunic"
+    ],
     "rooms": [
       {
         "id": "verdant_outskirts",
@@ -269,9 +320,7 @@
         "specialConnections": [],
         "seedOverrides": []
       }
-    ],
-    "startingRoomId": "verdant_outskirts",
-    "defaultSlotCount": 4,
-    "startingItemIds": ["rusty_hatchet", "cloth_tunic"]
-  }
+    ]
+  },
+  "recipes": []
 }

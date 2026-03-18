@@ -1,4 +1,4 @@
-import type { ASTNode } from "./types";
+import type { ASTNode } from "../../../shared/dsl/types";
 
 /**
  * Mock evaluation context for testing conditions in the editor.

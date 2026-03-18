@@ -1,6 +1,3 @@
-// ============================================================
-// TOKEN TYPES
-// ============================================================
 export type TokenType =
   | "NUMBER"
   | "STRING"
@@ -27,9 +24,6 @@ export interface Token {
   end: number;
 }
 
-// ============================================================
-// AST NODE TYPES
-// ============================================================
 export type ASTNode =
   | BinaryExpr
   | UnaryExpr
@@ -111,9 +105,6 @@ export interface BooleanLiteral {
   end: number;
 }
 
-// ============================================================
-// PARSE RESULT
-// ============================================================
 export interface ParseError {
   message: string;
   start: number;

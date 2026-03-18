@@ -925,6 +925,92 @@ button {
   padding: 0 4px 2px 0;
 }
 
+.changelog-section {
+  padding: 0 4px 0 2px;
+}
+
+.changelog-panel {
+  margin-top: 10px;
+  border: 1px solid var(--panel-border);
+  background: #101010;
+  padding: 14px 14px 8px;
+  display: grid;
+  gap: 14px;
+}
+
+.changelog-release {
+  display: grid;
+  gap: 8px;
+}
+
+.changelog-release + .changelog-release {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.changelog-release-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.changelog-release-version,
+.changelog-release-date,
+.changelog-release-title,
+.changelog-group-label {
+  margin: 0;
+}
+
+.changelog-release-version {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f5f5f5;
+}
+
+.changelog-release-date {
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.changelog-release-title {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.changelog-group {
+  display: grid;
+  gap: 6px;
+}
+
+.changelog-group-label {
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.changelog-entry-list {
+  margin: 0;
+  padding-left: 16px;
+  display: grid;
+  gap: 5px;
+}
+
+.changelog-entry-list li {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.5;
+}
+
 .player-header-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr) minmax(0, 1fr);

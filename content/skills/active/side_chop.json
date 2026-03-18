@@ -1,0 +1,22 @@
+{
+  "id": "side_chop",
+  "name": "Side Chop",
+  "kind": "active",
+  "activityTags": [
+    "tree"
+  ],
+  "abilityTags": [
+    "chop"
+  ],
+  "linkedPassiveId": "treecutting",
+  "baseDurationMs": 1000,
+  "baseEnergyCost": 11,
+  "basePower": 7,
+  "powerPerLevel": 1,
+  "baseXpToNext": 25,
+  "xpScaling": 1.18,
+  "barColor": "#415236",
+  "accentColor": "#678752",
+  "description": "Unlocks at Treecutting Lv 5.",
+  "unlockCondition": "skill(\"treecutting\").level >= 5"
+}

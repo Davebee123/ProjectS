@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2026-03-18T19:37:37.233Z",
+  "releases": [
+    {
+      "version": "CURRENT",
+      "date": "In Progress",
+      "title": "Unreleased",
+      "entries": [
+        {
+          "category": "ui",
+          "text": "Added an in-client changelog panel so recent updates can be reviewed from inside the game.",
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-03-18",
+      "title": "Initial Playable Build",
+      "entries": [
+        {
+          "category": "fixes",
+          "text": "Improved unlock flow, object depletion visuals, and auto-cast behavior for chop abilities.",
+          "source": "manual"
+        },
+        {
+          "category": "new",
+          "text": "Playable treecutting loop with Oak and Birch exploration targets.",
+          "source": "manual"
+        },
+        {
+          "category": "ui",
+          "text": "Introduced the three-column game shell, exploration loading overlay, and interactable presentation.",
+          "source": "manual"
+        }
+      ]
+    }
+  ]
+}

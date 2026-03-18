@@ -30,12 +30,13 @@ export function createDefaultSkill(id: string, name: string): SkillTemplate {
 }
 
 const TREE_COLOR = "#415236";
-const TREE_ACCENT = "#5a7a4a";
+const TREE_ACCENT = "#678752";
 
 const SEED_SKILLS: SkillTemplate[] = [
   {
     id: "treecutting",
     name: "Treecutting",
+    folder: "passive",
     kind: "passive",
     activityTags: ["tree"],
     abilityTags: [],
@@ -47,11 +48,12 @@ const SEED_SKILLS: SkillTemplate[] = [
     xpScaling: 1.18,
     barColor: TREE_COLOR,
     accentColor: TREE_ACCENT,
-    description: "Passive efficiency for tree activities.",
+    description: "Passive efficiency for tree actions.",
   },
   {
     id: "upward_chop",
     name: "Upward Chop",
+    folder: "active",
     kind: "active",
     activityTags: ["tree"],
     abilityTags: ["chop"],
@@ -64,11 +66,12 @@ const SEED_SKILLS: SkillTemplate[] = [
     xpScaling: 1.18,
     barColor: TREE_COLOR,
     accentColor: TREE_ACCENT,
-    description: "A quick upward strike. Builds combo for Downward Chop.",
+    description: "Auto-cast opener for tree damage.",
   },
   {
     id: "downward_chop",
     name: "Downward Chop",
+    folder: "active",
     kind: "active",
     activityTags: ["tree"],
     abilityTags: ["chop"],
@@ -81,12 +84,13 @@ const SEED_SKILLS: SkillTemplate[] = [
     xpScaling: 1.18,
     barColor: TREE_COLOR,
     accentColor: TREE_ACCENT,
-    description: "A powerful downward strike. Bonus when combo-armed.",
+    description: "Unlocks at Treecutting Lv 3. Bonus arms after 3 successful Upward Chops.",
     unlockCondition: 'skill("treecutting").level >= 3',
   },
   {
     id: "side_chop",
     name: "Side Chop",
+    folder: "active",
     kind: "active",
     activityTags: ["tree"],
     abilityTags: ["chop"],
@@ -99,7 +103,7 @@ const SEED_SKILLS: SkillTemplate[] = [
     xpScaling: 1.18,
     barColor: TREE_COLOR,
     accentColor: TREE_ACCENT,
-    description: "A swift lateral strike. Activates Chop +2 buff.",
+    description: "Unlocks at Treecutting Lv 5.",
     unlockCondition: 'skill("treecutting").level >= 5',
   },
 ];

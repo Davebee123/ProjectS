@@ -1,0 +1,8 @@
+{
+  "id": "sap",
+  "name": "Tree Sap",
+  "description": "Sticky sap harvested from tree bark.",
+  "stackable": true,
+  "stats": {},
+  "eventHooks": []
+}

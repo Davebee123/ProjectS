@@ -6,7 +6,7 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import { conditionLanguage } from "../../dsl/highlighting";
 import { conditionCompletions, setEntityProviders } from "../../dsl/completions";
-import { parse } from "../../dsl/parser";
+import { parse } from "../../../../shared/dsl/parser";
 import { useItemStore } from "../../stores/itemStore";
 import { useSkillStore } from "../../stores/skillStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";

@@ -1,0 +1,10 @@
+{
+  "id": "upward_to_downward",
+  "fromSkillId": "upward_chop",
+  "toSkillId": "downward_chop",
+  "activityTag": "tree",
+  "windowMs": 5000,
+  "timeMultiplier": 0.5,
+  "energyMultiplier": 0.5,
+  "label": "UPWARD -> DOWNWARD"
+}

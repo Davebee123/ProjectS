@@ -1,0 +1,27 @@
+{
+  "id": "verdant_outskirts",
+  "name": "Verdant Outskirts",
+  "description": "A sun-dappled clearing at the edge of the forest. Trees of all sizes grow here.",
+  "gridX": 2,
+  "gridY": 2,
+  "slotCount": 4,
+  "spawnTable": [
+    {
+      "id": "sp_oak",
+      "interactableId": "oak_tree",
+      "spawnChance": 100,
+      "minCount": 1,
+      "maxCount": 3
+    },
+    {
+      "id": "sp_birch",
+      "interactableId": "birch_tree",
+      "spawnChance": 30,
+      "minCount": 1,
+      "maxCount": 1
+    }
+  ],
+  "fixedInteractables": [],
+  "specialConnections": [],
+  "seedOverrides": []
+}

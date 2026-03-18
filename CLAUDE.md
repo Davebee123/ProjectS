@@ -10,13 +10,18 @@ Default behavior: small context, precise edits, short outputs, fast verification
   - `data/loader.ts`: bundle types and accessors
   - `data/bridge.ts`: bundle -> runtime conversion
   - `data/evaluator.ts`: runtime DSL evaluator
+- Canonical authored content: `content/`
+  - one JSON file per entity
+  - `worlds/<worldId>/world.json` + `rooms/*.json`
+  - generate runtime bundle with `npm run content:build`
 - Editor app: `content-editor/src/`
   - `App.tsx`: routes + undo/redo key hook
-  - `schema/types.ts`: source-of-truth authoring schema
+  - `schema/types.ts`: shared authoring schema re-export
   - `stores/*.ts`: persisted editor state (`editor-*` localStorage)
   - `components/**`: CRUD pages and panels
-  - `dsl/*`: parser, grammar, completions, test evaluator
-- Runtime content payload: `public/data/game-content.json`
+  - `dsl/*`: completions, highlighting, test evaluator
+- Shared contracts/parsing: `shared/`
+- Runtime content payload: `public/data/game-content.json` (generated artifact)
 
 ## Model usage policy (cost control)
 - Use lightweight model/workflow for discovery and simple refactors.

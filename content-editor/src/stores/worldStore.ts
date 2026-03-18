@@ -13,14 +13,42 @@ interface WorldState {
 
 function createDefaultWorld(): WorldTemplate {
   return {
-    id: "default_world",
-    name: "Overworld",
-    gridWidth: 20,
-    gridHeight: 20,
-    rooms: [],
-    startingRoomId: "",
-    defaultSlotCount: 3,
-    startingItemIds: [],
+    id: "verdant_world",
+    name: "Verdant Outskirts",
+    gridWidth: 5,
+    gridHeight: 5,
+    rooms: [
+      {
+        id: "verdant_outskirts",
+        name: "Verdant Outskirts",
+        description: "A sun-dappled clearing at the edge of the forest. Trees of all sizes grow here.",
+        gridX: 2,
+        gridY: 2,
+        slotCount: 4,
+        spawnTable: [
+          {
+            id: "sp_oak",
+            interactableId: "oak_tree",
+            spawnChance: 100,
+            minCount: 1,
+            maxCount: 3,
+          },
+          {
+            id: "sp_birch",
+            interactableId: "birch_tree",
+            spawnChance: 30,
+            minCount: 1,
+            maxCount: 1,
+          },
+        ],
+        fixedInteractables: [],
+        specialConnections: [],
+        seedOverrides: [],
+      },
+    ],
+    startingRoomId: "verdant_outskirts",
+    defaultSlotCount: 4,
+    startingItemIds: ["rusty_hatchet", "cloth_tunic"],
   };
 }
 

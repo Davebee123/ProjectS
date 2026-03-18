@@ -15,6 +15,21 @@ npm run dev      # opens at http://localhost:5174
 
 The game loads content from `public/data/game-content.json`. After editing, export from the **Export / Import** page and replace that file.
 
+Canonical content now lives in `content/` as per-entity JSON files. `public/data/game-content.json` is generated from those files with:
+
+```bash
+npm run content:build
+```
+
+Use the editor export/import flow for local snapshots, migrations, or backup. For team collaboration, commit changes under `content/` and regenerate the bundle.
+
+When running the editor via `npm run dev`, the **Export / Import** page also exposes:
+
+- **Load from content/** — imports the current canonical repo content into the editor
+- **Save to content/** — writes the current editor state back into `content/` and regenerates `public/data/game-content.json`
+
+This repo sync bridge is a dev-server feature; it is not available from the static built editor alone.
+
 ---
 
 ## Sidebar
@@ -132,9 +147,25 @@ Define resources and objects the player can interact with (trees, rocks, chests,
 
 - **Content Summary** — counts of all defined entities.
 - **Validation** — lists errors (must fix before export) and warnings.
-- **Export** — downloads `game-content.json`. Copy it to `public/data/` in the game project to apply changes.
-- **Import** — load a previously exported JSON to resume editing.
+- **Export** — downloads a bundle snapshot (`game-content.json`). Useful for backup or manual runtime loading.
+- **Import** — load a previously exported bundle snapshot to resume editing locally.
 - **Reset to Defaults** — wipes all editor data and reloads with seed data. Irreversible.
+
+### Source of Truth
+
+For collaboration, treat these as authoritative:
+
+- `content/items/**/*.json`
+- `content/skills/**/*.json`
+- `content/interactables/**/*.json`
+- `content/worlds/**`
+
+The generated runtime bundle should be rebuilt from those files, not edited manually:
+
+```bash
+npm run content:validate
+npm run content:build
+```
 
 ---
 

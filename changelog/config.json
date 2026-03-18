@@ -1,0 +1,17 @@
+{
+  "releases": [
+    {
+      "version": "CURRENT",
+      "date": "In Progress",
+      "title": "Unreleased",
+      "target": "current"
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-03-18",
+      "title": "Initial Playable Build",
+      "compareTo": null,
+      "target": "snapshot"
+    }
+  ]
+}

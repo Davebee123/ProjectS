@@ -1,0 +1,41 @@
+name: Content Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            content-editor/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Validate canonical content
+        run: npm run content:validate
+
+      - name: Build game
+        run: npm run build
+
+      - name: Install editor dependencies
+        working-directory: content-editor
+        run: npm ci
+
+      - name: Build editor
+        working-directory: content-editor
+        run: npm run build

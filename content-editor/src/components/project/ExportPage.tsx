@@ -9,11 +9,22 @@ import { useStatusEffectStore } from "../../stores/statusEffectStore";
 import { useInteractableStore } from "../../stores/interactableStore";
 import { useComboStore } from "../../stores/comboStore";
 import { useWorldStore } from "../../stores/worldStore";
-import { parse } from "../../dsl/parser";
+import { useRecipeStore } from "../../stores/recipeStore";
+import { validateBundle, type ValidationIssue } from "../../../../shared/content/validation";
+import type { GameContentBundle } from "../../../../shared/content/types";
 
-interface ValidationIssue {
-  severity: "error" | "warning";
-  message: string;
+interface RepoSyncResponse {
+  ok: boolean;
+  message?: string;
+  issues?: ValidationIssue[];
+  bundle?: GameContentBundle;
+}
+
+function comparableBundleJson(bundle: GameContentBundle): string {
+  return JSON.stringify({
+    ...bundle,
+    exportedAt: "",
+  });
 }
 
 function useValidation(): ValidationIssue[] {
@@ -24,141 +35,21 @@ function useValidation(): ValidationIssue[] {
   const { statusEffects } = useStatusEffectStore();
   const { interactables } = useInteractableStore();
   const { combos } = useComboStore();
+  const { recipes } = useRecipeStore();
   const { world } = useWorldStore();
+  const { exportBundle } = useProjectStore();
 
   return useMemo(() => {
-    const issues: ValidationIssue[] = [];
-
-    // Check IDs are unique within each entity type
-    const checkDupes = (list: { id: string }[], label: string) => {
-      const ids = new Set<string>();
-      for (const item of list) {
-        if (ids.has(item.id)) {
-          issues.push({ severity: "error", message: `Duplicate ${label} ID: "${item.id}"` });
-        }
-        ids.add(item.id);
-      }
-    };
-    checkDupes(items, "item");
-    checkDupes(skills, "skill");
-    checkDupes(statusEffects, "status effect");
-    checkDupes(interactables, "interactable");
-    checkDupes(combos, "combo");
-    checkDupes(world.rooms, "room");
-
-    // Skills: check unlock conditions parse
-    for (const skill of skills) {
-      if (skill.unlockCondition) {
-        const result = parse(skill.unlockCondition);
-        if (result.errors.length > 0) {
-          issues.push({
-            severity: "error",
-            message: `Skill "${skill.name}" has invalid unlock condition: ${result.errors[0].message}`,
-          });
-        }
-      }
-    }
-
-    // Active skills should have a linked passive
-    for (const skill of skills) {
-      if (skill.kind === "active" && !skill.linkedPassiveId) {
-        issues.push({
-          severity: "warning",
-          message: `Active skill "${skill.name}" has no linked passive skill`,
-        });
-      }
-    }
-
-    // Combos: check from/to skill refs
-    const skillIds = new Set(skills.map((s) => s.id));
-    for (const combo of combos) {
-      if (combo.fromSkillId && !skillIds.has(combo.fromSkillId)) {
-        issues.push({
-          severity: "error",
-          message: `Combo "${combo.label}" references unknown from-skill "${combo.fromSkillId}"`,
-        });
-      }
-      if (combo.toSkillId && !skillIds.has(combo.toSkillId)) {
-        issues.push({
-          severity: "error",
-          message: `Combo "${combo.label}" references unknown to-skill "${combo.toSkillId}"`,
-        });
-      }
-      if (!combo.fromSkillId || !combo.toSkillId) {
-        issues.push({
-          severity: "warning",
-          message: `Combo "${combo.label || combo.id}" is incomplete (missing from/to skill)`,
-        });
-      }
-    }
-
-    // Interactables: check loot table item refs
-    const itemIds = new Set(items.map((i) => i.id));
-    for (const inter of interactables) {
-      for (const entry of inter.lootTable) {
-        if (entry.itemId && !itemIds.has(entry.itemId)) {
-          issues.push({
-            severity: "error",
-            message: `Interactable "${inter.name}" loot references unknown item "${entry.itemId}"`,
-          });
-        }
-      }
-      // Check activity tag exists
-      const tagIds = new Set(activityTags.map((t) => t.id));
-      if (inter.activityTag && !tagIds.has(inter.activityTag)) {
-        issues.push({
-          severity: "warning",
-          message: `Interactable "${inter.name}" references unknown activity tag "${inter.activityTag}"`,
-        });
-      }
-    }
-
-    // World: check starting room
-    if (world.rooms.length > 0 && !world.startingRoomId) {
-      issues.push({
-        severity: "warning",
-        message: "World has rooms but no starting room is set",
-      });
-    }
-    if (world.startingRoomId && !world.rooms.find((r) => r.id === world.startingRoomId)) {
-      issues.push({
-        severity: "error",
-        message: `Starting room "${world.startingRoomId}" not found`,
-      });
-    }
-
-    // Room spawn table refs
-    const interIds = new Set(interactables.map((i) => i.id));
-    for (const room of world.rooms) {
-      for (const entry of room.spawnTable) {
-        if (entry.interactableId && !interIds.has(entry.interactableId)) {
-          issues.push({
-            severity: "error",
-            message: `Room "${room.name}" spawn table references unknown interactable "${entry.interactableId}"`,
-          });
-        }
-      }
-    }
-
-    // Empty content warnings
-    if (items.length === 0) {
-      issues.push({ severity: "warning", message: "No items defined" });
-    }
-    if (skills.length === 0) {
-      issues.push({ severity: "warning", message: "No skills defined" });
-    }
-    if (interactables.length === 0) {
-      issues.push({ severity: "warning", message: "No interactables defined" });
-    }
-
-    return issues;
-  }, [activityTags, abilityTags, storageKeys, items, skills, statusEffects, interactables, combos, world]);
+    return validateBundle(exportBundle());
+  }, [activityTags, abilityTags, storageKeys, items, skills, statusEffects, interactables, combos, recipes, world, exportBundle]);
 }
 
 export function ExportPage() {
   const { exportBundle, downloadJson, importBundle, resetAllStores } = useProjectStore();
   const [preview, setPreview] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [repoStatus, setRepoStatus] = useState<string | null>(null);
+  const [repoBusy, setRepoBusy] = useState(false);
   const issues = useValidation();
 
   const errors = issues.filter((i) => i.severity === "error");
@@ -170,6 +61,7 @@ export function ExportPage() {
   const { statusEffects } = useStatusEffectStore();
   const { interactables } = useInteractableStore();
   const { combos } = useComboStore();
+  const { recipes } = useRecipeStore();
   const { world } = useWorldStore();
   const { storageKeys } = useStorageKeyStore();
 
@@ -198,8 +90,88 @@ export function ExportPage() {
     input.click();
   };
 
+  const handleLoadFromContent = async () => {
+    setRepoBusy(true);
+    setRepoStatus(null);
+    try {
+      const response = await fetch("/api/content/bundle");
+      const payload = (await response.json()) as RepoSyncResponse;
+      if (!response.ok || !payload.bundle) {
+        setRepoStatus(payload.message ?? "Failed to load from content/");
+        return;
+      }
+      const localBundle = exportBundle();
+      if (comparableBundleJson(localBundle) !== comparableBundleJson(payload.bundle)) {
+        const confirmed = window.confirm(
+          "Local editor state differs from content/. Loading will replace your current in-browser changes. Continue?"
+        );
+        if (!confirmed) {
+          setRepoStatus("Load from content/ cancelled. Local editor state was kept.");
+          return;
+        }
+      }
+      importBundle(payload.bundle);
+      const warningCount = payload.issues?.filter((issue) => issue.severity === "warning").length ?? 0;
+      setRepoStatus(
+        warningCount > 0
+          ? `Loaded from content/ with ${warningCount} warning${warningCount === 1 ? "" : "s"}.`
+          : "Loaded current repo content into the editor."
+      );
+    } catch (error) {
+      setRepoStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      setRepoBusy(false);
+    }
+  };
+
+  const handleSaveToContent = async () => {
+    setRepoBusy(true);
+    setRepoStatus(null);
+    try {
+      const response = await fetch("/api/content/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(exportBundle()),
+      });
+      const payload = (await response.json()) as RepoSyncResponse;
+      if (!response.ok) {
+        const firstError = payload.issues?.find((issue) => issue.severity === "error");
+        setRepoStatus(firstError?.message ?? payload.message ?? "Failed to save to content/");
+        return;
+      }
+      const warningCount = payload.issues?.filter((issue) => issue.severity === "warning").length ?? 0;
+      setRepoStatus(
+        warningCount > 0
+          ? `Saved to content/ and regenerated game-content.json with ${warningCount} warning${warningCount === 1 ? "" : "s"}.`
+          : "Saved to content/ and regenerated game-content.json."
+      );
+    } catch (error) {
+      setRepoStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      setRepoBusy(false);
+    }
+  };
+
   return (
     <PageShell title="Export / Import">
+      <section className="editor-section">
+        <h3 className="section-title">Repo Sync</h3>
+        <p className="section-desc">
+          Sync directly with the canonical content/ files in this repo. Loading replaces the current editor state. Saving rewrites content/ and regenerates public/data/game-content.json. This is available when running the editor through `npm run dev`.
+        </p>
+        <div className="button-row">
+          <button className="btn btn--primary" onClick={handleLoadFromContent} disabled={repoBusy}>
+            Load from content/
+          </button>
+          <button className="btn" onClick={handleSaveToContent} disabled={repoBusy}>
+            Save to content/
+          </button>
+        </div>
+        {repoStatus && <p className="status-msg">{repoStatus}</p>}
+      </section>
+
       {/* Content Summary */}
       <section className="editor-section">
         <h3 className="section-title">Content Summary</h3>
@@ -223,6 +195,10 @@ export function ExportPage() {
           <div className="summary-item">
             <span className="summary-count">{combos.length}</span>
             <span className="summary-label">Combos</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{recipes.length}</span>
+            <span className="summary-label">Recipes</span>
           </div>
           <div className="summary-item">
             <span className="summary-count">{world.rooms.length}</span>
@@ -277,7 +253,7 @@ export function ExportPage() {
       <section className="editor-section">
         <h3 className="section-title">Export</h3>
         <p className="section-desc">
-          Export all content as a single JSON file for the game to load.
+          Export a bundle snapshot for the game runtime or for backup/import. The canonical authored data now lives in the repo's content/ directory.
         </p>
         <div className="button-row">
           <button className="btn btn--primary" onClick={downloadJson}>
@@ -294,7 +270,7 @@ export function ExportPage() {
       <section className="editor-section">
         <h3 className="section-title">Import</h3>
         <p className="section-desc">
-          Load an existing game-content.json file to continue editing.
+          Load an existing bundle snapshot to continue editing locally. Import replaces the current in-browser editor state.
         </p>
         <button className="btn" onClick={handleImport}>
           Import JSON File

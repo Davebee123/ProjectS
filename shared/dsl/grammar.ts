@@ -1,4 +1,4 @@
-import type { Token, TokenType } from "./types";
+import type { Token, TokenType } from "./types.js";
 
 const KEYWORDS: Record<string, TokenType> = {
   AND: "AND",
@@ -13,13 +13,11 @@ export function tokenize(input: string): Token[] {
   let i = 0;
 
   while (i < input.length) {
-    // Skip whitespace
     if (/\s/.test(input[i])) {
-      i++;
+      i += 1;
       continue;
     }
 
-    // Two-char operators
     const two = input.slice(i, i + 2);
     if (two === "==" || two === "!=" || two === ">=" || two === "<=") {
       const typeMap: Record<string, TokenType> = {
@@ -33,39 +31,42 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
-    // Single-char operators
     const ch = input[i];
     if (ch === ">") {
       tokens.push({ type: "GT", value: ">", start: i, end: i + 1 });
-      i++;
+      i += 1;
       continue;
     }
     if (ch === "<") {
       tokens.push({ type: "LT", value: "<", start: i, end: i + 1 });
-      i++;
+      i += 1;
       continue;
     }
     if (ch === "(") {
       tokens.push({ type: "LPAREN", value: "(", start: i, end: i + 1 });
-      i++;
+      i += 1;
       continue;
     }
     if (ch === ")") {
       tokens.push({ type: "RPAREN", value: ")", start: i, end: i + 1 });
-      i++;
+      i += 1;
       continue;
     }
     if (ch === ".") {
       tokens.push({ type: "DOT", value: ".", start: i, end: i + 1 });
-      i++;
+      i += 1;
+      continue;
+    }
+    if (ch === ",") {
+      tokens.push({ type: "IDENT", value: ",", start: i, end: i + 1 });
+      i += 1;
       continue;
     }
 
-    // String literal
     if (ch === '"' || ch === "'") {
       const quote = ch;
       const start = i;
-      i++;
+      i += 1;
       let str = "";
       while (i < input.length && input[i] !== quote) {
         if (input[i] === "\\" && i + 1 < input.length) {
@@ -73,39 +74,45 @@ export function tokenize(input: string): Token[] {
           i += 2;
         } else {
           str += input[i];
-          i++;
+          i += 1;
         }
       }
-      if (i < input.length) i++; // skip closing quote
+      if (i < input.length) {
+        i += 1;
+      }
       tokens.push({ type: "STRING", value: str, start, end: i });
       continue;
     }
 
-    // Number literal
     if (/[0-9]/.test(ch) || (ch === "-" && i + 1 < input.length && /[0-9]/.test(input[i + 1]))) {
       const start = i;
-      if (ch === "-") i++;
-      while (i < input.length && /[0-9.]/.test(input[i])) i++;
+      if (ch === "-") {
+        i += 1;
+      }
+      while (i < input.length && /[0-9.]/.test(input[i])) {
+        i += 1;
+      }
       tokens.push({ type: "NUMBER", value: input.slice(start, i), start, end: i });
       continue;
     }
 
-    // Identifier / keyword
     if (/[a-zA-Z_]/.test(ch)) {
       const start = i;
-      while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) i++;
+      while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
+        i += 1;
+      }
       const word = input.slice(start, i);
       const kwType = KEYWORDS[word];
-      if (kwType) {
-        tokens.push({ type: kwType, value: word, start, end: i });
-      } else {
-        tokens.push({ type: "IDENT", value: word, start, end: i });
-      }
+      tokens.push({
+        type: kwType ?? "IDENT",
+        value: word,
+        start,
+        end: i,
+      });
       continue;
     }
 
-    // Unknown character — skip it (parser will handle errors)
-    i++;
+    i += 1;
   }
 
   tokens.push({ type: "EOF", value: "", start: input.length, end: input.length });

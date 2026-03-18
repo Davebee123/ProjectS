@@ -2,6 +2,7 @@ import { useEffect, useReducer, useState } from "react";
 import { loadBundle } from "./data/loader";
 import { playAmbient } from "./audio";
 import { comboDefsToRules } from "./data/bridge";
+import type { ChangelogData } from "./data/changelog";
 import { reducer, setCombos, createInitialState } from "./state";
 import { GameContext } from "./GameContext";
 import { ThreeColumnLayout } from "./components/layout/ThreeColumnLayout";
@@ -11,7 +12,7 @@ import { WorldColumn } from "./components/world/WorldColumn";
 
 // ── Game App (renders after content is loaded) ──
 
-function GameApp() {
+function GameApp({ changelog }: { changelog: ChangelogData | null }) {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ function GameApp() {
   }, []);
 
   return (
-    <GameContext.Provider value={{ state, dispatch }}>
+    <GameContext.Provider value={{ state, dispatch, changelog }}>
       <div className="app-shell">
         <ThreeColumnLayout
           left={<PlayerColumn />}
@@ -39,17 +40,25 @@ function GameApp() {
 function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [changelog, setChangelog] = useState<ChangelogData | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/data/game-content.json");
+        const [bundleRes, changelogRes] = await Promise.all([
+          fetch("/data/game-content.json"),
+          fetch("/data/changelog.json").catch(() => null),
+        ]);
+        const res = bundleRes;
         if (res.ok) {
           const data = await res.json();
           loadBundle(data);
           setCombos(comboDefsToRules(data.combos ?? []));
           const startRoom = data.world?.rooms?.find((r: { id: string }) => r.id === data.world?.startingRoomId);
           if (startRoom?.ambientSound) playAmbient(startRoom.ambientSound);
+          if (changelogRes && changelogRes.ok) {
+            setChangelog(await changelogRes.json());
+          }
         } else {
           setError("No game-content.json found. Export one from the Content Editor.");
         }
@@ -81,7 +90,7 @@ function App() {
     );
   }
 
-  return <GameApp />;
+  return <GameApp changelog={changelog} />;
 }
 
 export default App;
