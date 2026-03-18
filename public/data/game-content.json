@@ -158,6 +158,7 @@
       "allowedAbilityTags": ["chop"],
       "requiredLevel": 1,
       "effectiveHealth": { "min": 92, "max": 132 },
+      "image": "/oak-tree.png",
       "barColor": "#524436",
       "accentColor": "#796652",
       "meterLabel": "Logs",

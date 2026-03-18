@@ -40,7 +40,7 @@ export interface InventoryItem {
   id: string;
   name: string;
   qty: number;
-  slot?: "weapon" | "armor" | "accessory";
+  slot?: "head" | "shoulders" | "chest" | "hands" | "legs" | "feet" | "back" | "mainHand" | "offHand" | "rune";
   attack?: number;
   activityPowerMultiplier?: number;
   defense?: number;
@@ -63,6 +63,7 @@ export interface WorldObject {
   drops: InventoryItem[];
   interactableId: string;
   xpRewards: { skillId: string; amount: number }[];
+  image?: string;
 }
 
 export interface ComboRule {
@@ -238,6 +239,7 @@ export function generateObjectsFromRoom(
         drops: rollLootDrops(def, rng, ctx),
         interactableId: def.id,
         xpRewards: def.xpRewards,
+        image: def.image,
       });
     }
   }

@@ -50,7 +50,11 @@ export interface StorageKeyDef {
 // ============================================================
 // ITEM TEMPLATES
 // ============================================================
-export type EquipmentSlot = "weapon" | "armor" | "accessory";
+export type EquipmentSlot =
+  | "head" | "shoulders" | "chest" | "hands"
+  | "legs" | "feet" | "back"
+  | "mainHand" | "offHand"
+  | "rune";
 
 export interface ItemStats {
   attack?: number;
@@ -261,6 +265,7 @@ export interface RoomTemplate {
   slotCount: number;
   entryCondition?: string;
   ambientSound?: string;
+  backgroundImage?: string;
   spawnTable: SpawnTableEntry[];
   fixedInteractables: FixedInteractable[];
   specialConnections: RoomConnection[];

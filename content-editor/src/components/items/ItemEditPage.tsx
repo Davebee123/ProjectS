@@ -7,9 +7,16 @@ import { useTagStore } from "../../stores/tagStore";
 
 const SLOT_OPTIONS: { value: string; label: string }[] = [
   { value: "", label: "None (material/consumable)" },
-  { value: "weapon", label: "Weapon" },
-  { value: "armor", label: "Armor" },
-  { value: "accessory", label: "Accessory" },
+  { value: "head", label: "Head" },
+  { value: "shoulders", label: "Shoulders" },
+  { value: "chest", label: "Chest" },
+  { value: "hands", label: "Hands" },
+  { value: "legs", label: "Legs" },
+  { value: "feet", label: "Feet" },
+  { value: "back", label: "Back" },
+  { value: "mainHand", label: "Main Hand" },
+  { value: "offHand", label: "Off Hand" },
+  { value: "rune", label: "Fey Rune" },
 ];
 
 const STAT_FIELDS: { key: keyof ItemStats; label: string; step: string }[] = [

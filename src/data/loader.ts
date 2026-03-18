@@ -54,7 +54,7 @@ export interface ItemDef {
   id: string;
   name: string;
   description: string;
-  slot?: "weapon" | "armor" | "accessory";
+  slot?: "head" | "shoulders" | "chest" | "hands" | "legs" | "feet" | "back" | "mainHand" | "offHand" | "rune";
   stackable: boolean;
   stats: {
     attack?: number;
@@ -194,6 +194,7 @@ export interface RoomDef {
   id: string;
   name: string;
   description: string;
+  level?: number;
   gridX: number;
   gridY: number;
   slotCount: number;
@@ -203,6 +204,7 @@ export interface RoomDef {
   seedOverrides: { condition: string; seed: number | string; priority: number }[];
   entryCondition?: string;
   ambientSound?: string;
+  backgroundImage?: string;
 }
 
 export interface SpawnEntryDef {

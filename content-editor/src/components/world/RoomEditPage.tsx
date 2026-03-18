@@ -129,6 +129,23 @@ export function RoomEditPage() {
         />
       </section>
 
+      {/* ── Background Image ── */}
+      <section className="editor-section">
+        <h3 className="section-title">Background Image</h3>
+        <p className="section-desc">
+          Optional background image displayed behind the room in the game. Path is relative to{" "}
+          <code>public/</code>.
+        </p>
+        <FilePathInput
+          label="Image File"
+          value={room.backgroundImage || ""}
+          onChange={(v) => update({ backgroundImage: v || undefined })}
+          placeholder="images/rooms/forest_bg.png"
+          accept="image/*"
+          pathPrefix="images"
+        />
+      </section>
+
       {/* ── Entry Condition ── */}
       <section className="editor-section">
         <h3 className="section-title">Entry Condition</h3>
