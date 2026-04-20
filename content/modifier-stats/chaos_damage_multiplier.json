@@ -1,0 +1,9 @@
+{
+  "id": "chaos_damage_multiplier",
+  "label": "Chaos Damage Multiplier",
+  "category": "damage",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

@@ -7,6 +7,9 @@ import { SpawnTablePanel } from "./SpawnTablePanel";
 import { FixedInteractablesPanel } from "./FixedInteractablesPanel";
 import { RoomConnectionsPanel } from "./RoomConnectionsPanel";
 import { SeedOverridesPanel } from "./SeedOverridesPanel";
+import { toPublicAssetPath } from "../../utils/assets";
+
+const MAX_ROOM_DESCRIPTION_CHARS = 500;
 
 export function RoomEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +30,7 @@ export function RoomEditPage() {
 
   const update = (patch: Partial<typeof room>) => updateRoom(room.id, patch);
   const isStart = world.startingRoomId === room.id;
+  const backgroundImageSrc = toPublicAssetPath(room.backgroundImage);
 
   return (
     <PageShell
@@ -72,12 +76,17 @@ export function RoomEditPage() {
           </div>
           <div className="form-field form-field--wide">
             <label className="field-label">Description</label>
-            <input
+            <textarea
               className="input"
               value={room.description}
-              onChange={(e) => update({ description: e.target.value })}
+              onChange={(e) => update({ description: e.target.value.slice(0, MAX_ROOM_DESCRIPTION_CHARS) })}
               placeholder="What the player sees when entering..."
+              maxLength={MAX_ROOM_DESCRIPTION_CHARS}
+              rows={4}
             />
+            <p className="section-desc" style={{ marginBottom: 0, marginTop: 8 }}>
+              {room.description.length}/{MAX_ROOM_DESCRIPTION_CHARS} characters
+            </p>
           </div>
           <div className="form-field">
             <label className="field-label">Grid X</label>
@@ -114,18 +123,30 @@ export function RoomEditPage() {
 
       {/* ── Ambient Sound ── */}
       <section className="editor-section">
-        <h3 className="section-title">Ambient Sound</h3>
+        <h3 className="section-title">Room Audio</h3>
         <p className="section-desc">
-          Looping background audio played when the player enters this room. Path is relative to{" "}
+          Background music and ambient sound are separate looping channels. Paths are relative to{" "}
           <code>public/</code>. Leave blank for silence.
         </p>
         <FilePathInput
-          label="Audio File"
+          label="Background Music"
+          value={room.backgroundMusic || ""}
+          onChange={(v) => update({ backgroundMusic: v || undefined })}
+          placeholder="Sound Files/Background Music Project S.mp3"
+          accept="audio/*"
+          pathPrefix="Sound Files"
+        />
+        <div style={{ height: 12 }} />
+        <p className="section-desc">
+          Ambient sound is for room tone like wind, insects, rain, machinery, or cave noise.
+        </p>
+        <FilePathInput
+          label="Ambient Sound"
           value={room.ambientSound || ""}
           onChange={(v) => update({ ambientSound: v || undefined })}
-          placeholder="audio/forest_ambience.ogg"
+          placeholder="Sound Files/ThunderAndRain.wav"
           accept="audio/*"
-          pathPrefix="audio"
+          pathPrefix="Sound Files"
         />
       </section>
 
@@ -144,6 +165,37 @@ export function RoomEditPage() {
           accept="image/*"
           pathPrefix="images"
         />
+      </section>
+
+      <section className="editor-section">
+        <h3 className="section-title">Preview</h3>
+        <p className="section-desc">
+          Compact room presentation preview for title, description, and background treatment.
+        </p>
+        <div className="room-preview-card">
+          {backgroundImageSrc ? (
+            <div
+              className="room-preview-backdrop"
+              style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.94), rgba(0, 0, 0, 0.94)), url("${backgroundImageSrc}")`,
+              }}
+            />
+          ) : (
+            <div className="room-preview-backdrop room-preview-backdrop--empty" />
+          )}
+          <div className="room-preview-content">
+            <div className="room-preview-title-row">
+              <div className="room-preview-level">Lvl {room.level ?? 1}</div>
+              <div>
+                <div className="room-preview-label">Location</div>
+                <h4 className="room-preview-title">{room.name || room.id}</h4>
+              </div>
+            </div>
+            <div className="room-preview-description">
+              {room.description || "Room description preview."}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── Entry Condition ── */}

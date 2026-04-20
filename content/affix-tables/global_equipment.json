@@ -1,0 +1,5 @@
+{
+  "id": "global_equipment",
+  "label": "Global Equipment",
+  "description": "Shared affix pool for all equippable gear."
+}

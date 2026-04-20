@@ -1,0 +1,9 @@
+{
+  "id": "flat_weapon_damage",
+  "label": "Flat Weapon Damage",
+  "category": "damage",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add"
+  ]
+}

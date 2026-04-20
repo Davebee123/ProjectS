@@ -1,0 +1,13 @@
+{
+  "id": "clear",
+  "name": "Clear",
+  "description": "Clear skies with good visibility.",
+  "icon": "☀",
+  "weight": 4,
+  "energyRegenMult": 1,
+  "manaRegenMult": 1,
+  "successChanceMod": 0,
+  "ambientSound": "/Sound Files/Weather/Nighttime Clearsky.mp3",
+  "ambientSoundVolume": 0.2,
+  "ambientSoundLoop": true
+}

@@ -1,0 +1,31 @@
+{
+  "id": "forward_slash",
+  "name": "Forward Slash",
+  "kind": "active",
+  "system": "combat",
+  "usableByInteractables": false,
+  "activityTags": [
+    "enemy"
+  ],
+  "abilityTags": [
+    "one_hand_sword"
+  ],
+  "baseDurationMs": 2000,
+  "baseEnergyCost": 15,
+  "basePower": 5,
+  "powerPerLevel": 1,
+  "baseXpToNext": 50,
+  "xpScaling": 1.18,
+  "barColor": "#9e9e9e",
+  "accentColor": "#c9c9c9",
+  "description": "An advancing strike with your sword",
+  "perkMilestones": [],
+  "hitSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_ForwardSlash.wav",
+  "usageProfile": {
+    "castMode": "cast",
+    "targetPattern": "single",
+    "usageContext": "combat",
+    "weaponRequirement": "One-Handed Sword"
+  },
+  "hitSoundVolume": 0.2
+}

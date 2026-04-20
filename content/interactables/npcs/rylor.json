@@ -1,0 +1,49 @@
+{
+  "id": "rylor",
+  "name": "Rylor",
+  "description": "A fellow agri-farmer commissioned by the town of Lyoris. One of your good friends.",
+  "activityTag": "npc",
+  "abilityBehaviorMode": "priority",
+  "allowedAbilityTags": [],
+  "requiredLevel": 0,
+  "effectiveHealth": {
+    "min": 100,
+    "max": 100
+  },
+  "barColor": "#7a7a7a",
+  "accentColor": "#d7d14a",
+  "meterLabel": "Favor",
+  "lootTable": [],
+  "xpRewards": [],
+  "abilities": [],
+  "onInteractEffects": [],
+  "onDestroyEffects": [],
+  "npc": {
+    "portraitImage": "/Interactable Images/Rylor.png",
+    "dialogues": [
+      {
+        "dialogueId": "rylor_clear_the_danger_complete",
+        "condition": "room.id == \"room_4_4\" AND player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5"
+      },
+      {
+        "dialogueId": "rylor_farmstead_1",
+        "condition": "room.id == \"room_4_4\" AND player.hasCompletedQuest(\"find_your_backpack\") AND NOT player.hasQuest(\"clear_the_danger\")"
+      },
+      {
+        "dialogueId": "rylor_backpack_quest",
+        "condition": "player.hasQuest(\"find_your_backpack\") AND NOT player.hasCompletedQuest(\"find_your_backpack\") AND player.has_item(\"backpack\")"
+      },
+      {
+        "dialogueId": "rylor_intro",
+        "condition": "NOT player.has_quest(\"find_your_backpack\")"
+      },
+      {
+        "dialogueId": "rylor_instructions",
+        "condition": "player.hasQuest(\"find_your_backpack\") AND NOT player.hasCompletedQuest(\"find_your_backpack\") AND NOT player.has_item(\"backpack\")"
+      }
+    ]
+  },
+  "image": "/Interactable Images/Rylor.png",
+  "imagePositionY": 25,
+  "formRules": []
+}

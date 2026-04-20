@@ -1,6 +1,8 @@
-import { useInteractableStore } from "../../stores/interactableStore";
+import { createDefaultInteractable, useInteractableStore } from "../../stores/interactableStore";
 import { ConditionEditor } from "../shared/ConditionEditor";
+import { ReferencePicker } from "../shared/ReferencePicker";
 import type { FixedInteractable } from "../../schema/types";
+import { createUniqueId } from "../../utils/ids";
 
 interface Props {
   entries: FixedInteractable[];
@@ -8,7 +10,18 @@ interface Props {
 }
 
 export function FixedInteractablesPanel({ entries, onChange }: Props) {
-  const { interactables } = useInteractableStore();
+  const { interactables, addInteractable } = useInteractableStore();
+  const interactableOptions = interactables.map((interactable) => ({
+    id: interactable.id,
+    label: interactable.name,
+    meta: `${interactable.activityTag || "no activity"} • Level ${interactable.requiredLevel}`,
+  }));
+
+  const createAndLinkInteractable = (name: string) => {
+    const id = createUniqueId(name, interactables.map((interactable) => interactable.id));
+    addInteractable(createDefaultInteractable(id, name));
+    return id;
+  };
 
   const add = () => {
     onChange([...entries, { interactableId: "" }]);
@@ -33,20 +46,16 @@ export function FixedInteractablesPanel({ entries, onChange }: Props) {
 
       {entries.map((entry, idx) => (
         <div key={idx} className="action-row" style={{ marginBottom: 8 }}>
-          <select
-            className="input select"
+          <ReferencePicker
             value={entry.interactableId}
-            onChange={(e) =>
-              update(idx, { interactableId: e.target.value })
-            }
-          >
-            <option value="">-- Select --</option>
-            {interactables.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            options={interactableOptions}
+            compact
+            showSelectedPreview={false}
+            placeholder="Select interactable..."
+            onChange={(value) => update(idx, { interactableId: value })}
+            onCreate={createAndLinkInteractable}
+            createPlaceholder="New interactable name..."
+          />
           <div style={{ flex: 1 }}>
             <ConditionEditor
               value={entry.condition || ""}

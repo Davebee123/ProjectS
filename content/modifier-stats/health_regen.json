@@ -1,0 +1,10 @@
+{
+  "id": "health_regen",
+  "label": "Health Regen",
+  "category": "regen",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

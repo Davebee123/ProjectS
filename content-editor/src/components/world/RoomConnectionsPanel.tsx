@@ -1,6 +1,8 @@
-import { useWorldStore } from "../../stores/worldStore";
+import { createDefaultRoom, useWorldStore } from "../../stores/worldStore";
 import { ConditionEditor } from "../shared/ConditionEditor";
+import { ReferencePicker } from "../shared/ReferencePicker";
 import type { RoomConnection } from "../../schema/types";
+import { createUniqueId } from "../../utils/ids";
 
 interface Props {
   connections: RoomConnection[];
@@ -13,8 +15,39 @@ export function RoomConnectionsPanel({
   currentRoomId,
   onChange,
 }: Props) {
-  const { world } = useWorldStore();
+  const { world, addRoom } = useWorldStore();
+  const currentRoom = world.rooms.find((room) => room.id === currentRoomId);
   const otherRooms = world.rooms.filter((r) => r.id !== currentRoomId);
+  const roomOptions = otherRooms.map((room) => ({
+    id: room.id,
+    label: room.name,
+    meta: `(${room.gridX}, ${room.gridY})${room.level ? ` • Level ${room.level}` : ""}`,
+  }));
+
+  const createAndLinkRoom = (name: string) => {
+    const id = createUniqueId(name, world.rooms.map((room) => room.id));
+    const occupied = new Set(world.rooms.map((room) => `${room.gridX},${room.gridY}`));
+    let gridX = currentRoom?.gridX ?? 0;
+    let gridY = currentRoom?.gridY ?? 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    for (let y = 0; y < world.gridHeight; y += 1) {
+      for (let x = 0; x < world.gridWidth; x += 1) {
+        if (occupied.has(`${x},${y}`)) {
+          continue;
+        }
+        const distance = Math.abs(x - (currentRoom?.gridX ?? 0)) + Math.abs(y - (currentRoom?.gridY ?? 0));
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          gridX = x;
+          gridY = y;
+        }
+      }
+    }
+
+    addRoom(createDefaultRoom(id, name, gridX, gridY, world.defaultSlotCount));
+    return id;
+  };
 
   const add = () => {
     onChange([...connections, { targetRoomId: "", label: "" }]);
@@ -41,21 +74,14 @@ export function RoomConnectionsPanel({
         <div key={idx} className="hook-card">
           <div className="form-grid">
             <div className="form-field">
-              <label className="field-label">Target Room</label>
-              <select
-                className="input select"
+              <ReferencePicker
+                label="Target Room"
                 value={conn.targetRoomId}
-                onChange={(e) =>
-                  update(idx, { targetRoomId: e.target.value })
-                }
-              >
-                <option value="">-- Select room --</option>
-                {otherRooms.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} ({r.gridX},{r.gridY})
-                  </option>
-                ))}
-              </select>
+                options={roomOptions}
+                onChange={(value) => update(idx, { targetRoomId: value })}
+                onCreate={createAndLinkRoom}
+                createPlaceholder="New room name..."
+              />
             </div>
             <div className="form-field">
               <label className="field-label">Label</label>

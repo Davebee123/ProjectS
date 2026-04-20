@@ -1,0 +1,24 @@
+{
+  "id": "clear_the_danger",
+  "name": "Clear The Danger",
+  "description": "Rylor wants you to clear the area of danger to ensure the safety of Lyoris.",
+  "category": "main_story",
+  "level": 1,
+  "objectives": [
+    {
+      "id": "clear_the_danger_objective_1",
+      "title": "Clear the Hostile Fauna",
+      "description": "Rylor wants you to clear the area of danger to ensure the safety of Lyoris.",
+      "progress": {
+        "kind": "structured",
+        "label": "Progress",
+        "source": {
+          "type": "interactable_defeat_count",
+          "interactableId": "threadhorn_staglet"
+        },
+        "requiredValue": 5
+      }
+    }
+  ],
+  "completedDescription": "You have successfully dispatched of the threatened Threadhorns."
+}

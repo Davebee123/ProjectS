@@ -2,7 +2,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PageShell } from "../layout/PageShell";
 import { useItemStore } from "../../stores/itemStore";
 import { EventHooksPanel } from "./EventHooksPanel";
-import type { EquipmentSlot, ItemStats, PlacementEffect, PlacementEffectType } from "../../schema/types";
+import { EditorItemPreview, type EditorItemPreviewRow } from "../shared/EditorItemPreview";
+import type {
+  EquipmentSlot,
+  InventoryCategory,
+  ItemRarity,
+  ItemStats,
+  PlacementEffect,
+  PlacementEffectType,
+} from "../../schema/types";
 import { useTagStore } from "../../stores/tagStore";
 
 const SLOT_OPTIONS: { value: string; label: string }[] = [
@@ -24,8 +32,26 @@ const STAT_FIELDS: { key: keyof ItemStats; label: string; step: string }[] = [
   { key: "defense", label: "Defense", step: "1" },
   { key: "energyRegen", label: "Energy Regen", step: "0.5" },
   { key: "activityPowerMultiplier", label: "Activity Power Multiplier", step: "0.01" },
+  { key: "backpackSlots", label: "Backpack Slots", step: "1" },
   { key: "speedMultiplier", label: "Speed Multiplier", step: "0.01" },
   { key: "energyCostMultiplier", label: "Energy Cost Multiplier", step: "0.01" },
+];
+
+const RARITY_OPTIONS: { value: ItemRarity; label: string }[] = [
+  { value: "common", label: "Common" },
+  { value: "uncommon", label: "Uncommon" },
+  { value: "rare", label: "Rare" },
+  { value: "epic", label: "Epic" },
+];
+
+const INVENTORY_CATEGORY_OPTIONS: { value: InventoryCategory; label: string }[] = [
+  { value: "weapons", label: "Weapons" },
+  { value: "armor", label: "Armor" },
+  { value: "consumables", label: "Consumables" },
+  { value: "fey_runes", label: "Fey Runes" },
+  { value: "materials", label: "Materials" },
+  { value: "quest_items", label: "Quest Items" },
+  { value: "misc", label: "Misc" },
 ];
 
 export function ItemEditPage() {
@@ -50,6 +76,19 @@ export function ItemEditPage() {
     const val = raw === "" ? undefined : Number(raw);
     updateItem(item.id, { stats: { ...item.stats, [key]: val } });
   };
+
+  const previewRows: EditorItemPreviewRow[] = STAT_FIELDS.flatMap((field) => {
+    const value = item.stats[field.key];
+    if (value == null) {
+      return [];
+    }
+    return [
+      {
+        label: field.label,
+        value: String(value),
+      },
+    ];
+  });
 
   return (
     <PageShell
@@ -83,6 +122,51 @@ export function ItemEditPage() {
               onChange={(e) => updateItem(item.id, { description: e.target.value })}
               placeholder="Item description..."
             />
+          </div>
+          <div className="form-field">
+            <label className="field-label">Image</label>
+            <input
+              className="input"
+              value={item.image || ""}
+              onChange={(e) => updateItem(item.id, { image: e.target.value || undefined })}
+              placeholder="/icons/items/example.png"
+            />
+          </div>
+          <div className="form-field">
+            <label className="field-label">Rarity</label>
+            <select
+              className="input select"
+              value={item.rarity || "common"}
+              onChange={(e) =>
+                updateItem(item.id, {
+                  rarity: e.target.value as ItemRarity,
+                })
+              }
+            >
+              {RARITY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
+            <label className="field-label">Backpack Category</label>
+            <select
+              className="input select"
+              value={item.inventoryCategory || "misc"}
+              onChange={(e) =>
+                updateItem(item.id, {
+                  inventoryCategory: e.target.value as InventoryCategory,
+                })
+              }
+            >
+              {INVENTORY_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="form-field">
             <label className="field-label">Equipment Slot</label>
@@ -126,6 +210,23 @@ export function ItemEditPage() {
       </section>
 
       <section className="editor-section">
+        <h3 className="section-title">Preview</h3>
+        <p className="section-desc">Quick runtime-style read of this item.</p>
+        <EditorItemPreview
+          name={item.name}
+          description={item.description}
+          additionalEffectsText={item.additionalEffectsText}
+          image={item.image}
+          rarity={item.rarity}
+          meta={[
+            item.inventoryCategory || "misc",
+            item.slot || (item.stackable ? "stackable" : "inventory item"),
+          ]}
+          rows={previewRows}
+        />
+      </section>
+
+      <section className="editor-section">
         <h3 className="section-title">Stats</h3>
         <p className="section-desc">
           Leave blank for stats that don't apply. Multipliers default to 1.0 (no effect).
@@ -145,6 +246,58 @@ export function ItemEditPage() {
             </div>
           ))}
         </div>
+
+        {item.stats.attack != null && item.stats.attack > 0 && (
+          <div className="form-field" style={{ marginTop: 12 }}>
+            <label className="field-label">Attack Applies To Tags</label>
+            <p className="section-desc" style={{ marginBottom: 6 }}>
+              If set, this item's attack bonus only applies against interactables with a matching tag.
+              Leave empty to apply to all targets.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {(item.stats.attackTags ?? []).map((tag) => (
+                <span key={tag} className="tag-pill">
+                  {tag}
+                  <button
+                    type="button"
+                    className="tag-pill-remove"
+                    onClick={() =>
+                      updateItem(item.id, {
+                        stats: {
+                          ...item.stats,
+                          attackTags: (item.stats.attackTags ?? []).filter((t) => t !== tag),
+                        },
+                      })
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <select
+              className="input"
+              value=""
+              onChange={(e) => {
+                if (!e.target.value) return;
+                const existing = item.stats.attackTags ?? [];
+                if (existing.includes(e.target.value)) return;
+                updateItem(item.id, {
+                  stats: { ...item.stats, attackTags: [...existing, e.target.value] },
+                });
+              }}
+            >
+              <option value="">Add tag…</option>
+              {activityTags
+                .filter((tag) => !(item.stats.attackTags ?? []).includes(tag.id))
+                .map((tag) => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.label}
+                  </option>
+                ))}
+            </select>
+          </div>
+        )}
       </section>
 
       {/* Placement */}

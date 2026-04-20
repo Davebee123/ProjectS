@@ -1,0 +1,10 @@
+{
+  "id": "entropy_resist",
+  "label": "Entropy Resist",
+  "category": "resistance",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

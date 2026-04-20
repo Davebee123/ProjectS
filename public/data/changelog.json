@@ -1,11 +1,166 @@
 {
-  "generatedAt": "2026-03-18T19:37:37.233Z",
+  "generatedAt": "2026-04-20T13:45:32.289Z",
   "releases": [
     {
       "version": "CURRENT",
       "date": "In Progress",
       "title": "Unreleased",
       "entries": [
+        {
+          "category": "new",
+          "text": "Added ability: Charge.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added ability: Forward Slash.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added ability: Gore.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added passive skill: Herbalism.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added passive skill: One-Hand Swords.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added ability: Parry.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added ability: Rustle.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added ability: Stab.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed ability: Downward Chop.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed ability: Side Chop.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed passive skill: Treecutting.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed ability: Upward Chop.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added interactable: Faeberry Bush.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added interactable: Rylor.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added interactable: Rylor.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added interactable: Threadhorn Staglet.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed interactable: Birch Tree.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed interactable: Oak Tree.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added item: Agri-Farmer's Blade.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added item: Agri-Farmer's Backpack.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added item: Fae Berry.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed item: Amber Band.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed item: Cloth Tunic.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed item: Logs.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed item: Rusty Hatchet.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed item: Tree Sap.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added quest: Clear The Danger.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added quest: Find Your Backpack.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added location: Lyorin Outskirts.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added location: Lyorin Farmstead.",
+          "source": "auto"
+        },
+        {
+          "category": "changes",
+          "text": "Removed location: Verdant Outskirts.",
+          "source": "auto"
+        },
         {
           "category": "ui",
           "text": "Added an in-client changelog panel so recent updates can be reviewed from inside the game.",

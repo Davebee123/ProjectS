@@ -1,19 +1,26 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { PageShell } from "../layout/PageShell";
 import { useRecipeStore } from "../../stores/recipeStore";
-import { useItemStore } from "../../stores/itemStore";
+import { createDefaultItem, useItemStore } from "../../stores/itemStore";
 import { useTagStore } from "../../stores/tagStore";
+import { CollapsibleEditorSection } from "../shared/CollapsibleEditorSection";
+import { ReferencePicker } from "../shared/ReferencePicker";
 import type { RecipeIngredient } from "../../schema/types";
+import { createUniqueId } from "../../utils/ids";
 
 function newIngredientId() {
   return `ing_${Date.now()}`;
+}
+
+function describeUnlockCondition(unlockCondition?: string): string {
+  return unlockCondition?.trim() ? "Custom DSL" : "Always unlocked";
 }
 
 export function RecipeEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { recipes, updateRecipe } = useRecipeStore();
-  const { items } = useItemStore();
+  const { items, addItem } = useItemStore();
   const { activityTags } = useTagStore();
 
   const recipe = recipes.find((r) => r.id === id);
@@ -31,6 +38,20 @@ export function RecipeEditPage() {
 
   const update = (patch: Parameters<typeof updateRecipe>[1]) =>
     updateRecipe(recipe.id, patch);
+
+  const itemOptions = items.map((item) => ({
+    id: item.id,
+    label: item.name || item.id,
+    meta: `${item.inventoryCategory || "misc"} • ${item.rarity || "common"}${item.slot ? ` • ${item.slot}` : ""}`,
+    description: item.description || undefined,
+    badges: [item.stackable ? "Stackable" : "Unique"],
+  }));
+
+  const createAndLinkItem = (name: string) => {
+    const id = createUniqueId(name, items.map((item) => item.id));
+    addItem(createDefaultItem(id, name));
+    return id;
+  };
 
   const addIngredient = () => {
     const ing: RecipeIngredient = { itemId: "", qty: 1 };
@@ -73,6 +94,16 @@ export function RecipeEditPage() {
               onChange={(e) => update({ name: e.target.value })}
             />
           </div>
+          <div className="form-field form-field--wide">
+            <label className="field-label">Description</label>
+            <textarea
+              className="input"
+              rows={3}
+              value={recipe.description || ""}
+              onChange={(e) => update({ description: e.target.value })}
+              placeholder="Crafting recipe description..."
+            />
+          </div>
           <div className="form-field">
             <label className="field-label">Folder</label>
             <input
@@ -95,12 +126,28 @@ export function RecipeEditPage() {
               ))}
             </select>
           </div>
+          <div className="form-field">
+            <label className="field-label">Craft Time (seconds)</label>
+            <input
+              type="number"
+              className="input"
+              min={0.1}
+              step={0.1}
+              value={((recipe.craftTimeMs ?? 2000) / 1000).toFixed(1)}
+              onChange={(e) => {
+                const seconds = Number(e.target.value);
+                update({ craftTimeMs: Math.max(100, Math.round(seconds * 1000)) });
+              }}
+            />
+          </div>
         </div>
       </section>
 
-      {/* Unlock Condition */}
-      <section className="editor-section">
-        <h3 className="section-title">Unlock Condition</h3>
+      <CollapsibleEditorSection
+        title="Unlock Condition"
+        summary={describeUnlockCondition(recipe.unlockCondition)}
+        defaultOpen={false}
+      >
         <p className="section-desc">
           DSL expression that must be true for this recipe to be visible and usable.
           Leave blank to always unlock. Use <code>player.has_item("id")</code> to create crafting trees.
@@ -113,7 +160,7 @@ export function RecipeEditPage() {
           onChange={(e) => update({ unlockCondition: e.target.value || undefined })}
           placeholder={'e.g. player.has_item("workbench") AND skill("carpentry").level >= 2'}
         />
-      </section>
+      </CollapsibleEditorSection>
 
       {/* Ingredients */}
       <section className="editor-section">
@@ -132,18 +179,17 @@ export function RecipeEditPage() {
               {recipe.ingredients.map((ing, i) => (
                 <tr key={i}>
                   <td>
-                    <select
-                      className="input"
+                    <ReferencePicker
                       value={ing.itemId}
-                      onChange={(e) => updateIngredient(i, { itemId: e.target.value })}
-                    >
-                      <option value="">(select item)</option>
-                      {items.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name || item.id}
-                        </option>
-                      ))}
-                    </select>
+                      options={itemOptions}
+                      compact
+                      showSelectedPreview={false}
+                      placeholder="Select item..."
+                      onOpenSelected={(value) => navigate(`/items/${value}`)}
+                      onChange={(value) => updateIngredient(i, { itemId: value })}
+                      onCreate={createAndLinkItem}
+                      createPlaceholder="New item name..."
+                    />
                   </td>
                   <td>
                     <input
@@ -179,19 +225,16 @@ export function RecipeEditPage() {
         <p className="section-desc">Item produced when crafting succeeds.</p>
         <div className="form-grid">
           <div className="form-field">
-            <label className="field-label">Output Item</label>
-            <select
-              className="input"
+            <ReferencePicker
+              label="Output Item"
               value={recipe.outputItemId}
-              onChange={(e) => update({ outputItemId: e.target.value })}
-            >
-              <option value="">(select item)</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name || item.id}
-                </option>
-              ))}
-            </select>
+              options={itemOptions}
+              onChange={(value) => update({ outputItemId: value })}
+              placeholder="Select item..."
+              onOpenSelected={(value) => navigate(`/items/${value}`)}
+              onCreate={createAndLinkItem}
+              createPlaceholder="New item name..."
+            />
           </div>
           <div className="form-field">
             <label className="field-label">Output Qty</label>

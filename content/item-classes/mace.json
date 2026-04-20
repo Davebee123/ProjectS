@@ -1,0 +1,11 @@
+{
+  "id": "mace",
+  "label": "Mace",
+  "slot": "mainHand",
+  "handedness": "one_hand",
+  "tags": [
+    "weapon",
+    "melee",
+    "blunt"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "melee_damage_multiplier",
+  "label": "Melee Damage Multiplier",
+  "category": "damage",
+  "supportsScope": false,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "agri_farmer_s_blade",
+  "name": "Agri-Farmer's Blade",
+  "description": "A blade used to cut grass and fend off danger.",
+  "rarity": "common",
+  "inventoryCategory": "weapons",
+  "stackable": false,
+  "stats": {
+    "attack": 2,
+    "attackTags": [
+      "bushes",
+      "trees"
+    ]
+  },
+  "eventHooks": [],
+  "slot": "mainHand"
+}

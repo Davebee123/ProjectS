@@ -3,16 +3,28 @@ import { promises as fs } from "node:fs";
 import type { LoadedContentSource, LoadedEntity, LoadedWorldSource } from "../../shared/content/source.js";
 import type {
   AbilityTagDef,
+  AffixDefinition,
+  AffixTableDef,
   ActivityTagDef,
   ComboRuleTemplate,
+  CutsceneTemplate,
+  DialogueTemplate,
   GameContentBundle,
   InteractableTemplate,
+  ItemBase,
+  ItemClassDef,
+  ItemQualityRuleSet,
+  ItemSetDefinition,
   ItemTemplate,
+  ModifierStatDef,
+  QuestTemplate,
   RecipeTemplate,
   RoomTemplate,
   SkillTemplate,
   StatusEffectTemplate,
   StorageKeyDef,
+  UniqueItem,
+  WeatherTemplate,
 } from "../../shared/content/types.js";
 import { buildBundleFromSource, loadContentSource } from "./pipeline.js";
 import { pathExists, sanitizePathSegment, writeJsonFile } from "./utils.js";
@@ -206,6 +218,27 @@ export async function writeContentSourceFromBundle(
     existing: existingSource?.storageKeys ?? [],
   });
 
+  await syncSimpleEntities<ItemClassDef>({
+    repoRoot,
+    baseDir: path.join("content", "item-classes"),
+    desired: bundle.itemClasses ?? [],
+    existing: existingSource?.itemClasses ?? [],
+  });
+
+  await syncSimpleEntities<AffixTableDef>({
+    repoRoot,
+    baseDir: path.join("content", "affix-tables"),
+    desired: bundle.affixTables ?? [],
+    existing: existingSource?.affixTables ?? [],
+  });
+
+  await syncSimpleEntities<ModifierStatDef>({
+    repoRoot,
+    baseDir: path.join("content", "modifier-stats"),
+    desired: bundle.modifierStats ?? [],
+    existing: existingSource?.modifierStats ?? [],
+  });
+
   await syncFolderedEntities<StatusEffectTemplate>({
     repoRoot,
     baseDir: path.join("content", "status-effects"),
@@ -220,6 +253,44 @@ export async function writeContentSourceFromBundle(
     desired: bundle.items,
     existing: existingSource?.items ?? [],
     fallbackFor: item => itemFallback(item),
+  });
+
+  await syncFolderedEntities<ItemBase>({
+    repoRoot,
+    baseDir: path.join("content", "item-bases"),
+    desired: bundle.itemBases ?? [],
+    existing: existingSource?.itemBases ?? [],
+    fallbackFor: base => base.inventoryCategory || "ungrouped",
+  });
+
+  await syncFolderedEntities<AffixDefinition>({
+    repoRoot,
+    baseDir: path.join("content", "affixes"),
+    desired: bundle.affixes ?? [],
+    existing: existingSource?.affixes ?? [],
+    fallbackFor: affix => affix.kind,
+  });
+
+  await syncSimpleEntities<ItemQualityRuleSet>({
+    repoRoot,
+    baseDir: path.join("content", "item-quality-rules"),
+    desired: bundle.itemQualityRules ?? [],
+    existing: existingSource?.itemQualityRules ?? [],
+  });
+
+  await syncFolderedEntities<UniqueItem>({
+    repoRoot,
+    baseDir: path.join("content", "unique-items"),
+    desired: bundle.uniqueItems ?? [],
+    existing: existingSource?.uniqueItems ?? [],
+    fallbackFor: uniqueItem => uniqueItem.folder || "ungrouped",
+  });
+
+  await syncSimpleEntities<ItemSetDefinition>({
+    repoRoot,
+    baseDir: path.join("content", "item-sets"),
+    desired: bundle.itemSets ?? [],
+    existing: existingSource?.itemSets ?? [],
   });
 
   await syncFolderedEntities<SkillTemplate>({
@@ -246,12 +317,43 @@ export async function writeContentSourceFromBundle(
     fallbackFor: interactable => interactable.activityTag || "ungrouped",
   });
 
+  await syncFolderedEntities<DialogueTemplate>({
+    repoRoot,
+    baseDir: path.join("content", "dialogues"),
+    desired: bundle.dialogues ?? [],
+    existing: existingSource?.dialogues ?? [],
+    fallbackFor: dialogue => dialogue.folder || "ungrouped",
+  });
+
+  await syncFolderedEntities<CutsceneTemplate>({
+    repoRoot,
+    baseDir: path.join("content", "cutscenes"),
+    desired: bundle.cutscenes ?? [],
+    existing: existingSource?.cutscenes ?? [],
+    fallbackFor: cutscene => cutscene.folder || "ungrouped",
+  });
+
+  await syncFolderedEntities<QuestTemplate>({
+    repoRoot,
+    baseDir: path.join("content", "quests"),
+    desired: bundle.quests ?? [],
+    existing: existingSource?.quests ?? [],
+    fallbackFor: quest => quest.category || "ungrouped",
+  });
+
   await syncFolderedEntities<RecipeTemplate>({
     repoRoot,
     baseDir: path.join("content", "recipes"),
     desired: bundle.recipes,
     existing: existingSource?.recipes ?? [],
     fallbackFor: recipe => recipe.stationTag || "ungrouped",
+  });
+
+  await syncSimpleEntities<WeatherTemplate>({
+    repoRoot,
+    baseDir: path.join("content", "weathers"),
+    desired: bundle.weathers ?? [],
+    existing: existingSource?.weathers ?? [],
   });
 
   await syncWorld(repoRoot, bundle, existingSource);

@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useGame } from "../../GameContext";
+import { getBackpackSlotCapacity } from "../../state";
 import { IconSlot } from "../shared/IconSlot";
 
 const COLS = 7;
@@ -6,10 +8,17 @@ const PAGE_SIZE = 16;
 
 export function BackpackGrid() {
   const { state, dispatch } = useGame();
-  const totalPages = Math.max(1, Math.ceil(state.backpackSlots / PAGE_SIZE));
+  const backpackSlotCapacity = getBackpackSlotCapacity(state);
+  const totalPages = Math.max(1, Math.ceil(backpackSlotCapacity / PAGE_SIZE));
   const pageStart = state.backpackPage * PAGE_SIZE;
-  const pageEnd = Math.min(pageStart + PAGE_SIZE, state.backpackSlots);
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, backpackSlotCapacity);
   const slotsOnPage = pageEnd - pageStart;
+
+  useEffect(() => {
+    if (state.backpackPage > totalPages - 1) {
+      dispatch({ type: "SET_BACKPACK_PAGE", page: totalPages - 1 });
+    }
+  }, [dispatch, state.backpackPage, totalPages]);
 
   const slotItems: (typeof state.inventory[number] | null)[] = [];
   for (let i = 0; i < slotsOnPage; i++) {
@@ -19,7 +28,9 @@ export function BackpackGrid() {
 
   return (
     <div className="backpack-section">
-      <p className="section-label">Backpack</p>
+      <div className="section-header-bar">
+        <p className="section-label">Backpack</p>
+      </div>
       <div className="section-divider-body">
         <div
           className="backpack-grid"

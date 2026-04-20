@@ -5,8 +5,10 @@ import { getBundle } from "../data/loader";
 import {
   skillDefsToStates,
   buildStartingInventory,
+  resolveEquipmentItem,
 } from "../data/bridge";
 import type { GameState, EquipmentSlot } from "./types";
+import { getVisibleQuestIds } from "./quests";
 import { generateObjectsForRoom, pickWeather } from "./reducer";
 
 const ALL_EQUIPMENT_SLOTS: EquipmentSlot[] = [
@@ -22,7 +24,7 @@ export function createInitialState(): GameState {
   const skills = bundle ? skillDefsToStates(bundle.skills) : [];
 
   // Starting inventory from bundle (equippable items)
-  const inventory = bundle ? buildStartingInventory(bundle) : [];
+  const startingInventory = bundle ? buildStartingInventory(bundle) : { stackables: [], equipmentItems: [] };
 
   // World info
   const world = bundle?.world;
@@ -42,10 +44,12 @@ export function createInitialState(): GameState {
     ALL_EQUIPMENT_SLOTS.map((s) => [s, null])
   ) as Record<EquipmentSlot, string | null>;
 
-  for (const item of inventory) {
-    if (!item.slot || item.slot === "rune") continue;
-    if (!equipment[item.slot as EquipmentSlot]) {
-      equipment[item.slot as EquipmentSlot] = item.id;
+  for (const instance of startingInventory.equipmentItems) {
+    if (!bundle) continue;
+    const resolved = resolveEquipmentItem(instance, bundle);
+    if (!resolved?.slot || resolved.slot === "rune") continue;
+    if (!equipment[resolved.slot as EquipmentSlot]) {
+      equipment[resolved.slot as EquipmentSlot] = instance.instanceId;
     }
   }
 
@@ -57,11 +61,15 @@ export function createInitialState(): GameState {
     seed,
     exploreCount: 1,
     currentRoomId: startingRoomId,
+    previousRoomId: null,
     playerStorage,
+    seenQuestIds: [],
+    announcedQuestIds: [],
     skills,
     objects: [],
     selectedObjectId: null,
-    inventory,
+    inventory: startingInventory.stackables,
+    inventoryEquipment: startingInventory.equipmentItems,
     equipment,
     feyRunes: [null, null, null, null, null, null],
     // Vitals
@@ -82,11 +90,20 @@ export function createInitialState(): GameState {
     playerXpToNext: 100,
     // Backpack
     backpackPage: 0,
-    backpackSlots: 30,
+    backpackSlots: 3,
+    bioboardSlots: [null],
     // Actions
     action: null,
     exploreAction: null,
+    craftingAction: null,
+    travelAction: null,
+    hostileAction: null,
+    friendlyAction: null,
+    weaponAction: null,
+    activeDialogue: null,
+    activeCutscene: null,
     autoSkillId: null,
+    weaponAutoEnabled: true,
     successfulUpwardHits: 0,
     downwardBonusReady: false,
     sidePrepUpwardStreak: 0,
@@ -95,8 +112,15 @@ export function createInitialState(): GameState {
     lastAction: null,
     log: [`Entered ${roomName}.`],
     floatTexts: [],
+    playerHitCue: null,
+    playerHitShakeUntil: 0,
+    weaponAttackAnimateUntil: 0,
     unlockCues: [],
     destroyedObjectCues: [],
+    objectAttackCues: [],
+    objectEmoteCues: [],
+    lootReceiptCues: [],
+    questReceiptCues: [],
     objectBatchStartedAt: now - 10000,
     openWindow: null,
     placedObjects: [],
@@ -110,6 +134,8 @@ export function createInitialState(): GameState {
   return {
     ...tempState,
     objects,
-    selectedObjectId: objects[0]?.id ?? null,
+    seenQuestIds: getVisibleQuestIds(tempState),
+    announcedQuestIds: getVisibleQuestIds(tempState),
+    selectedObjectId: null,
   };
 }

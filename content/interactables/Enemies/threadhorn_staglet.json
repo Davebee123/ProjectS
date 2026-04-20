@@ -1,0 +1,36 @@
+{
+  "id": "threadhorn_staglet",
+  "name": "Threadhorn Staglet",
+  "description": "A young threadhorn.",
+  "activityTag": "enemy",
+  "abilityBehaviorMode": "priority",
+  "allowedAbilityTags": [
+    "one_hand_sword"
+  ],
+  "requiredLevel": 1,
+  "effectiveHealth": {
+    "min": 30,
+    "max": 50
+  },
+  "barColor": "#A72727",
+  "accentColor": "#A72727",
+  "meterLabel": "HP",
+  "lootTable": [],
+  "xpRewards": [],
+  "abilities": [
+    {
+      "cooldownMs": 4000,
+      "resistChancePerLevel": 5,
+      "skillId": "gore"
+    }
+  ],
+  "onInteractEffects": [],
+  "onDestroyEffects": [],
+  "imagePositionX": 50,
+  "imagePositionY": 50,
+  "image": "/Interactable Images/ThreadhornStaglet.png",
+  "formRules": [],
+  "sounds": {
+    "onDestroy": "/Sound Files/Skills/Interactable Sounds/DeathStag.mp3"
+  }
+}

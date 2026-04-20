@@ -10,10 +10,27 @@ interface StorageKeyState {
   loadStorageKeys: (keys: StorageKeyDef[]) => void;
 }
 
+const SEED_STORAGE_KEYS: StorageKeyDef[] = [
+  {
+    id: "soil_samples_analyzed",
+    label: "Soil Samples Analyzed",
+    type: "counter",
+    defaultValue: 0,
+    description: "Tracks analyzed soil samples for the tutorial quest line.",
+  },
+  {
+    id: "dirty_frank_intro_seen",
+    label: "Dirty Frank Intro Seen",
+    type: "flag",
+    defaultValue: false,
+    description: "Tracks whether the player has met Dirty Frank.",
+  },
+];
+
 export const useStorageKeyStore = create<StorageKeyState>()(
   persist(
     (set) => ({
-      storageKeys: [],
+      storageKeys: SEED_STORAGE_KEYS,
 
       addStorageKey: (key) =>
         set((s) => ({ storageKeys: [...s.storageKeys, key] })),

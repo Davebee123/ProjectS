@@ -1,0 +1,10 @@
+{
+  "id": "mana",
+  "label": "Mana",
+  "category": "resource",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

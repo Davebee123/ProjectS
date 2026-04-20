@@ -1,0 +1,6 @@
+{
+  "id": "enemy",
+  "label": "Enemy",
+  "description": "Hostile interactables that can be targeted by combat abilities.",
+  "color": "#a72727"
+}

@@ -2,17 +2,18 @@
  * Game state types — extracted from App.tsx.
  * Single source of truth for all game state interfaces.
  */
-import type { SkillState, InventoryItem, WorldObject, ComboRule } from "../data/bridge";
+import type { SkillState, InventoryItem, EquipmentItemInstance, WorldObject, ComboRule } from "../data/bridge";
 
 // Re-export bridge types used across the state layer
-export type { SkillState, InventoryItem, WorldObject, ComboRule };
+export type { SkillState, InventoryItem, EquipmentItemInstance, WorldObject, ComboRule };
 
 export type EquipmentSlot =
   | "head" | "shoulders" | "chest" | "hands"
   | "legs" | "feet" | "back"
   | "mainHand" | "offHand";
 
-export type WeatherType = "clear" | "cloudy" | "rainy" | "stormy";
+/** Weather state ID — matches WeatherTemplate.id from bundle */
+export type WeatherType = string;
 export type WindowKey = "inventory" | "equipment" | "crafting" | "log";
 export type FloatingZone = "skills" | "objects";
 
@@ -27,6 +28,7 @@ export interface ActiveEffect {
   effectId: string;
   stacks: number;
   appliedAt: number;
+  intervalTimers?: Record<string, number>;
 }
 
 export interface ActionState {
@@ -36,6 +38,9 @@ export interface ActionState {
   endsAt: number;
   durationMs: number;
   energyCost: number;
+  successRoll: boolean;
+  tickMomentsMs: number[];
+  resolvedTickCount: number;
   comboLabel?: string;
 }
 
@@ -43,6 +48,65 @@ export interface ExploreState {
   seed: number;
   startedAt: number;
   endsAt: number;
+}
+
+export interface CraftingState {
+  recipeId: string;
+  startedAt: number;
+  endsAt: number;
+  durationMs: number;
+  outputItemId: string;
+  outputQty: number;
+  outputName: string;
+}
+
+export interface TravelState {
+  roomId: string;
+  roomName: string;
+  startedAt: number;
+  endsAt: number;
+  durationMs: number;
+  energyCost: number;
+}
+
+export interface HostileActionState {
+  objectId: string;
+  targetObjectId?: string;
+  abilityIndex: number;
+  abilityName: string;
+  skillId?: string;
+  startedAt: number;
+  endsAt: number;
+  durationMs: number;
+  damage?: number;
+  resisted: boolean;
+  tickMomentsMs: number[];
+  resolvedTickCount: number;
+  damageDealt: number;
+}
+
+export interface FriendlyActionState {
+  objectId: string;
+  targetObjectId: string;
+  abilityIndex: number;
+  abilityName: string;
+  skillId?: string;
+  startedAt: number;
+  endsAt: number;
+  durationMs: number;
+  damage?: number;
+  tickMomentsMs: number[];
+  resolvedTickCount: number;
+  damageDealt: number;
+}
+
+export interface WeaponActionState {
+  objectId: string;
+  weaponName: string;
+  startedAt: number;
+  endsAt: number;
+  durationMs: number;
+  damage: number;
 }
 
 export interface LastAction {
@@ -62,6 +126,12 @@ export interface FloatingText {
   durationMs: number;
 }
 
+export interface PlayerHitCue {
+  id: string;
+  text: string;
+  expiresAt: number;
+}
+
 export interface UnlockCue {
   skillId: string;
   expiresAt: number;
@@ -74,15 +144,76 @@ export interface DestroyedObjectCue {
   index: number;
 }
 
+export interface ObjectAttackCue {
+  id: string;
+  objectId: string;
+  expiresAt: number;
+}
+
+export interface ObjectEmoteCue {
+  id: string;
+  objectId: string;
+  text: string;
+  createdAt: number;
+  expiresAt: number;
+  durationMs: number;
+}
+
+export interface LootReceiptEntry {
+  id: string;
+  name: string;
+  qty: number;
+  image?: string;
+  rarityClass: "common" | "uncommon" | "rare";
+}
+
+export interface LootReceiptCue {
+  id: string;
+  objectId: string;
+  entries: LootReceiptEntry[];
+  appearsAt: number;
+  expiresAt: number;
+}
+
+export interface QuestReceiptCue {
+  id: string;
+  questId: string;
+  name: string;
+  description: string;
+  appearsAt: number;
+  expiresAt: number;
+}
+
+export interface DialogueState {
+  objectId: string | null;
+  dialogueId: string;
+  nodeId: string;
+  speakerName?: string;
+  portraitImage?: string;
+  meterLabel?: string;
+  integrity?: number;
+  maxIntegrity?: number;
+}
+
+export interface CutsceneState {
+  cutsceneId: string;
+  stepId: string;
+  awaitingDialogue: boolean;
+}
+
 export interface GameState {
   seed: number;
   exploreCount: number;
   currentRoomId: string;
+  previousRoomId: string | null;
   playerStorage: Record<string, boolean | number | string>;
+  seenQuestIds: string[];
+  announcedQuestIds: string[];
   skills: SkillState[];
   objects: WorldObject[];
   selectedObjectId: string | null;
   inventory: InventoryItem[];
+  inventoryEquipment: EquipmentItemInstance[];
   equipment: Record<EquipmentSlot, string | null>;
   feyRunes: [string | null, string | null, string | null, string | null, string | null, string | null];
   // Vitals
@@ -104,9 +235,18 @@ export interface GameState {
   // Backpack pagination
   backpackPage: number;
   backpackSlots: number;
+  bioboardSlots: Array<string | null>;
   action: ActionState | null;
   exploreAction: ExploreState | null;
+  craftingAction: CraftingState | null;
+  travelAction: TravelState | null;
+  hostileAction: HostileActionState | null;
+  friendlyAction: FriendlyActionState | null;
+  weaponAction: WeaponActionState | null;
+  activeDialogue: DialogueState | null;
+  activeCutscene: CutsceneState | null;
   autoSkillId: string | null;
+  weaponAutoEnabled: boolean;
   successfulUpwardHits: number;
   downwardBonusReady: boolean;
   sidePrepUpwardStreak: number;
@@ -115,8 +255,15 @@ export interface GameState {
   lastAction: LastAction | null;
   log: string[];
   floatTexts: FloatingText[];
+  playerHitCue: PlayerHitCue | null;
+  playerHitShakeUntil: number;
+  weaponAttackAnimateUntil: number;
   unlockCues: UnlockCue[];
   destroyedObjectCues: DestroyedObjectCue[];
+  objectAttackCues: ObjectAttackCue[];
+  objectEmoteCues: ObjectEmoteCue[];
+  lootReceiptCues: LootReceiptCue[];
+  questReceiptCues: QuestReceiptCue[];
   objectBatchStartedAt: number;
   openWindow: WindowKey | null;
   placedObjects: PlacedObject[];
@@ -127,23 +274,35 @@ export interface GameState {
 
 export type GameAction =
   | { type: "EXPLORE" }
+  | { type: "ACKNOWLEDGE_VISIBLE_QUESTS" }
   | { type: "SELECT_OBJECT"; objectId: string }
+  | { type: "CLEAR_SELECTED_OBJECT" }
+  | { type: "ADVANCE_DIALOGUE" }
+  | { type: "CHOOSE_DIALOGUE_OPTION"; optionId: string }
+  | { type: "CLOSE_DIALOGUE" }
+  | { type: "ADVANCE_CUTSCENE" }
+  | { type: "START_CUTSCENE"; cutsceneId: string }
   | { type: "SET_AUTO_SKILL"; skillId: string }
+  | { type: "TOGGLE_WEAPON_AUTO" }
   | { type: "TOGGLE_WINDOW"; window: WindowKey }
-  | { type: "EQUIP_ITEM"; itemId: string }
+  | { type: "EQUIP_ITEM"; instanceId: string }
   | { type: "UNEQUIP_SLOT"; slot: EquipmentSlot }
-  | { type: "SET_RUNE"; slot: 0 | 1 | 2 | 3 | 4 | 5; itemId: string }
+  | { type: "SET_RUNE"; slot: 0 | 1 | 2 | 3 | 4 | 5; instanceId: string }
   | { type: "REMOVE_RUNE"; slot: 0 | 1 | 2 | 3 | 4 | 5 }
   | { type: "CRAFT_ITEM"; recipeId: string }
   | { type: "PLACE_ITEM"; itemId: string }
   | { type: "REMOVE_PLACED_ITEM"; instanceId: string }
   | { type: "TRAVEL"; roomId: string }
   | { type: "SET_BACKPACK_PAGE"; page: number }
+  | { type: "ASSIGN_BIOBOARD_SKILL"; skillId: string }
+  | { type: "REMOVE_BIOBOARD_SKILL"; slotIndex: number }
+  | { type: "DISMISS_LOOT_RECEIPT"; cueId: string }
   | { type: "TICK"; now: number };
 
 export interface CastMetrics {
   durationMs: number;
   energyCost: number;
+  tickMomentsMs: number[];
   combo: ComboRule | null;
 }
 

@@ -1,0 +1,12 @@
+{
+  "id": "two_handed_maul",
+  "label": "Two-Handed Maul",
+  "slot": "mainHand",
+  "handedness": "two_hand",
+  "tags": [
+    "weapon",
+    "melee",
+    "blunt",
+    "heavy"
+  ]
+}

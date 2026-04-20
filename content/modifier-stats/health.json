@@ -1,0 +1,10 @@
+{
+  "id": "health",
+  "label": "Health",
+  "category": "resource",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

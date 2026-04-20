@@ -1,18 +1,31 @@
 import { useWorldStore } from "../../stores/worldStore";
 import { useItemStore } from "../../stores/itemStore";
+import { useItemizationStore } from "../../stores/itemizationStore";
+import { useCutsceneStore } from "../../stores/cutsceneStore";
 
 export function WorldSettingsPanel() {
   const { world, updateWorld } = useWorldStore();
   const { items } = useItemStore();
+  const { itemBases } = useItemizationStore();
+  const { cutscenes } = useCutsceneStore();
 
-  const equippableItems = items.filter((i) => i.slot);
-  const startingIds = world.startingItemIds ?? [];
+  const startingItemIds = world.startingItemIds ?? [];
+  const startingEquipmentBaseIds = world.startingEquipmentBaseIds ?? [];
+  const startingItems = items.filter((item) => item.stackable || !item.slot);
+  const equippableBases = itemBases.filter((itemBase) => itemBase.slot);
 
   const toggleStartingItem = (itemId: string) => {
-    const next = startingIds.includes(itemId)
-      ? startingIds.filter((id) => id !== itemId)
-      : [...startingIds, itemId];
+    const next = startingItemIds.includes(itemId)
+      ? startingItemIds.filter((id) => id !== itemId)
+      : [...startingItemIds, itemId];
     updateWorld({ startingItemIds: next });
+  };
+
+  const toggleStartingEquipmentBase = (baseId: string) => {
+    const next = startingEquipmentBaseIds.includes(baseId)
+      ? startingEquipmentBaseIds.filter((id) => id !== baseId)
+      : [...startingEquipmentBaseIds, baseId];
+    updateWorld({ startingEquipmentBaseIds: next });
   };
 
   return (
@@ -35,9 +48,9 @@ export function WorldSettingsPanel() {
             onChange={(e) => updateWorld({ startingRoomId: e.target.value })}
           >
             <option value="">-- Select --</option>
-            {world.rooms.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name} ({r.gridX},{r.gridY})
+            {world.rooms.map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.name} ({room.gridX},{room.gridY})
               </option>
             ))}
           </select>
@@ -50,9 +63,7 @@ export function WorldSettingsPanel() {
             min={1}
             max={100}
             value={world.gridWidth}
-            onChange={(e) =>
-              updateWorld({ gridWidth: Math.max(1, Number(e.target.value)) })
-            }
+            onChange={(e) => updateWorld({ gridWidth: Math.max(1, Number(e.target.value)) })}
           />
         </div>
         <div className="form-field">
@@ -63,9 +74,7 @@ export function WorldSettingsPanel() {
             min={1}
             max={100}
             value={world.gridHeight}
-            onChange={(e) =>
-              updateWorld({ gridHeight: Math.max(1, Number(e.target.value)) })
-            }
+            onChange={(e) => updateWorld({ gridHeight: Math.max(1, Number(e.target.value)) })}
           />
         </div>
         <div className="form-field">
@@ -82,36 +91,78 @@ export function WorldSettingsPanel() {
             }
           />
         </div>
+        <div className="form-field">
+          <label className="field-label">Starting Cutscene</label>
+          <select
+            className="input select"
+            value={world.startingCutsceneId || ""}
+            onChange={(e) => updateWorld({ startingCutsceneId: e.target.value || undefined })}
+          >
+            <option value="">-- None --</option>
+            {cutscenes.map((cutscene) => (
+              <option key={cutscene.id} value={cutscene.id}>
+                {cutscene.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Starting Inventory */}
       <h4 className="section-title" style={{ marginTop: "1.5rem" }}>
         Starting Inventory
       </h4>
       <p className="section-desc">
-        Select which equippable items the player starts with. These are
-        automatically equipped at game start.
+        Select stackable or static items granted to the player immediately on a new run.
       </p>
-      {equippableItems.length === 0 ? (
+      {startingItems.length === 0 ? (
         <p className="section-desc" style={{ opacity: 0.5 }}>
-          No equippable items defined yet.
+          No starting inventory items are available yet.
         </p>
       ) : (
         <div className="tag-list" style={{ gap: "0.5rem" }}>
-          {equippableItems.map((item) => {
-            const isSelected = startingIds.includes(item.id);
+          {startingItems.map((item) => {
+            const isSelected = startingItemIds.includes(item.id);
             return (
               <button
                 key={item.id}
                 type="button"
                 className={`tag-chip ${isSelected ? "tag-chip--selected" : ""}`}
                 onClick={() => toggleStartingItem(item.id)}
-                title={`${item.slot} — ${item.name}`}
+                title={item.name}
+              >
+                <span className="tag-chip-label">{item.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <h4 className="section-title" style={{ marginTop: "1.5rem" }}>
+        Starting Equipment Bases
+      </h4>
+      <p className="section-desc">
+        Select equipment bases that should be instantiated and auto-equipped at the start of a run.
+      </p>
+      {equippableBases.length === 0 ? (
+        <p className="section-desc" style={{ opacity: 0.5 }}>
+          No item bases are available yet.
+        </p>
+      ) : (
+        <div className="tag-list" style={{ gap: "0.5rem" }}>
+          {equippableBases.map((itemBase) => {
+            const isSelected = startingEquipmentBaseIds.includes(itemBase.id);
+            return (
+              <button
+                key={itemBase.id}
+                type="button"
+                className={`tag-chip ${isSelected ? "tag-chip--selected" : ""}`}
+                onClick={() => toggleStartingEquipmentBase(itemBase.id)}
+                title={`${itemBase.slot} - ${itemBase.name}`}
               >
                 <span className="tag-chip-label">
-                  {item.name}
+                  {itemBase.name}
                   <span style={{ opacity: 0.5, marginLeft: 6, fontSize: "0.8em" }}>
-                    [{item.slot}]
+                    [{itemBase.slot}]
                   </span>
                 </span>
               </button>

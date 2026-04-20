@@ -1,0 +1,9 @@
+{
+  "id": "heavy_armor",
+  "label": "Heavy Armor",
+  "slot": "chest",
+  "tags": [
+    "armor",
+    "heavy"
+  ]
+}

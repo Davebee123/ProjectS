@@ -1,22 +1,12 @@
 import { NavLink } from "react-router-dom";
+import { NAV_SECTIONS } from "../../navigation";
 import { useHistoryStore } from "../../stores/historyStore";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Tags" },
-  { to: "/storage", label: "Storage Keys" },
-  { to: "/status-effects", label: "Status Effects" },
-  { to: "/items", label: "Items" },
-  { to: "/skills", label: "Skills" },
-  { to: "/combos", label: "Combos" },
-  { to: "/interactables", label: "Interactables" },
-  { to: "/recipes", label: "Recipes" },
-  { to: "/world", label: "World Map" },
-  { to: "/export", label: "Export / Import" },
-  { to: "/test", label: "Test Conditions" },
-  { to: "/dsl", label: "DSL Reference" },
-];
+interface SidebarProps {
+  onOpenCommandPalette: () => void;
+}
 
-export function Sidebar() {
+export function Sidebar({ onOpenCommandPalette }: SidebarProps) {
   const past = useHistoryStore((s) => s.past);
   const future = useHistoryStore((s) => s.future);
   const undo = useHistoryStore((s) => s.undo);
@@ -27,6 +17,12 @@ export function Sidebar() {
       <div className="sidebar-header">
         <h1 className="sidebar-title">Content Editor</h1>
         <span className="sidebar-subtitle">Incremental Fantasy RPG</span>
+      </div>
+      <div className="sidebar-command">
+        <button className="btn btn--sm sidebar-command-btn" onClick={onOpenCommandPalette}>
+          Jump
+          <span className="sidebar-command-shortcut">Ctrl+K</span>
+        </button>
       </div>
       <div className="sidebar-undo-redo">
         <button
@@ -46,21 +42,28 @@ export function Sidebar() {
           Redo
         </button>
       </div>
-      <ul className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          <li key={item.to}>
-            <NavLink
-              to={item.to}
-              className={({ isActive }) =>
-                `sidebar-link${isActive ? " sidebar-link--active" : ""}`
-              }
-              end={item.to === "/"}
-            >
-              {item.label}
-            </NavLink>
-          </li>
+      <div className="sidebar-sections">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.id} className="sidebar-section">
+            <div className="sidebar-section-title">{section.label}</div>
+            <ul className="sidebar-nav sidebar-nav--compact">
+              {section.items.map((item) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `sidebar-link${isActive ? " sidebar-link--active" : ""}`
+                    }
+                    end={item.to === "/"}
+                  >
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
     </nav>
   );
 }

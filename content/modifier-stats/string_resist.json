@@ -1,0 +1,10 @@
+{
+  "id": "string_resist",
+  "label": "String Resist",
+  "category": "resistance",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

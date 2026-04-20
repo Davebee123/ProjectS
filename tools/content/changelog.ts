@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { ChangelogConfig, ChangelogData, ChangelogEntry, ChangelogRelease, ChangelogReleaseSpec } from "../../shared/content/changelog.js";
-import type { GameContentBundle, InteractableTemplate, ItemTemplate, RoomTemplate, SkillTemplate } from "../../shared/content/types.js";
+import type { GameContentBundle, InteractableTemplate, ItemTemplate, QuestTemplate, RoomTemplate, SkillTemplate } from "../../shared/content/types.js";
 import { buildBundleFromSource, loadContentSource } from "./pipeline.js";
 import { pathExists, readJsonFile, sortById, writeJsonFile, walkJsonFiles } from "./utils.js";
 
@@ -143,11 +143,34 @@ function diffRooms(before: RoomTemplate[], after: RoomTemplate[]): ChangelogEntr
   );
 }
 
+function diffQuests(before: QuestTemplate[], after: QuestTemplate[]): ChangelogEntry[] {
+  return diffNamedEntities(
+    before,
+    after,
+    (quest) => `Added quest: ${quest.name}.`,
+    (quest) => `Removed quest: ${quest.name}.`,
+    (prev, next) => {
+      if (
+        prev.category !== next.category ||
+        prev.level !== next.level ||
+        stringifyComparable(prev.objectives) !== stringifyComparable(next.objectives)
+      ) {
+        return `Updated ${next.name}.`;
+      }
+      if (stringifyComparable(prev) !== stringifyComparable(next)) {
+        return `Adjusted ${next.name}.`;
+      }
+      return null;
+    }
+  );
+}
+
 function autoEntriesFromDiff(before: GameContentBundle, after: GameContentBundle): ChangelogEntry[] {
   return [
     ...diffSkills(before.skills, after.skills),
     ...diffInteractables(before.interactables, after.interactables),
     ...diffItems(before.items, after.items),
+    ...diffQuests(before.quests ?? [], after.quests ?? []),
     ...diffRooms(before.world.rooms, after.world.rooms),
   ];
 }

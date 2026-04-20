@@ -11,16 +11,28 @@ import type {
 } from "../../shared/content/source.js";
 import type {
   AbilityTagDef,
+  AffixDefinition,
+  AffixTableDef,
   ActivityTagDef,
   ComboRuleTemplate,
+  CutsceneTemplate,
+  DialogueTemplate,
   GameContentBundle,
   InteractableTemplate,
+  ItemBase,
+  ItemClassDef,
+  ItemQualityRuleSet,
+  ItemSetDefinition,
   ItemTemplate,
+  ModifierStatDef,
+  QuestTemplate,
   RecipeTemplate,
   RoomTemplate,
   SkillTemplate,
   StatusEffectTemplate,
   StorageKeyDef,
+  UniqueItem,
+  WeatherTemplate,
   WorldTemplate,
 } from "../../shared/content/types.js";
 import {
@@ -90,10 +102,22 @@ export async function loadContentSource(repoRoot: string = process.cwd()): Promi
     storageKeys: await loadEntityDir<StorageKeyDef>(repoRoot, path.join(contentRoot, "storage-keys")),
     statusEffects: await loadEntityDir<StatusEffectTemplate>(repoRoot, path.join(contentRoot, "status-effects")),
     items: await loadEntityDir<ItemTemplate>(repoRoot, path.join(contentRoot, "items")),
+    itemClasses: await loadEntityDir<ItemClassDef>(repoRoot, path.join(contentRoot, "item-classes")),
+    affixTables: await loadEntityDir<AffixTableDef>(repoRoot, path.join(contentRoot, "affix-tables")),
+    modifierStats: await loadEntityDir<ModifierStatDef>(repoRoot, path.join(contentRoot, "modifier-stats")),
+    itemBases: await loadEntityDir<ItemBase>(repoRoot, path.join(contentRoot, "item-bases")),
+    affixes: await loadEntityDir<AffixDefinition>(repoRoot, path.join(contentRoot, "affixes")),
+    itemQualityRules: await loadEntityDir<ItemQualityRuleSet>(repoRoot, path.join(contentRoot, "item-quality-rules")),
+    uniqueItems: await loadEntityDir<UniqueItem>(repoRoot, path.join(contentRoot, "unique-items")),
+    itemSets: await loadEntityDir<ItemSetDefinition>(repoRoot, path.join(contentRoot, "item-sets")),
     skills: await loadEntityDir<SkillTemplate>(repoRoot, path.join(contentRoot, "skills")),
     combos: await loadEntityDir<ComboRuleTemplate>(repoRoot, path.join(contentRoot, "combos")),
     interactables: await loadEntityDir<InteractableTemplate>(repoRoot, path.join(contentRoot, "interactables")),
+    dialogues: await loadEntityDir<DialogueTemplate>(repoRoot, path.join(contentRoot, "dialogues")),
+    cutscenes: await loadEntityDir<CutsceneTemplate>(repoRoot, path.join(contentRoot, "cutscenes")),
+    quests: await loadEntityDir<QuestTemplate>(repoRoot, path.join(contentRoot, "quests")),
     recipes: await loadEntityDir<RecipeTemplate>(repoRoot, path.join(contentRoot, "recipes")),
+    weathers: await loadEntityDir<WeatherTemplate>(repoRoot, path.join(contentRoot, "weathers")),
     worlds: await loadWorlds(repoRoot, path.join(contentRoot, "worlds")),
   };
 }
@@ -157,10 +181,22 @@ export function validateContentSource(source: LoadedContentSource): ValidationIs
   for (const entity of source.storageKeys) checkFileName(entity, "Storage key");
   for (const entity of source.statusEffects) checkFileName(entity, "Status effect");
   for (const entity of source.items) checkFileName(entity, "Item");
+  for (const entity of source.itemClasses) checkFileName(entity, "Item class");
+  for (const entity of source.affixTables) checkFileName(entity, "Affix table");
+  for (const entity of source.modifierStats) checkFileName(entity, "Modifier stat");
+  for (const entity of source.itemBases) checkFileName(entity, "Item base");
+  for (const entity of source.affixes) checkFileName(entity, "Affix");
+  for (const entity of source.itemQualityRules) checkFileName(entity, "Item quality rule set");
+  for (const entity of source.uniqueItems) checkFileName(entity, "Unique item");
+  for (const entity of source.itemSets) checkFileName(entity, "Item set");
   for (const entity of source.skills) checkFileName(entity, "Skill");
   for (const entity of source.combos) checkFileName(entity, "Combo");
   for (const entity of source.interactables) checkFileName(entity, "Interactable");
+  for (const entity of source.dialogues) checkFileName(entity, "Dialogue");
+  for (const entity of source.cutscenes) checkFileName(entity, "Cutscene");
+  for (const entity of source.quests) checkFileName(entity, "Quest");
   for (const entity of source.recipes) checkFileName(entity, "Recipe");
+  for (const entity of source.weathers) checkFileName(entity, "Weather");
   for (const world of source.worlds) {
     if (path.posix.basename(world.world.sourcePath) !== "world.json") {
       issues.push({
@@ -222,6 +258,20 @@ export function buildBundleFromSource(source: LoadedContentSource, exportedAt: s
     items: source.items
       .map((item) => withDerivedFolder(item, "content/items"))
       .sort(sortById),
+    itemClasses: source.itemClasses.map((entry) => entry.value).sort(sortById),
+    affixTables: source.affixTables.map((entry) => entry.value).sort(sortById),
+    modifierStats: source.modifierStats.map((entry) => entry.value).sort(sortById),
+    itemBases: source.itemBases
+      .map((entry) => withDerivedFolder(entry, "content/item-bases"))
+      .sort(sortById),
+    affixes: source.affixes
+      .map((entry) => withDerivedFolder(entry, "content/affixes"))
+      .sort(sortById),
+    itemQualityRules: source.itemQualityRules.map((entry) => entry.value).sort(sortById),
+    uniqueItems: source.uniqueItems
+      .map((entry) => withDerivedFolder(entry, "content/unique-items"))
+      .sort(sortById),
+    itemSets: source.itemSets.map((entry) => entry.value).sort(sortById),
     skills: source.skills
       .map((skill) => withDerivedFolder(skill, "content/skills"))
       .sort(sortById),
@@ -231,10 +281,20 @@ export function buildBundleFromSource(source: LoadedContentSource, exportedAt: s
     interactables: source.interactables
       .map((interactable) => withDerivedFolder(interactable, "content/interactables"))
       .sort(sortById),
+    dialogues: source.dialogues
+      .map((dialogue) => withDerivedFolder(dialogue, "content/dialogues"))
+      .sort(sortById),
+    cutscenes: source.cutscenes
+      .map((cutscene) => withDerivedFolder(cutscene, "content/cutscenes"))
+      .sort(sortById),
+    quests: source.quests
+      .map((quest) => withDerivedFolder(quest, "content/quests"))
+      .sort(sortById),
     world,
     recipes: source.recipes
       .map((recipe) => withDerivedFolder(recipe, "content/recipes"))
       .sort(sortById),
+    weathers: source.weathers.map((w) => w.value).sort(sortById),
   };
 }
 

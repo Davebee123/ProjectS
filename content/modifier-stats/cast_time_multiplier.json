@@ -1,0 +1,9 @@
+{
+  "id": "cast_time_multiplier",
+  "label": "Cast Time Multiplier",
+  "category": "timing",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

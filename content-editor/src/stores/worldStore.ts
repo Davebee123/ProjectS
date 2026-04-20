@@ -41,14 +41,54 @@ function createDefaultWorld(): WorldTemplate {
             maxCount: 1,
           },
         ],
+        fixedInteractables: [
+          {
+            interactableId: "dirty_frank",
+          },
+          {
+            interactableId: "loyal_sprite",
+          },
+          {
+            interactableId: "desperate_rat",
+          },
+        ],
+        specialConnections: [],
+        seedOverrides: [],
+      },
+      {
+        id: "whispering_thicket",
+        name: "Whispering Thicket",
+        description: "A narrower stretch of woodland where the wind carries through denser brush and younger birch growth.",
+        level: 2,
+        gridX: 3,
+        gridY: 2,
+        slotCount: 4,
+        spawnTable: [
+          {
+            id: "sp_thicket_birch",
+            interactableId: "birch_tree",
+            spawnChance: 100,
+            minCount: 1,
+            maxCount: 2,
+          },
+          {
+            id: "sp_thicket_oak",
+            interactableId: "oak_tree",
+            spawnChance: 45,
+            minCount: 1,
+            maxCount: 1,
+          },
+        ],
         fixedInteractables: [],
         specialConnections: [],
         seedOverrides: [],
       },
     ],
     startingRoomId: "verdant_outskirts",
+    startingCutsceneId: "waking_up_confused",
     defaultSlotCount: 4,
-    startingItemIds: ["rusty_hatchet", "cloth_tunic"],
+    startingItemIds: [],
+    startingEquipmentBaseIds: ["starter_dagger"],
   };
 }
 

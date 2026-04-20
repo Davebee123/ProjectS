@@ -1,0 +1,9 @@
+{
+  "id": "all_damage_multiplier",
+  "label": "All Damage Multiplier",
+  "category": "damage",
+  "supportsScope": false,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

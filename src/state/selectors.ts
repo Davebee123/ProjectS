@@ -4,16 +4,16 @@
  */
 import { getBundle } from "../data/loader";
 import type { RecipeDef } from "../data/loader";
-import { evaluateCondition } from "../data/evaluator";
 import {
   getAvailableRecipes,
   type InventoryItem,
 } from "../data/bridge";
-import type { GameState } from "./types";
+import type { GameState, FloatingText } from "./types";
 import { buildEvalContext } from "./utils";
-import { getEquipmentStats, getRelevantPassiveLevel, getSuccessChance } from "./reducer";
+import { getBackpackSlotCapacity, getEquipmentStats, getRelevantPassiveLevel, getSuccessChance } from "./reducer";
+import { getReachableRooms } from "./worldNavigation";
 
-export { getEquipmentStats, getRelevantPassiveLevel, getSuccessChance };
+export { getBackpackSlotCapacity, getEquipmentStats, getRelevantPassiveLevel, getSuccessChance };
 
 export function selectRoomName(state: GameState): string {
   const bundle = getBundle();
@@ -21,11 +21,7 @@ export function selectRoomName(state: GameState): string {
 }
 
 export function selectRoomExits(state: GameState) {
-  const bundle = getBundle();
-  const room = bundle?.world.rooms.find((r) => r.id === state.currentRoomId);
-  if (!room?.specialConnections?.length) return [];
-  const ctx = buildEvalContext(state);
-  return room.specialConnections.filter((c) => !c.condition || evaluateCondition(c.condition, ctx));
+  return getReachableRooms(state);
 }
 
 export function selectAvailableRecipes(state: GameState): RecipeDef[] {
@@ -58,6 +54,17 @@ export function selectObjectFloatMap(state: GameState): Map<string, string[]> {
     if (entry.zone !== "objects" || !entry.objectId) continue;
     const existing = map.get(entry.objectId) ?? [];
     existing.push(entry.text);
+    map.set(entry.objectId, existing);
+  }
+  return map;
+}
+
+export function selectObjectImpactMap(state: GameState): Map<string, FloatingText[]> {
+  const map = new Map<string, FloatingText[]>();
+  for (const entry of state.floatTexts) {
+    if (entry.zone !== "objects" || !entry.objectId) continue;
+    const existing = map.get(entry.objectId) ?? [];
+    existing.push(entry);
     map.set(entry.objectId, existing);
   }
   return map;

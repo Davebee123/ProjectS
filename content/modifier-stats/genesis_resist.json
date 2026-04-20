@@ -1,0 +1,10 @@
+{
+  "id": "genesis_resist",
+  "label": "Genesis Resist",
+  "category": "resistance",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

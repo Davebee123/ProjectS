@@ -12,11 +12,14 @@ interface Props {
 }
 
 export function TagPicker({ tags, selected, onChange, label }: Props) {
+  const knownTagIds = new Set(tags.map((tag) => tag.id));
+  const visibleSelected = selected.filter((id) => knownTagIds.has(id));
+
   const toggle = (id: string) => {
-    if (selected.includes(id)) {
-      onChange(selected.filter((s) => s !== id));
+    if (visibleSelected.includes(id)) {
+      onChange(visibleSelected.filter((s) => s !== id));
     } else {
-      onChange([...selected, id]);
+      onChange([...visibleSelected, id]);
     }
   };
 
@@ -25,7 +28,7 @@ export function TagPicker({ tags, selected, onChange, label }: Props) {
       {label && <label className="field-label">{label}</label>}
       <div className="tag-chips">
         {tags.map((tag) => {
-          const active = selected.includes(tag.id);
+          const active = visibleSelected.includes(tag.id);
           return (
             <button
               key={tag.id}

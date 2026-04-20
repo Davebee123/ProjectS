@@ -1,0 +1,10 @@
+{
+  "id": "shield",
+  "label": "Shield",
+  "slot": "offHand",
+  "handedness": "one_hand",
+  "tags": [
+    "offhand",
+    "defense"
+  ]
+}

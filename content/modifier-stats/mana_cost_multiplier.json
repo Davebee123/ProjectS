@@ -1,0 +1,9 @@
+{
+  "id": "mana_cost_multiplier",
+  "label": "Mana Cost Multiplier",
+  "category": "cost",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

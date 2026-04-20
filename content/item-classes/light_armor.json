@@ -1,0 +1,9 @@
+{
+  "id": "light_armor",
+  "label": "Light Armor",
+  "slot": "chest",
+  "tags": [
+    "armor",
+    "light"
+  ]
+}

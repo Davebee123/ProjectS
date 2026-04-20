@@ -1,0 +1,13 @@
+{
+  "id": "stormy",
+  "name": "Stormy",
+  "description": "Thunder and lightning rage overhead.",
+  "icon": "⛈",
+  "weight": 1,
+  "energyRegenMult": 0.7,
+  "manaRegenMult": 1.5,
+  "successChanceMod": -10,
+  "ambientSound": "/Sound Files/Weather/StormyWeather.wav",
+  "ambientSoundVolume": 0.3,
+  "ambientSoundLoop": true
+}

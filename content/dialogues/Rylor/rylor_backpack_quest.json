@@ -1,0 +1,25 @@
+{
+  "id": "rylor_backpack_quest",
+  "name": "Rylor_Backpack Quest",
+  "description": "",
+  "startNodeId": "rylor_backpack_quest_start",
+  "nodes": [
+    {
+      "id": "rylor_backpack_quest_start",
+      "text": "You found it! And quick timing, too. Another hour longer of searching and I'm not sure we'd make it back in one piece! Let's start heading back to town.\n\nClick the square to the right of our current area on the minimap to travel to it. ",
+      "options": [
+        {
+          "id": "rylor_backpack_quest_start_option_1",
+          "text": "Lets head out!",
+          "closeDialogue": true
+        }
+      ],
+      "onEnterEffects": [
+        {
+          "type": "complete_quest",
+          "questId": "find_your_backpack"
+        }
+      ]
+    }
+  ]
+}

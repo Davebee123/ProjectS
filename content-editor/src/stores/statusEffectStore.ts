@@ -15,19 +15,56 @@ export function createDefaultStatusEffect(id: string, name: string): StatusEffec
     id,
     name,
     description: "",
+    iconImage: undefined,
     removalType: "timed",
     durationMs: 10000,
     statModifiers: [],
+    preventsSpellCasting: false,
+    preventsWeaponAbilities: false,
     stackable: false,
     maxStacks: 1,
     color: "#c4a44a",
+    eventHooks: [],
   };
 }
 
 export const useStatusEffectStore = create<StatusEffectState>()(
   persist(
     (set) => ({
-      statusEffects: [],
+      statusEffects: [
+        {
+          id: "suspended",
+          name: "Suspended",
+          description: "The target is suspended in the air and vulnerable to follow-up abilities.",
+          folder: "control",
+          iconImage: "/icons/status/suspended.svg",
+          removalType: "timed",
+          durationMs: 6000,
+          statModifiers: [],
+          preventsSpellCasting: false,
+          preventsWeaponAbilities: false,
+          stackable: false,
+          maxStacks: 1,
+          color: "#7c8cff",
+          eventHooks: [],
+        },
+        {
+          id: "armor_shredded",
+          name: "Armor Shredded",
+          description: "The target's defenses are broken down by follow-up attacks.",
+          folder: "debuffs",
+          iconImage: "/icons/status/armor-shredded.svg",
+          removalType: "timed",
+          durationMs: 8000,
+          statModifiers: [],
+          preventsSpellCasting: false,
+          preventsWeaponAbilities: false,
+          stackable: false,
+          maxStacks: 1,
+          color: "#ff744e",
+          eventHooks: [],
+        },
+      ],
 
       addStatusEffect: (effect) =>
         set((s) => ({ statusEffects: [...s.statusEffects, effect] })),

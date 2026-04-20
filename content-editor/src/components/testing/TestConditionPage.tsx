@@ -5,6 +5,7 @@ import { useItemStore } from "../../stores/itemStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";
 import { useWorldStore } from "../../stores/worldStore";
 import { useStatusEffectStore } from "../../stores/statusEffectStore";
+import { useQuestStore } from "../../stores/questStore";
 import { parse } from "../../../../shared/dsl/parser";
 import { testEvaluate, createEmptyContext } from "../../dsl/testEvaluator";
 import type { MockContext } from "../../dsl/testEvaluator";
@@ -15,6 +16,7 @@ export function TestConditionPage() {
   const { storageKeys } = useStorageKeyStore();
   const { world } = useWorldStore();
   const { statusEffects } = useStatusEffectStore();
+  const { quests } = useQuestStore();
 
   const [condition, setCondition] = useState("");
   const [mockCtx, setMockCtx] = useState<MockContext>(createEmptyContext);
@@ -68,10 +70,31 @@ export function TestConditionPage() {
     }));
   };
 
-  const setEffectStacks = (id: string, stacks: number) => {
+  const setQuestGranted = (id: string, granted: boolean) => {
+    setMockCtx((prev) => ({
+      ...prev,
+      quests: { ...prev.quests, [id]: granted },
+    }));
+  };
+
+  const setQuestCompleted = (id: string, completed: boolean) => {
+    setMockCtx((prev) => ({
+      ...prev,
+      completedQuests: { ...prev.completedQuests, [id]: completed },
+    }));
+  };
+
+  const setPlayerEffectStacks = (id: string, stacks: number) => {
     setMockCtx((prev) => ({
       ...prev,
       effects: { ...prev.effects, [id]: stacks },
+    }));
+  };
+
+  const setTargetEffectStacks = (id: string, stacks: number) => {
+    setMockCtx((prev) => ({
+      ...prev,
+      targetEffects: { ...prev.targetEffects, [id]: stacks },
     }));
   };
 
@@ -144,6 +167,42 @@ export function TestConditionPage() {
         </section>
       )}
 
+      {quests.length > 0 && (
+        <section className="editor-section">
+          <h3 className="section-title">Granted Quests</h3>
+          <div className="mock-state-grid">
+            {quests.map((quest) => (
+              <div key={quest.id} className="mock-state-row">
+                <label className="mock-state-label">{quest.name || quest.id}</label>
+                <input
+                  type="checkbox"
+                  checked={mockCtx.quests[quest.id] ?? false}
+                  onChange={(e) => setQuestGranted(quest.id, e.target.checked)}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {quests.length > 0 && (
+        <section className="editor-section">
+          <h3 className="section-title">Completed Quests</h3>
+          <div className="mock-state-grid">
+            {quests.map((quest) => (
+              <div key={`completed_${quest.id}`} className="mock-state-row">
+                <label className="mock-state-label">{quest.name || quest.id}</label>
+                <input
+                  type="checkbox"
+                  checked={mockCtx.completedQuests[quest.id] ?? false}
+                  onChange={(e) => setQuestCompleted(quest.id, e.target.checked)}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Mock Items */}
       {items.length > 0 && (
         <section className="editor-section">
@@ -205,7 +264,7 @@ export function TestConditionPage() {
       {/* Mock Active Effects */}
       {statusEffects.length > 0 && (
         <section className="editor-section">
-          <h3 className="section-title">Active Effects</h3>
+          <h3 className="section-title">Player Effects</h3>
           <p className="section-desc">
             Set stack count per effect. 0 = not active (has_effect returns false).
           </p>
@@ -224,7 +283,37 @@ export function TestConditionPage() {
                   className="form-input form-input--sm"
                   min={0}
                   value={mockCtx.effects[fx.id] ?? 0}
-                  onChange={(e) => setEffectStacks(fx.id, Number(e.target.value))}
+                  onChange={(e) => setPlayerEffectStacks(fx.id, Number(e.target.value))}
+                  style={{ width: 64 }}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {statusEffects.length > 0 && (
+        <section className="editor-section">
+          <h3 className="section-title">Target Effects</h3>
+          <p className="section-desc">
+            Test conditions like <code>target.has_effect("suspended")</code>.
+          </p>
+          <div className="mock-state-grid">
+            {statusEffects.map((fx) => (
+              <div key={`target_${fx.id}`} className="mock-state-row">
+                <label className="mock-state-label">
+                  <span
+                    className="fx-dot"
+                    style={{ backgroundColor: fx.color }}
+                  />
+                  {fx.name || fx.id}
+                </label>
+                <input
+                  type="number"
+                  className="form-input form-input--sm"
+                  min={0}
+                  value={mockCtx.targetEffects[fx.id] ?? 0}
+                  onChange={(e) => setTargetEffectStacks(fx.id, Number(e.target.value))}
                   style={{ width: 64 }}
                 />
               </div>

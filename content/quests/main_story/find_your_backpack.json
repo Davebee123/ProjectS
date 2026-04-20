@@ -1,0 +1,33 @@
+{
+  "id": "find_your_backpack",
+  "name": "Find Your Backpack",
+  "description": "Rylor wants you to Explore around Lyorin Outskirts to try to find your backpack.",
+  "category": "main_story",
+  "unlockCondition": "player.has_quest(\"find_your_backpack\")",
+  "level": 1,
+  "objectives": [
+    {
+      "id": "find_your_backpack_objective_1",
+      "title": "Find Your Backpack",
+      "description": "Rylor wants you to Explore around Lyorin Outskirts to try to find your backpack.",
+      "progress": {
+        "kind": "structured",
+        "label": "Progress",
+        "source": {
+          "type": "item_count",
+          "itemId": "backpack"
+        },
+        "requiredValue": 1
+      }
+    },
+    {
+      "id": "find_your_backpack_objective_2",
+      "title": "Talk to Rylor",
+      "description": "You have found your backpack. Talk to Rylor when you're ready.",
+      "progress": {
+        "kind": "freeform",
+        "text": "Talk to Rylor"
+      }
+    }
+  ]
+}

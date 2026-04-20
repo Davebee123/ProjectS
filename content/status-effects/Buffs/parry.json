@@ -1,0 +1,18 @@
+{
+  "id": "parry",
+  "name": "Parry",
+  "description": "The next instance of damage deals less damage",
+  "removalType": "timed",
+  "durationMs": 4000,
+  "statModifiers": [
+    {
+      "stat": "damageReduction",
+      "operation": "add",
+      "value": 5
+    }
+  ],
+  "stackable": false,
+  "maxStacks": 1,
+  "color": "#64e141",
+  "eventHooks": []
+}

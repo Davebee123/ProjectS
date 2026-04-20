@@ -1,6 +1,8 @@
-import { useInteractableStore } from "../../stores/interactableStore";
+import { createDefaultInteractable, useInteractableStore } from "../../stores/interactableStore";
 import { ConditionEditor } from "../shared/ConditionEditor";
+import { ReferencePicker } from "../shared/ReferencePicker";
 import type { SpawnTableEntry } from "../../schema/types";
+import { createUniqueId } from "../../utils/ids";
 
 interface Props {
   entries: SpawnTableEntry[];
@@ -13,7 +15,18 @@ function nextStId() {
 }
 
 export function SpawnTablePanel({ entries, onChange }: Props) {
-  const { interactables } = useInteractableStore();
+  const { interactables, addInteractable } = useInteractableStore();
+  const interactableOptions = interactables.map((interactable) => ({
+    id: interactable.id,
+    label: interactable.name,
+    meta: `${interactable.activityTag || "no activity"} • Level ${interactable.requiredLevel}`,
+  }));
+
+  const createAndLinkInteractable = (name: string) => {
+    const id = createUniqueId(name, interactables.map((interactable) => interactable.id));
+    addInteractable(createDefaultInteractable(id, name));
+    return id;
+  };
 
   const add = () => {
     onChange([
@@ -24,6 +37,7 @@ export function SpawnTablePanel({ entries, onChange }: Props) {
         spawnChance: 100,
         minCount: 1,
         maxCount: 1,
+        neverRespawnAfterDefeat: false,
       },
     ]);
   };
@@ -48,20 +62,16 @@ export function SpawnTablePanel({ entries, onChange }: Props) {
       {entries.map((entry, idx) => (
         <div key={entry.id} className="hook-card">
           <div className="hook-header">
-            <select
-              className="input select"
+            <ReferencePicker
               value={entry.interactableId}
-              onChange={(e) =>
-                update(idx, { interactableId: e.target.value })
-              }
-            >
-              <option value="">-- Select interactable --</option>
-              {interactables.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+              options={interactableOptions}
+              compact
+              showSelectedPreview={false}
+              placeholder="Select interactable..."
+              onChange={(value) => update(idx, { interactableId: value })}
+              onCreate={createAndLinkInteractable}
+              createPlaceholder="New interactable name..."
+            />
             <span style={{ flex: 1 }} />
             <button
               className="btn btn--danger btn--sm"
@@ -107,6 +117,19 @@ export function SpawnTablePanel({ entries, onChange }: Props) {
                   update(idx, { maxCount: Number(e.target.value) })
                 }
               />
+            </div>
+            <div className="form-field">
+              <label className="field-label">Persistence</label>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={entry.neverRespawnAfterDefeat === true}
+                  onChange={(e) =>
+                    update(idx, { neverRespawnAfterDefeat: e.target.checked || undefined })
+                  }
+                />
+                <span>Never respawn after defeat</span>
+              </label>
             </div>
             <div className="form-field form-field--wide">
               <label className="field-label">Condition (optional)</label>

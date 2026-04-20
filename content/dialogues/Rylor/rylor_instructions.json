@@ -1,0 +1,19 @@
+{
+  "id": "rylor_instructions",
+  "name": "rylor_instructions",
+  "description": "While the player is on the quest 'Find Your Backpack', if you talk to Rylor during this quest, he will point you towards exploring.",
+  "startNodeId": "rylor_instructions_start",
+  "nodes": [
+    {
+      "id": "rylor_instructions_start",
+      "text": "Hit the \"Explore\" button on the top right of your screen to explore this area. Perhaps you left your backpack somewhere while gathering berries?",
+      "options": [
+        {
+          "id": "rylor_instructions_start_option_1",
+          "text": "Roger that.",
+          "closeDialogue": true
+        }
+      ]
+    }
+  ]
+}

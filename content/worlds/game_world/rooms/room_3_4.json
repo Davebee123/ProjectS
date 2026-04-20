@@ -1,0 +1,34 @@
+{
+  "id": "room_3_4",
+  "name": "Lyorin Outskirts",
+  "description": "You are surrounded by what farmland has survived the blight. You see the faint glow of your hometown, Lyoris, in the distance, and hear the hum of irrigation pumps working overtime to salvage the crops that still remain.",
+  "gridX": 3,
+  "gridY": 4,
+  "slotCount": 4,
+  "spawnTable": [
+    {
+      "id": "st_1776042651268_0",
+      "interactableId": "faeberry_bush",
+      "spawnChance": 100,
+      "minCount": 1,
+      "maxCount": 3,
+      "neverRespawnAfterDefeat": false,
+      "condition": "player.has_quest(\"find_your_backpack\")"
+    }
+  ],
+  "fixedInteractables": [
+    {
+      "interactableId": "rylor"
+    }
+  ],
+  "specialConnections": [
+    {
+      "targetRoomId": "room_4_4",
+      "label": "Lyorin Farmstead",
+      "condition": "player.hasCompletedQuest(\"find_your_backpack\")"
+    }
+  ],
+  "seedOverrides": [],
+  "backgroundMusic": "/Sound Files/Background Music Project S.mp3",
+  "backgroundImage": "/Background Images/BackgroundLyorinOutskirts.png"
+}

@@ -1,0 +1,52 @@
+{
+  "id": "forceful",
+  "kind": "prefix",
+  "nameTemplate": "Forceful",
+  "description": "Adds flat weapon damage.",
+  "tableId": "weapon_general",
+  "weight": 100,
+  "tiers": [
+    {
+      "tier": 1,
+      "itemLevelMin": 1,
+      "itemLevelMax": 10,
+      "rollMin": 1,
+      "rollMax": 2
+    },
+    {
+      "tier": 2,
+      "itemLevelMin": 11,
+      "itemLevelMax": 20,
+      "rollMin": 2,
+      "rollMax": 4
+    },
+    {
+      "tier": 3,
+      "itemLevelMin": 21,
+      "itemLevelMax": 30,
+      "rollMin": 4,
+      "rollMax": 6
+    },
+    {
+      "tier": 4,
+      "itemLevelMin": 31,
+      "itemLevelMax": 40,
+      "rollMin": 6,
+      "rollMax": 8
+    },
+    {
+      "tier": 5,
+      "itemLevelMin": 41,
+      "itemLevelMax": 50,
+      "rollMin": 8,
+      "rollMax": 10
+    }
+  ],
+  "modifiers": [
+    {
+      "statId": "flat_weapon_damage",
+      "operation": "add",
+      "valueSource": "rolled_value"
+    }
+  ]
+}

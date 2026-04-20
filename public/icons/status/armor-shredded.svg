@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="shredBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffad8e"/>
+      <stop offset="100%" stop-color="#c33f24"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="8" fill="#1a0e0a"/>
+  <path d="M32 10 48 16v13c0 11-6 18-16 25C22 47 16 40 16 29V16z" fill="url(#shredBg)" opacity="0.3"/>
+  <path d="M32 12 46 17v12c0 10-5 16-14 22-9-6-14-12-14-22V17z" fill="none" stroke="#ffd9cf" stroke-width="3"/>
+  <path d="M24 20 31 29 26 34 35 44" fill="none" stroke="#ffd9cf" stroke-width="4" stroke-linecap="round"/>
+  <path d="M39 18 33 26 38 31 30 42" fill="none" stroke="#ffd9cf" stroke-width="4" stroke-linecap="round"/>
+</svg>

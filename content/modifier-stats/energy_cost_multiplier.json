@@ -1,0 +1,9 @@
+{
+  "id": "energy_cost_multiplier",
+  "label": "Energy Cost Multiplier",
+  "category": "cost",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

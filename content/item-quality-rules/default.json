@@ -1,0 +1,68 @@
+{
+  "id": "default",
+  "label": "Default Equipment Quality Rules",
+  "bands": [
+    {
+      "itemLevelMin": 1,
+      "itemLevelMax": 10,
+      "qualityWeights": {
+        "common": 75,
+        "uncommon": 25,
+        "rare": 0
+      }
+    },
+    {
+      "itemLevelMin": 11,
+      "itemLevelMax": 20,
+      "qualityWeights": {
+        "common": 66,
+        "uncommon": 29,
+        "rare": 5
+      },
+      "rareAffixCountWeights": {
+        "2": 100
+      }
+    },
+    {
+      "itemLevelMin": 21,
+      "itemLevelMax": 30,
+      "qualityWeights": {
+        "common": 63,
+        "uncommon": 30,
+        "rare": 7
+      },
+      "rareAffixCountWeights": {
+        "2": 88,
+        "3": 12
+      }
+    },
+    {
+      "itemLevelMin": 31,
+      "itemLevelMax": 40,
+      "qualityWeights": {
+        "common": 60,
+        "uncommon": 31,
+        "rare": 9
+      },
+      "rareAffixCountWeights": {
+        "3": 78,
+        "4": 18,
+        "5": 4
+      }
+    },
+    {
+      "itemLevelMin": 41,
+      "itemLevelMax": 50,
+      "qualityWeights": {
+        "common": 57,
+        "uncommon": 31,
+        "rare": 12
+      },
+      "rareAffixCountWeights": {
+        "3": 28,
+        "4": 62,
+        "5": 10
+      }
+    }
+  ]
+}

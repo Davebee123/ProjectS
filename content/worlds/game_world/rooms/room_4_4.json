@@ -1,0 +1,42 @@
+{
+  "id": "room_4_4",
+  "name": "Lyorin Farmstead",
+  "description": "The farmland here juxtaposes with the threatening blight that encroaches on its fauna. Animals tend to these plants as their last bastion of safety and survival. Another dance of life and death.",
+  "gridX": 4,
+  "gridY": 4,
+  "slotCount": 4,
+  "spawnTable": [
+    {
+      "id": "st_1776616269879_0",
+      "interactableId": "threadhorn_staglet",
+      "spawnChance": 100,
+      "minCount": 1,
+      "maxCount": 1,
+      "neverRespawnAfterDefeat": false,
+      "condition": "player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") < 5"
+    },
+    {
+      "id": "st_1776616283541_1",
+      "interactableId": "faeberry_bush",
+      "spawnChance": 50,
+      "minCount": 1,
+      "maxCount": 1,
+      "neverRespawnAfterDefeat": false
+    }
+  ],
+  "fixedInteractables": [
+    {
+      "interactableId": "rylor",
+      "condition": "NOT player.hasQuest(\"clear_the_danger\") OR player.hasCompletedQuest(\"clear_the_danger\") OR player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5"
+    },
+    {
+      "interactableId": "rylor_combat",
+      "condition": "player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") < 5"
+    }
+  ],
+  "specialConnections": [],
+  "seedOverrides": [],
+  "backgroundMusic": "/Sound Files/Background Music Project S.mp3",
+  "backgroundImage": "/Background Images/BackgroundLyorinFarmstead.png",
+  "entryCondition": "player.hasCompletedQuest(\"find_your_backpack\")"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "parry",
+  "name": "Parry",
+  "kind": "active",
+  "system": "combat",
+  "usableByInteractables": false,
+  "activityTags": [
+    "enemy"
+  ],
+  "abilityTags": [
+    "one_hand_sword"
+  ],
+  "baseDurationMs": 2000,
+  "baseEnergyCost": 25,
+  "basePower": 0,
+  "powerPerLevel": 0,
+  "baseXpToNext": 50,
+  "xpScaling": 1.18,
+  "barColor": "#555555",
+  "accentColor": "#777777",
+  "description": "You parry the attack with your sword",
+  "perkMilestones": [],
+  "basePowerMax": 0,
+  "powerPerLevelMax": 0,
+  "usageProfile": {
+    "castMode": "cast",
+    "targetPattern": "self",
+    "usageContext": "combat",
+    "weaponRequirement": "One-Handed Sword"
+  },
+  "effects": [
+    {
+      "id": "effect_1",
+      "trigger": "on_cast_complete",
+      "target": "self",
+      "type": "apply_status",
+      "statusEffectId": "parry"
+    }
+  ],
+  "castSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_Parry.wav",
+  "castSoundVolume": 0.6,
+  "castSoundOnComplete": true,
+  "disableAutoCast": true
+}

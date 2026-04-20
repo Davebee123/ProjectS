@@ -1,0 +1,10 @@
+{
+  "id": "focus",
+  "label": "Focus",
+  "slot": "offHand",
+  "handedness": "one_hand",
+  "tags": [
+    "offhand",
+    "casting"
+  ]
+}

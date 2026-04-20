@@ -1,0 +1,9 @@
+{
+  "id": "cloak",
+  "label": "Cloak",
+  "slot": "back",
+  "tags": [
+    "armor",
+    "back"
+  ]
+}

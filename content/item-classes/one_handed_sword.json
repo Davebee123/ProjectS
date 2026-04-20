@@ -1,0 +1,11 @@
+{
+  "id": "one_handed_sword",
+  "label": "One-Handed Sword",
+  "slot": "mainHand",
+  "handedness": "one_hand",
+  "tags": [
+    "weapon",
+    "melee",
+    "blade"
+  ]
+}

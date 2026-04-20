@@ -1,0 +1,13 @@
+{
+  "id": "backpack",
+  "name": "Agri-Farmer's Backpack",
+  "description": "A backpack used to store farming supplies and harvested goods",
+  "rarity": "common",
+  "inventoryCategory": "misc",
+  "stackable": false,
+  "stats": {
+    "backpackSlots": 10
+  },
+  "eventHooks": [],
+  "slot": "back"
+}

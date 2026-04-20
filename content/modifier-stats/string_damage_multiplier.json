@@ -1,0 +1,9 @@
+{
+  "id": "string_damage_multiplier",
+  "label": "String Damage Multiplier",
+  "category": "damage",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

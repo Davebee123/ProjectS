@@ -1,0 +1,10 @@
+{
+  "id": "cloudy",
+  "name": "Cloudy",
+  "description": "Overcast skies with muted light.",
+  "icon": "☁",
+  "weight": 3,
+  "energyRegenMult": 1,
+  "manaRegenMult": 1.1,
+  "successChanceMod": 0
+}

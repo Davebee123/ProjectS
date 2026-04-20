@@ -1,0 +1,41 @@
+{
+  "id": "rylor_farmstead_1",
+  "name": "Rylor_Farmstead_1",
+  "description": "",
+  "startNodeId": "rylor_farmstead_1_start",
+  "nodes": [
+    {
+      "id": "rylor_farmstead_1_start",
+      "text": "[narration] Rylor smells the air. His Bioboard whirrs with anticipatory energy [/narration] The air stirs with unrest. I fear we are in the company of hostile fauna. [narration] Rylor readies his sword [narration].",
+      "options": [],
+      "continueLabel": "Continue",
+      "nextNodeId": "rylor_farmstead_1_node_2"
+    },
+    {
+      "id": "rylor_farmstead_1_node_2",
+      "text": "[narration] He smiles at you and one of his eyebrows juts[/narration].  You know how to use your sword, right? Just start swinging!",
+      "options": [
+        {
+          "id": "rylor_farmstead_1_node_2_option_1",
+          "text": "For Lyoris!",
+          "closeDialogue": true,
+          "effects": [
+            {
+              "type": "spawn_interactable",
+              "interactableId": "threadhorn_staglet"
+            },
+            {
+              "type": "grant_quest",
+              "questId": "clear_the_danger"
+            },
+            {
+              "type": "transform_interactable",
+              "target": "bearer",
+              "interactableId": "rylor_combat"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

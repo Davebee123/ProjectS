@@ -1,0 +1,36 @@
+{
+  "id": "charge",
+  "name": "Charge",
+  "kind": "active",
+  "system": "combat",
+  "usableByInteractables": true,
+  "activityTags": [
+    "enemy"
+  ],
+  "abilityTags": [],
+  "baseDurationMs": 4000,
+  "baseEnergyCost": 10,
+  "basePower": 5,
+  "powerPerLevel": 1,
+  "baseXpToNext": 25,
+  "xpScaling": 1.18,
+  "barColor": "#ff5c5c",
+  "accentColor": "#ff0505",
+  "description": "Charge Ability for Threadhorn",
+  "perkMilestones": [],
+  "effects": [
+    {
+      "id": "effect_1",
+      "trigger": "on_hit",
+      "target": "target",
+      "type": "apply_status",
+      "value": -2,
+      "statusEffectId": "stunned"
+    }
+  ],
+  "usageProfile": {
+    "castMode": "cast",
+    "targetPattern": "single",
+    "usageContext": "combat"
+  }
+}

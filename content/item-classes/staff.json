@@ -1,0 +1,10 @@
+{
+  "id": "staff",
+  "label": "Staff",
+  "slot": "mainHand",
+  "handedness": "two_hand",
+  "tags": [
+    "weapon",
+    "casting"
+  ]
+}

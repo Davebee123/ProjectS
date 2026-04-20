@@ -1,0 +1,9 @@
+{
+  "id": "backpack_slots",
+  "label": "Backpack Slots",
+  "category": "utility",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add"
+  ]
+}

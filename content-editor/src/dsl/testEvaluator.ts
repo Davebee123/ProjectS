@@ -1,15 +1,15 @@
 import type { ASTNode } from "../../../shared/dsl/types";
 
-/**
- * Mock evaluation context for testing conditions in the editor.
- */
 export interface MockContext {
   skills: Record<string, { level: number; unlocked: boolean }>;
-  items: Record<string, number>; // itemId → count
+  items: Record<string, number>;
   flags: Record<string, boolean>;
   counters: Record<string, number>;
   values: Record<string, string | number>;
-  effects: Record<string, number>; // effectId → stack count (0 = not active)
+  quests: Record<string, boolean>;
+  completedQuests: Record<string, boolean>;
+  effects: Record<string, number>;
+  targetEffects: Record<string, number>;
   roomId: string;
   exploreCount: number;
   targetTag: string;
@@ -22,7 +22,10 @@ export function createEmptyContext(): MockContext {
     flags: {},
     counters: {},
     values: {},
+    quests: {},
+    completedQuests: {},
     effects: {},
+    targetEffects: {},
     roomId: "",
     exploreCount: 0,
     targetTag: "",
@@ -31,10 +34,6 @@ export function createEmptyContext(): MockContext {
 
 type Val = number | string | boolean;
 
-/**
- * Evaluate a parsed AST against a mock context.
- * Returns { result: boolean } on success or { error: string } on failure.
- */
 export function testEvaluate(
   ast: ASTNode | null,
   ctx: MockContext
@@ -58,7 +57,7 @@ function evalNode(node: ASTNode, ctx: MockContext): Val {
     case "BooleanLiteral":
       return node.value;
     case "Identifier":
-      return node.name; // identifiers are resolved in property/call context
+      return node.name;
     case "BinaryExpr": {
       const left = evalNode(node.left, ctx);
       const right = evalNode(node.right, ctx);
@@ -101,6 +100,7 @@ function resolveProp(obj: Val, prop: string, ctx: MockContext): Val {
   }
   if (obj === "target") {
     if (prop === "tag") return ctx.targetTag;
+    return `target.${prop}`;
   }
   if (typeof obj === "string" && obj.startsWith("__skill:")) {
     const skillId = obj.slice(8);
@@ -120,8 +120,14 @@ function resolveCall(callee: Val, args: Val[], ctx: MockContext): Val {
   if (fn === "player.counter") return ctx.counters[String(args[0])] ?? 0;
   if (fn === "player.value") return ctx.values[String(args[0])] ?? "";
   if (fn === "player.storage") return ctx.values[String(args[0])] ?? "";
+  if (fn === "player.has_quest" || fn === "player.hasQuest") return ctx.quests[String(args[0])] ?? false;
+  if (fn === "player.has_completed_quest" || fn === "player.hasCompletedQuest") {
+    return ctx.completedQuests[String(args[0])] ?? false;
+  }
   if (fn === "player.has_effect") return (ctx.effects[String(args[0])] ?? 0) > 0;
   if (fn === "player.effect_stacks") return ctx.effects[String(args[0])] ?? 0;
+  if (fn === "target.has_effect") return (ctx.targetEffects[String(args[0])] ?? 0) > 0;
+  if (fn === "target.effect_stacks") return ctx.targetEffects[String(args[0])] ?? 0;
   throw new Error(`Unknown function: ${fn}`);
 }
 

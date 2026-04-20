@@ -1,0 +1,34 @@
+{
+  "id": "rustle",
+  "name": "Rustle",
+  "kind": "active",
+  "system": "gathering",
+  "usableByInteractables": false,
+  "activityTags": [
+    "bushes"
+  ],
+  "abilityTags": [
+    "bushes"
+  ],
+  "baseDurationMs": 3000,
+  "baseEnergyCost": 20,
+  "basePower": 10,
+  "powerPerLevel": 1,
+  "baseXpToNext": 25,
+  "xpScaling": 1.18,
+  "barColor": "#17644d",
+  "accentColor": "#0c8863",
+  "description": "You attempt to rustle through a bush.",
+  "perkMilestones": [],
+  "usageProfile": {
+    "castMode": "cast",
+    "targetPattern": "single",
+    "usageContext": "non_combat",
+    "interruptible": true
+  },
+  "linkedPassiveId": "herbalism",
+  "castSoundVolume": 0.2,
+  "castSound": "/Sound Files/RustlingSkill.mp3",
+  "basePowerMax": 12,
+  "powerPerLevelMax": 2
+}

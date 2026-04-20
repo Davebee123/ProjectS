@@ -1,0 +1,9 @@
+{
+  "id": "genesis_damage_multiplier",
+  "label": "Genesis Damage Multiplier",
+  "category": "damage",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

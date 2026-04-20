@@ -1,326 +1,1566 @@
 {
   "version": "1.0.0",
-  "exportedAt": "2026-03-18T19:37:37.226Z",
+  "exportedAt": "2026-04-20T13:45:32.276Z",
   "tags": {
     "activityTags": [
       {
-        "id": "tree",
-        "label": "Tree",
-        "description": "Woodcutting activities",
-        "color": "#415236"
+        "id": "bushes",
+        "label": "Bushes",
+        "description": "Bushes",
+        "color": "#555555"
+      },
+      {
+        "id": "enemy",
+        "label": "Enemy",
+        "description": "Hostile interactables that can be targeted by combat abilities.",
+        "color": "#a72727"
+      },
+      {
+        "id": "friendly",
+        "label": "Friendly",
+        "description": "Allied companion interactables that can fight hostile interactables.",
+        "color": "#4f6d8a"
+      },
+      {
+        "id": "misc",
+        "label": "Misc",
+        "description": "Misc",
+        "color": "#92b5c3"
+      },
+      {
+        "id": "npc",
+        "label": "NPC",
+        "description": "An NPC",
+        "color": "#808080"
+      },
+      {
+        "id": "trees",
+        "label": "Trees",
+        "description": "Trees",
+        "color": "#555555"
       }
     ],
     "abilityTags": [
       {
-        "id": "chop",
-        "label": "Chop",
-        "description": "Chopping abilities"
+        "id": "bushes",
+        "label": "Bushes",
+        "description": "Skills for bushes"
+      },
+      {
+        "id": "one_hand_sword",
+        "label": "One-Hand Sword",
+        "description": "Skills for One-Handed Swords"
       }
     ]
   },
   "storageKeys": [],
-  "statusEffects": [],
+  "statusEffects": [
+    {
+      "id": "parry",
+      "name": "Parry",
+      "description": "The next instance of damage deals less damage",
+      "removalType": "timed",
+      "durationMs": 4000,
+      "statModifiers": [
+        {
+          "stat": "damageReduction",
+          "operation": "add",
+          "value": 5
+        }
+      ],
+      "stackable": false,
+      "maxStacks": 1,
+      "color": "#64e141",
+      "eventHooks": [],
+      "folder": "Buffs"
+    },
+    {
+      "id": "stunned",
+      "name": "Stunned",
+      "description": "You are stunned.",
+      "removalType": "timed",
+      "durationMs": 2000,
+      "statModifiers": [],
+      "stackable": false,
+      "maxStacks": 1,
+      "color": "#b84000",
+      "eventHooks": [],
+      "preventsWeaponAbilities": true,
+      "folder": "Debuffs"
+    }
+  ],
   "items": [
     {
-      "id": "amber_band",
-      "name": "Amber Band",
-      "description": "A ring of hardened amber. Hums with faint energy.",
-      "slot": "offHand",
-      "stackable": false,
-      "stats": {
-        "energyRegen": 1,
-        "energyCostMultiplier": 0.95
-      },
-      "eventHooks": [],
-      "folder": "accessories"
-    },
-    {
-      "id": "cloth_tunic",
-      "name": "Cloth Tunic",
-      "description": "A simple cloth tunic.",
-      "slot": "chest",
-      "stackable": false,
-      "stats": {
-        "defense": 3
-      },
-      "eventHooks": [],
-      "folder": "armor"
-    },
-    {
-      "id": "log",
-      "name": "Logs",
-      "description": "Rough-cut logs from a felled tree.",
-      "stackable": true,
-      "stats": {},
-      "eventHooks": [],
-      "folder": "resources"
-    },
-    {
-      "id": "rusty_hatchet",
-      "name": "Rusty Hatchet",
-      "description": "A basic hatchet. Better than nothing.",
-      "slot": "mainHand",
+      "id": "agri_farmer_s_blade",
+      "name": "Agri-Farmer's Blade",
+      "description": "A blade used to cut grass and fend off danger.",
+      "rarity": "common",
+      "inventoryCategory": "weapons",
       "stackable": false,
       "stats": {
         "attack": 2,
-        "activityPowerMultiplier": 1.05,
-        "speedMultiplier": 0.94,
-        "energyCostMultiplier": 0.95
+        "attackTags": [
+          "bushes",
+          "trees"
+        ]
       },
       "eventHooks": [],
-      "folder": "tools"
+      "slot": "mainHand",
+      "folder": "Weapons"
     },
     {
-      "id": "sap",
-      "name": "Tree Sap",
-      "description": "Sticky sap harvested from tree bark.",
+      "id": "backpack",
+      "name": "Agri-Farmer's Backpack",
+      "description": "A backpack used to store farming supplies and harvested goods",
+      "rarity": "common",
+      "inventoryCategory": "misc",
+      "stackable": false,
+      "stats": {
+        "backpackSlots": 10
+      },
+      "eventHooks": [],
+      "slot": "back",
+      "folder": "equipment"
+    },
+    {
+      "id": "fae_berry",
+      "name": "Fae Berry",
+      "description": "A bright red berry that is known to have healing properties. It cannot be eaten raw.",
+      "rarity": "common",
+      "inventoryCategory": "materials",
       "stackable": true,
       "stats": {},
       "eventHooks": [],
       "folder": "resources"
     }
   ],
+  "itemClasses": [
+    {
+      "id": "cloak",
+      "label": "Cloak",
+      "slot": "back",
+      "tags": [
+        "armor",
+        "back"
+      ]
+    },
+    {
+      "id": "dagger",
+      "label": "Dagger",
+      "slot": "mainHand",
+      "handedness": "one_hand",
+      "tags": [
+        "weapon",
+        "melee",
+        "blade"
+      ]
+    },
+    {
+      "id": "fey_rune",
+      "label": "Fey Rune",
+      "slot": "rune",
+      "tags": [
+        "rune"
+      ]
+    },
+    {
+      "id": "focus",
+      "label": "Focus",
+      "slot": "offHand",
+      "handedness": "one_hand",
+      "tags": [
+        "offhand",
+        "casting"
+      ]
+    },
+    {
+      "id": "heavy_armor",
+      "label": "Heavy Armor",
+      "slot": "chest",
+      "tags": [
+        "armor",
+        "heavy"
+      ]
+    },
+    {
+      "id": "light_armor",
+      "label": "Light Armor",
+      "slot": "chest",
+      "tags": [
+        "armor",
+        "light"
+      ]
+    },
+    {
+      "id": "mace",
+      "label": "Mace",
+      "slot": "mainHand",
+      "handedness": "one_hand",
+      "tags": [
+        "weapon",
+        "melee",
+        "blunt"
+      ]
+    },
+    {
+      "id": "one_handed_sword",
+      "label": "One-Handed Sword",
+      "slot": "mainHand",
+      "handedness": "one_hand",
+      "tags": [
+        "weapon",
+        "melee",
+        "blade"
+      ]
+    },
+    {
+      "id": "shield",
+      "label": "Shield",
+      "slot": "offHand",
+      "handedness": "one_hand",
+      "tags": [
+        "offhand",
+        "defense"
+      ]
+    },
+    {
+      "id": "staff",
+      "label": "Staff",
+      "slot": "mainHand",
+      "handedness": "two_hand",
+      "tags": [
+        "weapon",
+        "casting"
+      ]
+    },
+    {
+      "id": "two_handed_maul",
+      "label": "Two-Handed Maul",
+      "slot": "mainHand",
+      "handedness": "two_hand",
+      "tags": [
+        "weapon",
+        "melee",
+        "blunt",
+        "heavy"
+      ]
+    },
+    {
+      "id": "two_handed_rifle",
+      "label": "Two-Handed Rifle",
+      "slot": "mainHand",
+      "handedness": "two_hand",
+      "tags": [
+        "weapon",
+        "ranged",
+        "rifle"
+      ]
+    }
+  ],
+  "affixTables": [
+    {
+      "id": "armor_defense",
+      "label": "Armor Defense",
+      "description": "Defensive affixes for armor."
+    },
+    {
+      "id": "armor_general",
+      "label": "Armor General",
+      "description": "Affixes shared by armor pieces."
+    },
+    {
+      "id": "armor_resistance",
+      "label": "Armor Resistance",
+      "description": "Resistance affixes for armor and shields."
+    },
+    {
+      "id": "fey_rune_general",
+      "label": "Fey Rune General",
+      "description": "Affixes for fey rune equipment."
+    },
+    {
+      "id": "global_equipment",
+      "label": "Global Equipment",
+      "description": "Shared affix pool for all equippable gear."
+    },
+    {
+      "id": "offhand_general",
+      "label": "Offhand General",
+      "description": "Affixes for focuses and shields."
+    },
+    {
+      "id": "weapon_blade",
+      "label": "Weapon Blade",
+      "description": "Affixes for blades such as swords and daggers."
+    },
+    {
+      "id": "weapon_blunt",
+      "label": "Weapon Blunt",
+      "description": "Affixes for maces and mauls."
+    },
+    {
+      "id": "weapon_casting",
+      "label": "Weapon Casting",
+      "description": "Affixes for casting-focused weapons."
+    },
+    {
+      "id": "weapon_general",
+      "label": "Weapon General",
+      "description": "General weapon affixes for all weapon bases."
+    },
+    {
+      "id": "weapon_melee",
+      "label": "Weapon Melee",
+      "description": "Affixes shared by melee weapons."
+    },
+    {
+      "id": "weapon_ranged",
+      "label": "Weapon Ranged",
+      "description": "Affixes shared by ranged weapons."
+    },
+    {
+      "id": "weapon_rifle",
+      "label": "Weapon Rifle",
+      "description": "Affixes specific to rifles."
+    }
+  ],
+  "modifierStats": [
+    {
+      "id": "all_damage_multiplier",
+      "label": "All Damage Multiplier",
+      "category": "damage",
+      "supportsScope": false,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "backpack_slots",
+      "label": "Backpack Slots",
+      "category": "utility",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add"
+      ]
+    },
+    {
+      "id": "cast_time_multiplier",
+      "label": "Cast Time Multiplier",
+      "category": "timing",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "chaos_damage_multiplier",
+      "label": "Chaos Damage Multiplier",
+      "category": "damage",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "chaos_resist",
+      "label": "Chaos Resist",
+      "category": "resistance",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "energy",
+      "label": "Energy",
+      "category": "resource",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "energy_cost_multiplier",
+      "label": "Energy Cost Multiplier",
+      "category": "cost",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "energy_regen",
+      "label": "Energy Regen",
+      "category": "regen",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "entropy_damage_multiplier",
+      "label": "Entropy Damage Multiplier",
+      "category": "damage",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "entropy_resist",
+      "label": "Entropy Resist",
+      "category": "resistance",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "flat_weapon_damage",
+      "label": "Flat Weapon Damage",
+      "category": "damage",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add"
+      ]
+    },
+    {
+      "id": "genesis_damage_multiplier",
+      "label": "Genesis Damage Multiplier",
+      "category": "damage",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "genesis_resist",
+      "label": "Genesis Resist",
+      "category": "resistance",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "health",
+      "label": "Health",
+      "category": "resource",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "health_regen",
+      "label": "Health Regen",
+      "category": "regen",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "mana",
+      "label": "Mana",
+      "category": "resource",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "mana_cost_multiplier",
+      "label": "Mana Cost Multiplier",
+      "category": "cost",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "mana_regen",
+      "label": "Mana Regen",
+      "category": "regen",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "melee_damage_multiplier",
+      "label": "Melee Damage Multiplier",
+      "category": "damage",
+      "supportsScope": false,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "physical_resist",
+      "label": "Physical Resist",
+      "category": "resistance",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    },
+    {
+      "id": "ranged_damage_multiplier",
+      "label": "Ranged Damage Multiplier",
+      "category": "damage",
+      "supportsScope": false,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "recharge_rate_multiplier",
+      "label": "Recharge Rate Multiplier",
+      "category": "timing",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "string_damage_multiplier",
+      "label": "String Damage Multiplier",
+      "category": "damage",
+      "supportsScope": true,
+      "supportedOperations": [
+        "multiply"
+      ]
+    },
+    {
+      "id": "string_resist",
+      "label": "String Resist",
+      "category": "resistance",
+      "supportsScope": false,
+      "supportedOperations": [
+        "add",
+        "multiply"
+      ]
+    }
+  ],
+  "itemBases": [],
+  "affixes": [
+    {
+      "id": "forceful",
+      "kind": "prefix",
+      "nameTemplate": "Forceful",
+      "description": "Adds flat weapon damage.",
+      "tableId": "weapon_general",
+      "weight": 100,
+      "tiers": [
+        {
+          "tier": 1,
+          "itemLevelMin": 1,
+          "itemLevelMax": 10,
+          "rollMin": 1,
+          "rollMax": 2
+        },
+        {
+          "tier": 2,
+          "itemLevelMin": 11,
+          "itemLevelMax": 20,
+          "rollMin": 2,
+          "rollMax": 4
+        },
+        {
+          "tier": 3,
+          "itemLevelMin": 21,
+          "itemLevelMax": 30,
+          "rollMin": 4,
+          "rollMax": 6
+        },
+        {
+          "tier": 4,
+          "itemLevelMin": 31,
+          "itemLevelMax": 40,
+          "rollMin": 6,
+          "rollMax": 8
+        },
+        {
+          "tier": 5,
+          "itemLevelMin": 41,
+          "itemLevelMax": 50,
+          "rollMin": 8,
+          "rollMax": 10
+        }
+      ],
+      "modifiers": [
+        {
+          "statId": "flat_weapon_damage",
+          "operation": "add",
+          "valueSource": "rolled_value"
+        }
+      ],
+      "folder": "prefixes"
+    },
+    {
+      "id": "of_focus",
+      "kind": "suffix",
+      "nameTemplate": "of Focus",
+      "description": "Adds energy regeneration.",
+      "tableId": "global_equipment",
+      "weight": 100,
+      "tiers": [
+        {
+          "tier": 1,
+          "itemLevelMin": 1,
+          "itemLevelMax": 10,
+          "rollMin": 1,
+          "rollMax": 1
+        },
+        {
+          "tier": 2,
+          "itemLevelMin": 11,
+          "itemLevelMax": 20,
+          "rollMin": 1,
+          "rollMax": 2
+        },
+        {
+          "tier": 3,
+          "itemLevelMin": 21,
+          "itemLevelMax": 30,
+          "rollMin": 2,
+          "rollMax": 3
+        },
+        {
+          "tier": 4,
+          "itemLevelMin": 31,
+          "itemLevelMax": 40,
+          "rollMin": 3,
+          "rollMax": 4
+        },
+        {
+          "tier": 5,
+          "itemLevelMin": 41,
+          "itemLevelMax": 50,
+          "rollMin": 4,
+          "rollMax": 5
+        }
+      ],
+      "modifiers": [
+        {
+          "statId": "energy_regen",
+          "operation": "add",
+          "valueSource": "rolled_value"
+        }
+      ],
+      "folder": "suffixes"
+    }
+  ],
+  "itemQualityRules": [
+    {
+      "id": "default",
+      "label": "Default Equipment Quality Rules",
+      "bands": [
+        {
+          "itemLevelMin": 1,
+          "itemLevelMax": 10,
+          "qualityWeights": {
+            "common": 75,
+            "uncommon": 25,
+            "rare": 0
+          }
+        },
+        {
+          "itemLevelMin": 11,
+          "itemLevelMax": 20,
+          "qualityWeights": {
+            "common": 66,
+            "uncommon": 29,
+            "rare": 5
+          },
+          "rareAffixCountWeights": {
+            "2": 100
+          }
+        },
+        {
+          "itemLevelMin": 21,
+          "itemLevelMax": 30,
+          "qualityWeights": {
+            "common": 63,
+            "uncommon": 30,
+            "rare": 7
+          },
+          "rareAffixCountWeights": {
+            "2": 88,
+            "3": 12
+          }
+        },
+        {
+          "itemLevelMin": 31,
+          "itemLevelMax": 40,
+          "qualityWeights": {
+            "common": 60,
+            "uncommon": 31,
+            "rare": 9
+          },
+          "rareAffixCountWeights": {
+            "3": 78,
+            "4": 18,
+            "5": 4
+          }
+        },
+        {
+          "itemLevelMin": 41,
+          "itemLevelMax": 50,
+          "qualityWeights": {
+            "common": 57,
+            "uncommon": 31,
+            "rare": 12
+          },
+          "rareAffixCountWeights": {
+            "3": 28,
+            "4": 62,
+            "5": 10
+          }
+        }
+      ]
+    }
+  ],
+  "uniqueItems": [],
+  "itemSets": [],
   "skills": [
     {
-      "id": "downward_chop",
-      "name": "Downward Chop",
+      "id": "charge",
+      "name": "Charge",
       "kind": "active",
+      "system": "combat",
+      "usableByInteractables": true,
       "activityTags": [
-        "tree"
-      ],
-      "abilityTags": [
-        "chop"
-      ],
-      "linkedPassiveId": "treecutting",
-      "baseDurationMs": 4000,
-      "baseEnergyCost": 15,
-      "basePower": 10,
-      "powerPerLevel": 2,
-      "baseXpToNext": 25,
-      "xpScaling": 1.18,
-      "barColor": "#415236",
-      "accentColor": "#678752",
-      "description": "Unlocks at Treecutting Lv 3. Bonus arms after 3 successful Upward Chops.",
-      "unlockCondition": "skill(\"treecutting\").level >= 3",
-      "folder": "active"
-    },
-    {
-      "id": "side_chop",
-      "name": "Side Chop",
-      "kind": "active",
-      "activityTags": [
-        "tree"
-      ],
-      "abilityTags": [
-        "chop"
-      ],
-      "linkedPassiveId": "treecutting",
-      "baseDurationMs": 1000,
-      "baseEnergyCost": 11,
-      "basePower": 7,
-      "powerPerLevel": 1,
-      "baseXpToNext": 25,
-      "xpScaling": 1.18,
-      "barColor": "#415236",
-      "accentColor": "#678752",
-      "description": "Unlocks at Treecutting Lv 5.",
-      "unlockCondition": "skill(\"treecutting\").level >= 5",
-      "folder": "active"
-    },
-    {
-      "id": "treecutting",
-      "name": "Treecutting",
-      "kind": "passive",
-      "activityTags": [
-        "tree"
+        "enemy"
       ],
       "abilityTags": [],
-      "baseDurationMs": 0,
-      "baseEnergyCost": 0,
-      "basePower": 0,
-      "powerPerLevel": 0,
-      "baseXpToNext": 30,
-      "xpScaling": 1.18,
-      "barColor": "#415236",
-      "accentColor": "#678752",
-      "description": "Passive efficiency for tree actions.",
-      "folder": "passive"
-    },
-    {
-      "id": "upward_chop",
-      "name": "Upward Chop",
-      "kind": "active",
-      "activityTags": [
-        "tree"
-      ],
-      "abilityTags": [
-        "chop"
-      ],
-      "linkedPassiveId": "treecutting",
-      "baseDurationMs": 2000,
-      "baseEnergyCost": 12,
+      "baseDurationMs": 4000,
+      "baseEnergyCost": 10,
       "basePower": 5,
       "powerPerLevel": 1,
       "baseXpToNext": 25,
       "xpScaling": 1.18,
-      "barColor": "#415236",
-      "accentColor": "#678752",
-      "description": "Auto-cast opener for tree damage.",
+      "barColor": "#ff5c5c",
+      "accentColor": "#ff0505",
+      "description": "Charge Ability for Threadhorn",
+      "perkMilestones": [],
+      "effects": [
+        {
+          "id": "effect_1",
+          "trigger": "on_hit",
+          "target": "target",
+          "type": "apply_status",
+          "value": -2,
+          "statusEffectId": "stunned"
+        }
+      ],
+      "usageProfile": {
+        "castMode": "cast",
+        "targetPattern": "single",
+        "usageContext": "combat"
+      },
+      "folder": "Enemy Combat"
+    },
+    {
+      "id": "forward_slash",
+      "name": "Forward Slash",
+      "kind": "active",
+      "system": "combat",
+      "usableByInteractables": false,
+      "activityTags": [
+        "enemy"
+      ],
+      "abilityTags": [
+        "one_hand_sword"
+      ],
+      "baseDurationMs": 2000,
+      "baseEnergyCost": 15,
+      "basePower": 5,
+      "powerPerLevel": 1,
+      "baseXpToNext": 50,
+      "xpScaling": 1.18,
+      "barColor": "#9e9e9e",
+      "accentColor": "#c9c9c9",
+      "description": "An advancing strike with your sword",
+      "perkMilestones": [],
+      "hitSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_ForwardSlash.wav",
+      "usageProfile": {
+        "castMode": "cast",
+        "targetPattern": "single",
+        "usageContext": "combat",
+        "weaponRequirement": "One-Handed Sword"
+      },
+      "hitSoundVolume": 0.2,
+      "folder": "Combat"
+    },
+    {
+      "id": "gore",
+      "name": "Gore",
+      "kind": "active",
+      "system": "combat",
+      "usableByInteractables": true,
+      "activityTags": [
+        "enemy"
+      ],
+      "abilityTags": [],
+      "baseDurationMs": 2000,
+      "baseEnergyCost": 10,
+      "basePower": 10,
+      "powerPerLevel": 1,
+      "baseXpToNext": 25,
+      "xpScaling": 1.18,
+      "barColor": "#555555",
+      "accentColor": "#777777",
+      "description": "An attack for the Threadhorn",
+      "perkMilestones": [],
+      "basePowerMax": 15,
+      "usageProfile": {
+        "castMode": "cast",
+        "targetPattern": "single",
+        "usageContext": "combat"
+      },
+      "castSound": "/Sound Files/Skills/Interactable Sounds/ThreadhornAttack.mp3",
+      "hitSound": "/Sound Files/Skills/Weapon Skills/Getting Hit.mp3",
+      "hitSoundVolume": 0.225,
+      "castSoundVolume": 0.1,
+      "folder": "active"
+    },
+    {
+      "id": "herbalism",
+      "name": "Herbalism",
+      "kind": "passive",
+      "system": "gathering",
+      "usableByInteractables": false,
+      "activityTags": [],
+      "abilityTags": [
+        "bushes"
+      ],
+      "baseDurationMs": 1400,
+      "baseEnergyCost": 10,
+      "basePower": 5,
+      "powerPerLevel": 1,
+      "baseXpToNext": 25,
+      "xpScaling": 1.18,
+      "barColor": "#17644d",
+      "accentColor": "#17644d",
+      "description": "The art of gathering herbs.",
+      "perkMilestones": [],
+      "folder": "passive"
+    },
+    {
+      "id": "one_hand_swords",
+      "name": "One-Hand Swords",
+      "kind": "passive",
+      "system": "combat",
+      "usableByInteractables": false,
+      "activityTags": [],
+      "abilityTags": [],
+      "baseDurationMs": 1400,
+      "baseEnergyCost": 10,
+      "basePower": 5,
+      "powerPerLevel": 1,
+      "baseXpToNext": 100,
+      "xpScaling": 1.25,
+      "barColor": "#555555",
+      "accentColor": "#777777",
+      "description": "",
+      "perkMilestones": [],
+      "folder": "passive"
+    },
+    {
+      "id": "parry",
+      "name": "Parry",
+      "kind": "active",
+      "system": "combat",
+      "usableByInteractables": false,
+      "activityTags": [
+        "enemy"
+      ],
+      "abilityTags": [
+        "one_hand_sword"
+      ],
+      "baseDurationMs": 2000,
+      "baseEnergyCost": 25,
+      "basePower": 0,
+      "powerPerLevel": 0,
+      "baseXpToNext": 50,
+      "xpScaling": 1.18,
+      "barColor": "#555555",
+      "accentColor": "#777777",
+      "description": "You parry the attack with your sword",
+      "perkMilestones": [],
+      "basePowerMax": 0,
+      "powerPerLevelMax": 0,
+      "usageProfile": {
+        "castMode": "cast",
+        "targetPattern": "self",
+        "usageContext": "combat",
+        "weaponRequirement": "One-Handed Sword"
+      },
+      "effects": [
+        {
+          "id": "effect_1",
+          "trigger": "on_cast_complete",
+          "target": "self",
+          "type": "apply_status",
+          "statusEffectId": "parry"
+        }
+      ],
+      "castSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_Parry.wav",
+      "castSoundVolume": 0.6,
+      "castSoundOnComplete": true,
+      "disableAutoCast": true,
+      "folder": "Combat"
+    },
+    {
+      "id": "rustle",
+      "name": "Rustle",
+      "kind": "active",
+      "system": "gathering",
+      "usableByInteractables": false,
+      "activityTags": [
+        "bushes"
+      ],
+      "abilityTags": [
+        "bushes"
+      ],
+      "baseDurationMs": 3000,
+      "baseEnergyCost": 20,
+      "basePower": 10,
+      "powerPerLevel": 1,
+      "baseXpToNext": 25,
+      "xpScaling": 1.18,
+      "barColor": "#17644d",
+      "accentColor": "#0c8863",
+      "description": "You attempt to rustle through a bush.",
+      "perkMilestones": [],
+      "usageProfile": {
+        "castMode": "cast",
+        "targetPattern": "single",
+        "usageContext": "non_combat",
+        "interruptible": true
+      },
+      "linkedPassiveId": "herbalism",
+      "castSoundVolume": 0.2,
+      "castSound": "/Sound Files/RustlingSkill.mp3",
+      "basePowerMax": 12,
+      "powerPerLevelMax": 2,
+      "folder": "active"
+    },
+    {
+      "id": "stab",
+      "name": "Stab",
+      "kind": "active",
+      "system": "combat",
+      "usableByInteractables": true,
+      "activityTags": [
+        "enemy"
+      ],
+      "abilityTags": [],
+      "baseDurationMs": 4000,
+      "baseEnergyCost": 10,
+      "basePower": 2,
+      "powerPerLevel": 1,
+      "baseXpToNext": 25,
+      "xpScaling": 1.18,
+      "barColor": "#555555",
+      "accentColor": "#777777",
+      "description": "",
+      "perkMilestones": [],
+      "usageProfile": {
+        "castMode": "cast",
+        "targetPattern": "single",
+        "usageContext": "combat"
+      },
+      "hitSound": "/Sound Files/OneHandSword_WeaponSkill_Stab.wav",
+      "hitSoundVolume": 0.2,
+      "effects": [
+        {
+          "id": "effect_1",
+          "trigger": "on_hit",
+          "target": "target",
+          "type": "show_emote",
+          "emoteChance": 50,
+          "durationMs": 3000,
+          "customText": "Take that!"
+        }
+      ],
+      "basePowerMax": 3,
+      "disableAutoCast": true,
+      "castSoundOnComplete": true,
       "folder": "active"
     }
   ],
-  "combos": [
-    {
-      "id": "upward_to_downward",
-      "fromSkillId": "upward_chop",
-      "toSkillId": "downward_chop",
-      "activityTag": "tree",
-      "windowMs": 5000,
-      "timeMultiplier": 0.5,
-      "energyMultiplier": 0.5,
-      "label": "UPWARD -> DOWNWARD",
-      "folder": "tree"
-    }
-  ],
+  "combos": [],
   "interactables": [
     {
-      "id": "birch_tree",
-      "name": "Birch Tree",
-      "description": "A tall birch. Harder to fell than oak.",
-      "activityTag": "tree",
+      "id": "faeberry_bush",
+      "name": "Faeberry Bush",
+      "description": "A bush that grows glowing red berries.",
+      "activityTag": "bushes",
+      "abilityBehaviorMode": "priority",
       "allowedAbilityTags": [
-        "chop"
-      ],
-      "requiredLevel": 5,
-      "effectiveHealth": {
-        "min": 130,
-        "max": 176
-      },
-      "barColor": "#5a4d3f",
-      "accentColor": "#8c7459",
-      "meterLabel": "Logs",
-      "lootTable": [
-        {
-          "id": "lt_birch_log",
-          "itemId": "log",
-          "quantityMin": 8,
-          "quantityMax": 16,
-          "dropChance": 100,
-          "weight": 1
-        },
-        {
-          "id": "lt_birch_sap",
-          "itemId": "sap",
-          "quantityMin": 1,
-          "quantityMax": 3,
-          "dropChance": 100,
-          "weight": 1
-        },
-        {
-          "id": "lt_birch_amber",
-          "itemId": "amber_band",
-          "quantityMin": 1,
-          "quantityMax": 1,
-          "dropChance": 15,
-          "weight": 1
-        }
-      ],
-      "xpRewards": [],
-      "abilities": [],
-      "onInteractEffects": [],
-      "onDestroyEffects": [],
-      "folder": "trees"
-    },
-    {
-      "id": "oak_tree",
-      "name": "Oak Tree",
-      "description": "A sturdy oak. Yields logs and sap when felled.",
-      "activityTag": "tree",
-      "allowedAbilityTags": [
-        "chop"
+        "bushes"
       ],
       "requiredLevel": 1,
       "effectiveHealth": {
-        "min": 92,
-        "max": 132
+        "min": 40,
+        "max": 50
       },
-      "barColor": "#524436",
-      "accentColor": "#796652",
-      "meterLabel": "Logs",
+      "barColor": "#17644d",
+      "accentColor": "#005731",
+      "meterLabel": "Integrity",
       "lootTable": [
         {
-          "id": "lt_oak_log",
-          "itemId": "log",
-          "quantityMin": 8,
-          "quantityMax": 16,
-          "dropChance": 100,
-          "weight": 1
-        },
-        {
-          "id": "lt_oak_sap",
-          "itemId": "sap",
+          "id": "lt_1776042055328_1",
+          "dropType": "item",
+          "itemId": "fae_berry",
           "quantityMin": 1,
-          "quantityMax": 3,
+          "quantityMax": 2,
           "dropChance": 100,
           "weight": 1
         },
         {
-          "id": "lt_oak_amber",
-          "itemId": "amber_band",
+          "id": "lt_1776042071032_2",
+          "dropType": "item",
+          "itemId": "backpack",
           "quantityMin": 1,
           "quantityMax": 1,
-          "dropChance": 15,
-          "weight": 1
+          "dropChance": 100,
+          "weight": 2,
+          "condition": "NOT player.has_item(\"backpack\")"
         }
       ],
+      "xpRewards": [],
+      "formRules": [],
+      "abilities": [],
+      "onInteractEffects": [],
+      "onDestroyEffects": [],
+      "image": "/Interactable Images/Faeberry  Bush.png",
+      "folder": "nodes"
+    },
+    {
+      "id": "rylor",
+      "name": "Rylor",
+      "description": "A fellow agri-farmer commissioned by the town of Lyoris. One of your good friends.",
+      "activityTag": "npc",
+      "abilityBehaviorMode": "priority",
+      "allowedAbilityTags": [],
+      "requiredLevel": 0,
+      "effectiveHealth": {
+        "min": 100,
+        "max": 100
+      },
+      "barColor": "#7a7a7a",
+      "accentColor": "#d7d14a",
+      "meterLabel": "Favor",
+      "lootTable": [],
       "xpRewards": [],
       "abilities": [],
       "onInteractEffects": [],
       "onDestroyEffects": [],
-      "image": "/oak-tree.png",
-      "folder": "trees"
+      "npc": {
+        "portraitImage": "/Interactable Images/Rylor.png",
+        "dialogues": [
+          {
+            "dialogueId": "rylor_clear_the_danger_complete",
+            "condition": "room.id == \"room_4_4\" AND player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5"
+          },
+          {
+            "dialogueId": "rylor_farmstead_1",
+            "condition": "room.id == \"room_4_4\" AND player.hasCompletedQuest(\"find_your_backpack\") AND NOT player.hasQuest(\"clear_the_danger\")"
+          },
+          {
+            "dialogueId": "rylor_backpack_quest",
+            "condition": "player.hasQuest(\"find_your_backpack\") AND NOT player.hasCompletedQuest(\"find_your_backpack\") AND player.has_item(\"backpack\")"
+          },
+          {
+            "dialogueId": "rylor_intro",
+            "condition": "NOT player.has_quest(\"find_your_backpack\")"
+          },
+          {
+            "dialogueId": "rylor_instructions",
+            "condition": "player.hasQuest(\"find_your_backpack\") AND NOT player.hasCompletedQuest(\"find_your_backpack\") AND NOT player.has_item(\"backpack\")"
+          }
+        ]
+      },
+      "image": "/Interactable Images/Rylor.png",
+      "imagePositionY": 25,
+      "formRules": [],
+      "folder": "npcs"
+    },
+    {
+      "id": "rylor_combat",
+      "name": "Rylor",
+      "description": "Your Agri-Farmer friend",
+      "activityTag": "friendly",
+      "abilityBehaviorMode": "priority",
+      "allowedAbilityTags": [],
+      "requiredLevel": 1,
+      "effectiveHealth": {
+        "min": 150,
+        "max": 200
+      },
+      "barColor": "#3f627f",
+      "accentColor": "#6e9fc8",
+      "meterLabel": "HP",
+      "lootTable": [],
+      "xpRewards": [],
+      "formRules": [
+        {
+          "id": "rylor_returns_to_dialogue",
+          "condition": "player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5",
+          "interactableId": "rylor"
+        }
+      ],
+      "abilities": [
+        {
+          "skillId": "stab",
+          "castTimeMs": 1800,
+          "cooldownMs": 8000,
+          "targetMode": "lowest_hp_enemy",
+          "resistChancePerLevel": 5
+        }
+      ],
+      "onInteractEffects": [],
+      "onDestroyEffects": [],
+      "imagePositionX": 50,
+      "imagePositionY": 25,
+      "image": "/Interactable Images/Rylor.png",
+      "folder": "Companions"
+    },
+    {
+      "id": "threadhorn_staglet",
+      "name": "Threadhorn Staglet",
+      "description": "A young threadhorn.",
+      "activityTag": "enemy",
+      "abilityBehaviorMode": "priority",
+      "allowedAbilityTags": [
+        "one_hand_sword"
+      ],
+      "requiredLevel": 1,
+      "effectiveHealth": {
+        "min": 30,
+        "max": 50
+      },
+      "barColor": "#A72727",
+      "accentColor": "#A72727",
+      "meterLabel": "HP",
+      "lootTable": [],
+      "xpRewards": [],
+      "abilities": [
+        {
+          "cooldownMs": 4000,
+          "resistChancePerLevel": 5,
+          "skillId": "gore"
+        }
+      ],
+      "onInteractEffects": [],
+      "onDestroyEffects": [],
+      "imagePositionX": 50,
+      "imagePositionY": 50,
+      "image": "/Interactable Images/ThreadhornStaglet.png",
+      "formRules": [],
+      "sounds": {
+        "onDestroy": "/Sound Files/Skills/Interactable Sounds/DeathStag.mp3"
+      },
+      "folder": "Enemies"
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "rylor_backpack_quest",
+      "name": "Rylor_Backpack Quest",
+      "description": "",
+      "startNodeId": "rylor_backpack_quest_start",
+      "nodes": [
+        {
+          "id": "rylor_backpack_quest_start",
+          "text": "You found it! And quick timing, too. Another hour longer of searching and I'm not sure we'd make it back in one piece! Let's start heading back to town.\n\nClick the square to the right of our current area on the minimap to travel to it. ",
+          "options": [
+            {
+              "id": "rylor_backpack_quest_start_option_1",
+              "text": "Lets head out!",
+              "closeDialogue": true
+            }
+          ],
+          "onEnterEffects": [
+            {
+              "type": "complete_quest",
+              "questId": "find_your_backpack"
+            }
+          ]
+        }
+      ],
+      "folder": "Rylor"
+    },
+    {
+      "id": "rylor_clear_the_danger_complete",
+      "name": "Rylor - Clear the Danger Complete",
+      "description": "Rylor returns to dialogue after helping the player clear the farmstead threat.",
+      "startNodeId": "rylor_clear_the_danger_complete_start",
+      "nodes": [
+        {
+          "id": "rylor_clear_the_danger_complete_start",
+          "text": "That should hold the Threadhorns back for now. The Farmstead can breathe again, at least for a little while.",
+          "options": [
+            {
+              "id": "rylor_clear_the_danger_complete_start_option_1",
+              "text": "Glad you're safe.",
+              "closeDialogue": true,
+              "effects": [
+                {
+                  "type": "complete_quest",
+                  "questId": "clear_the_danger"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "folder": "Rylor"
+    },
+    {
+      "id": "rylor_farmstead_1",
+      "name": "Rylor_Farmstead_1",
+      "description": "",
+      "startNodeId": "rylor_farmstead_1_start",
+      "nodes": [
+        {
+          "id": "rylor_farmstead_1_start",
+          "text": "[narration] Rylor smells the air. His Bioboard whirrs with anticipatory energy [/narration] The air stirs with unrest. I fear we are in the company of hostile fauna. [narration] Rylor readies his sword [narration].",
+          "options": [],
+          "continueLabel": "Continue",
+          "nextNodeId": "rylor_farmstead_1_node_2"
+        },
+        {
+          "id": "rylor_farmstead_1_node_2",
+          "text": "[narration] He smiles at you and one of his eyebrows juts[/narration].  You know how to use your sword, right? Just start swinging!",
+          "options": [
+            {
+              "id": "rylor_farmstead_1_node_2_option_1",
+              "text": "For Lyoris!",
+              "closeDialogue": true,
+              "effects": [
+                {
+                  "type": "spawn_interactable",
+                  "interactableId": "threadhorn_staglet"
+                },
+                {
+                  "type": "grant_quest",
+                  "questId": "clear_the_danger"
+                },
+                {
+                  "type": "transform_interactable",
+                  "target": "bearer",
+                  "interactableId": "rylor_combat"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "folder": "Rylor"
+    },
+    {
+      "id": "rylor_instructions",
+      "name": "rylor_instructions",
+      "description": "While the player is on the quest 'Find Your Backpack', if you talk to Rylor during this quest, he will point you towards exploring.",
+      "startNodeId": "rylor_instructions_start",
+      "nodes": [
+        {
+          "id": "rylor_instructions_start",
+          "text": "Hit the \"Explore\" button on the top right of your screen to explore this area. Perhaps you left your backpack somewhere while gathering berries?",
+          "options": [
+            {
+              "id": "rylor_instructions_start_option_1",
+              "text": "Roger that.",
+              "closeDialogue": true
+            }
+          ]
+        }
+      ],
+      "folder": "Rylor"
+    },
+    {
+      "id": "rylor_intro",
+      "name": "Rylor Intro",
+      "description": "",
+      "startNodeId": "rylor_intro_start",
+      "nodes": [
+        {
+          "id": "rylor_intro_start",
+          "text": "Who knew cutting dead plants could work up such an appetite? [narration] He lets out an exacerbated sigh as he picks up his backpack [/narration].",
+          "options": [],
+          "nextNodeId": "rylor_intro_node_2",
+          "continueLabel": "Continue"
+        },
+        {
+          "id": "rylor_intro_node_2",
+          "text": "The sky is tired. We should head back before it gets too dangerous out here. [narration] He looks around, and then looks at you, confused. [/narration]. Where did you leave your backpack?",
+          "options": [
+            {
+              "id": "rylor_intro_node_2_option_1",
+              "text": "I'm not too sure.",
+              "nextNodeId": "rylor_intro_node_3"
+            }
+          ],
+          "continueLabel": "Continue",
+          "onEnterEffects": [],
+          "nextNodeId": "rylor_intro_node_3"
+        },
+        {
+          "id": "rylor_intro_node_3",
+          "text": "Ha! And I thought I was delirious. Well, we don't want you returning to Virelios without any haul, so let's try to find it.\n\nHit the [color=#FFA74E] Explore [/color] button on the top right of your screen to navigate around this area. I'm sure it will come up sooner rather than later.",
+          "options": [
+            {
+              "id": "rylor_intro_node_3_option_1",
+              "text": "Will do!",
+              "closeDialogue": true,
+              "effects": [
+                {
+                  "type": "grant_quest",
+                  "questId": "find_your_backpack"
+                }
+              ]
+            }
+          ],
+          "onEnterEffects": []
+        }
+      ],
+      "folder": "Rylor"
+    }
+  ],
+  "cutscenes": [
+    {
+      "id": "intro_cutscene",
+      "name": "Intro Cutscene",
+      "description": "",
+      "startStepId": "intro_cutscene_intro",
+      "steps": [
+        {
+          "id": "intro_cutscene_intro",
+          "kind": "text",
+          "text": "The air smells of both life and death. The sky, struggling to stay awake, shines a dim glint on the farmland. It's been a long day of work, and it's time to return to a familiar palce.",
+          "onContinueEffects": []
+        }
+      ],
+      "folder": "ungrouped"
+    }
+  ],
+  "quests": [
+    {
+      "id": "clear_the_danger",
+      "name": "Clear The Danger",
+      "description": "Rylor wants you to clear the area of danger to ensure the safety of Lyoris.",
+      "category": "main_story",
+      "level": 1,
+      "objectives": [
+        {
+          "id": "clear_the_danger_objective_1",
+          "title": "Clear the Hostile Fauna",
+          "description": "Rylor wants you to clear the area of danger to ensure the safety of Lyoris.",
+          "progress": {
+            "kind": "structured",
+            "label": "Progress",
+            "source": {
+              "type": "interactable_defeat_count",
+              "interactableId": "threadhorn_staglet"
+            },
+            "requiredValue": 5
+          }
+        }
+      ],
+      "completedDescription": "You have successfully dispatched of the threatened Threadhorns.",
+      "folder": "Main Story"
+    },
+    {
+      "id": "find_your_backpack",
+      "name": "Find Your Backpack",
+      "description": "Rylor wants you to Explore around Lyorin Outskirts to try to find your backpack.",
+      "category": "main_story",
+      "unlockCondition": "player.has_quest(\"find_your_backpack\")",
+      "level": 1,
+      "objectives": [
+        {
+          "id": "find_your_backpack_objective_1",
+          "title": "Find Your Backpack",
+          "description": "Rylor wants you to Explore around Lyorin Outskirts to try to find your backpack.",
+          "progress": {
+            "kind": "structured",
+            "label": "Progress",
+            "source": {
+              "type": "item_count",
+              "itemId": "backpack"
+            },
+            "requiredValue": 1
+          }
+        },
+        {
+          "id": "find_your_backpack_objective_2",
+          "title": "Talk to Rylor",
+          "description": "You have found your backpack. Talk to Rylor when you're ready.",
+          "progress": {
+            "kind": "freeform",
+            "text": "Talk to Rylor"
+          }
+        }
+      ],
+      "folder": "main_story"
     }
   ],
   "world": {
-    "id": "verdant_world",
-    "name": "Verdant Outskirts",
-    "gridWidth": 5,
-    "gridHeight": 5,
-    "startingRoomId": "verdant_outskirts",
+    "id": "game_world",
+    "name": "Sylorin-Beta",
+    "gridWidth": 10,
+    "gridHeight": 10,
+    "startingRoomId": "room_3_4",
     "defaultSlotCount": 4,
     "startingItemIds": [
-      "rusty_hatchet",
-      "cloth_tunic"
+      "agri_farmer_s_blade"
     ],
+    "startingEquipmentBaseIds": [],
+    "startingCutsceneId": "intro_cutscene",
     "rooms": [
       {
-        "id": "verdant_outskirts",
-        "name": "Verdant Outskirts",
-        "description": "A sun-dappled clearing at the edge of the forest. Trees of all sizes grow here.",
-        "gridX": 2,
-        "gridY": 2,
+        "id": "room_3_4",
+        "name": "Lyorin Outskirts",
+        "description": "You are surrounded by what farmland has survived the blight. You see the faint glow of your hometown, Lyoris, in the distance, and hear the hum of irrigation pumps working overtime to salvage the crops that still remain.",
+        "gridX": 3,
+        "gridY": 4,
         "slotCount": 4,
         "spawnTable": [
           {
-            "id": "sp_oak",
-            "interactableId": "oak_tree",
+            "id": "st_1776042651268_0",
+            "interactableId": "faeberry_bush",
             "spawnChance": 100,
             "minCount": 1,
-            "maxCount": 3
-          },
-          {
-            "id": "sp_birch",
-            "interactableId": "birch_tree",
-            "spawnChance": 30,
-            "minCount": 1,
-            "maxCount": 1
+            "maxCount": 3,
+            "neverRespawnAfterDefeat": false,
+            "condition": "player.has_quest(\"find_your_backpack\")"
           }
         ],
-        "fixedInteractables": [],
+        "fixedInteractables": [
+          {
+            "interactableId": "rylor"
+          }
+        ],
+        "specialConnections": [
+          {
+            "targetRoomId": "room_4_4",
+            "label": "Lyorin Farmstead",
+            "condition": "player.hasCompletedQuest(\"find_your_backpack\")"
+          }
+        ],
+        "seedOverrides": [],
+        "backgroundMusic": "/Sound Files/Background Music Project S.mp3",
+        "backgroundImage": "/Background Images/BackgroundLyorinOutskirts.png"
+      },
+      {
+        "id": "room_4_4",
+        "name": "Lyorin Farmstead",
+        "description": "The farmland here juxtaposes with the threatening blight that encroaches on its fauna. Animals tend to these plants as their last bastion of safety and survival. Another dance of life and death.",
+        "gridX": 4,
+        "gridY": 4,
+        "slotCount": 4,
+        "spawnTable": [
+          {
+            "id": "st_1776616269879_0",
+            "interactableId": "threadhorn_staglet",
+            "spawnChance": 100,
+            "minCount": 1,
+            "maxCount": 1,
+            "neverRespawnAfterDefeat": false,
+            "condition": "player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") < 5"
+          },
+          {
+            "id": "st_1776616283541_1",
+            "interactableId": "faeberry_bush",
+            "spawnChance": 50,
+            "minCount": 1,
+            "maxCount": 1,
+            "neverRespawnAfterDefeat": false
+          }
+        ],
+        "fixedInteractables": [
+          {
+            "interactableId": "rylor",
+            "condition": "NOT player.hasQuest(\"clear_the_danger\") OR player.hasCompletedQuest(\"clear_the_danger\") OR player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5"
+          },
+          {
+            "interactableId": "rylor_combat",
+            "condition": "player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") < 5"
+          }
+        ],
         "specialConnections": [],
-        "seedOverrides": []
+        "seedOverrides": [],
+        "backgroundMusic": "/Sound Files/Background Music Project S.mp3",
+        "backgroundImage": "/Background Images/BackgroundLyorinFarmstead.png",
+        "entryCondition": "player.hasCompletedQuest(\"find_your_backpack\")"
       }
     ]
   },
-  "recipes": []
+  "recipes": [],
+  "weathers": [
+    {
+      "id": "clear",
+      "name": "Clear",
+      "description": "Clear skies with good visibility.",
+      "icon": "☀",
+      "weight": 4,
+      "energyRegenMult": 1,
+      "manaRegenMult": 1,
+      "successChanceMod": 0,
+      "ambientSound": "/Sound Files/Weather/Nighttime Clearsky.mp3",
+      "ambientSoundVolume": 0.2,
+      "ambientSoundLoop": true
+    },
+    {
+      "id": "cloudy",
+      "name": "Cloudy",
+      "description": "Overcast skies with muted light.",
+      "icon": "☁",
+      "weight": 3,
+      "energyRegenMult": 1,
+      "manaRegenMult": 1.1,
+      "successChanceMod": 0
+    },
+    {
+      "id": "rainy",
+      "name": "Rainy",
+      "description": "Steady rainfall dampens the land.",
+      "icon": "🌧️",
+      "weight": 2,
+      "energyRegenMult": 0.85,
+      "manaRegenMult": 1.25,
+      "successChanceMod": -5,
+      "ambientSound": "/Sound Files/Weather/LightRain.mp3",
+      "ambientSoundVolume": 0.25,
+      "ambientSoundLoop": true
+    },
+    {
+      "id": "stormy",
+      "name": "Stormy",
+      "description": "Thunder and lightning rage overhead.",
+      "icon": "⛈",
+      "weight": 1,
+      "energyRegenMult": 0.7,
+      "manaRegenMult": 1.5,
+      "successChanceMod": -10,
+      "ambientSound": "/Sound Files/Weather/StormyWeather.wav",
+      "ambientSoundVolume": 0.3,
+      "ambientSoundLoop": true
+    }
+  ]
 }

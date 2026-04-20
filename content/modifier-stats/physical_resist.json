@@ -1,0 +1,10 @@
+{
+  "id": "physical_resist",
+  "label": "Physical Resist",
+  "category": "resistance",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "two_handed_rifle",
+  "label": "Two-Handed Rifle",
+  "slot": "mainHand",
+  "handedness": "two_hand",
+  "tags": [
+    "weapon",
+    "ranged",
+    "rifle"
+  ]
+}

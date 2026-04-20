@@ -1,56 +1,38 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { PageShell } from "../layout/PageShell";
 import { useProjectStore } from "../../stores/projectStore";
-import { useTagStore } from "../../stores/tagStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";
 import { useItemStore } from "../../stores/itemStore";
 import { useSkillStore } from "../../stores/skillStore";
 import { useStatusEffectStore } from "../../stores/statusEffectStore";
 import { useInteractableStore } from "../../stores/interactableStore";
-import { useComboStore } from "../../stores/comboStore";
 import { useWorldStore } from "../../stores/worldStore";
 import { useRecipeStore } from "../../stores/recipeStore";
-import { validateBundle, type ValidationIssue } from "../../../../shared/content/validation";
+import { useQuestStore } from "../../stores/questStore";
+import { useDialogueStore } from "../../stores/dialogueStore";
+import { useCutsceneStore } from "../../stores/cutsceneStore";
+import { useItemizationStore } from "../../stores/itemizationStore";
+import { saveBundleToContent, type RepoSyncResponse } from "../../api/repoSync";
+import { createBlankBundle } from "../../utils/createBlankBundle";
+import type { ValidationIssue } from "../../../../shared/content/validation";
 import type { GameContentBundle } from "../../../../shared/content/types";
-
-interface RepoSyncResponse {
-  ok: boolean;
-  message?: string;
-  issues?: ValidationIssue[];
-  bundle?: GameContentBundle;
-}
-
-function comparableBundleJson(bundle: GameContentBundle): string {
-  return JSON.stringify({
-    ...bundle,
-    exportedAt: "",
-  });
-}
-
-function useValidation(): ValidationIssue[] {
-  const { activityTags, abilityTags } = useTagStore();
-  const { storageKeys } = useStorageKeyStore();
-  const { items } = useItemStore();
-  const { skills } = useSkillStore();
-  const { statusEffects } = useStatusEffectStore();
-  const { interactables } = useInteractableStore();
-  const { combos } = useComboStore();
-  const { recipes } = useRecipeStore();
-  const { world } = useWorldStore();
-  const { exportBundle } = useProjectStore();
-
-  return useMemo(() => {
-    return validateBundle(exportBundle());
-  }, [activityTags, abilityTags, storageKeys, items, skills, statusEffects, interactables, combos, recipes, world, exportBundle]);
-}
+import { useBundleValidation } from "../../hooks/useBundleValidation";
+import { getComparableBundleSignature } from "../../utils/bundleSignature";
 
 export function ExportPage() {
-  const { exportBundle, downloadJson, importBundle, resetAllStores } = useProjectStore();
+  const {
+    exportBundle,
+    downloadJson,
+    importBundle,
+    resetAllStores,
+    markRepoLoaded,
+    markRepoSaved,
+  } = useProjectStore();
   const [preview, setPreview] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [repoStatus, setRepoStatus] = useState<string | null>(null);
   const [repoBusy, setRepoBusy] = useState(false);
-  const issues = useValidation();
+  const issues = useBundleValidation();
 
   const errors = issues.filter((i) => i.severity === "error");
   const warnings = issues.filter((i) => i.severity === "warning");
@@ -60,10 +42,22 @@ export function ExportPage() {
   const { skills } = useSkillStore();
   const { statusEffects } = useStatusEffectStore();
   const { interactables } = useInteractableStore();
-  const { combos } = useComboStore();
+  const { dialogues } = useDialogueStore();
+  const { cutscenes } = useCutsceneStore();
+  const { quests } = useQuestStore();
   const { recipes } = useRecipeStore();
   const { world } = useWorldStore();
   const { storageKeys } = useStorageKeyStore();
+  const {
+    itemClasses,
+    affixTables,
+    modifierStats,
+    itemBases,
+    affixes,
+    itemQualityRules,
+    uniqueItems,
+    itemSets,
+  } = useItemizationStore();
 
   const handlePreview = () => {
     const bundle = exportBundle();
@@ -90,6 +84,18 @@ export function ExportPage() {
     input.click();
   };
 
+  const handleStartBlankProject = () => {
+    const confirmed = window.confirm(
+      "Start from a blank project? This will replace the current in-browser editor state."
+    );
+    if (!confirmed) {
+      return;
+    }
+    importBundle(createBlankBundle());
+    setImportStatus("Blank project loaded locally. Use Save to content/ when ready.");
+    setTimeout(() => setImportStatus(null), 4000);
+  };
+
   const handleLoadFromContent = async () => {
     setRepoBusy(true);
     setRepoStatus(null);
@@ -101,7 +107,10 @@ export function ExportPage() {
         return;
       }
       const localBundle = exportBundle();
-      if (comparableBundleJson(localBundle) !== comparableBundleJson(payload.bundle)) {
+      if (
+        getComparableBundleSignature(localBundle) !==
+        getComparableBundleSignature(payload.bundle)
+      ) {
         const confirmed = window.confirm(
           "Local editor state differs from content/. Loading will replace your current in-browser changes. Continue?"
         );
@@ -111,6 +120,7 @@ export function ExportPage() {
         }
       }
       importBundle(payload.bundle);
+      markRepoLoaded(payload.bundle);
       const warningCount = payload.issues?.filter((issue) => issue.severity === "warning").length ?? 0;
       setRepoStatus(
         warningCount > 0
@@ -128,19 +138,13 @@ export function ExportPage() {
     setRepoBusy(true);
     setRepoStatus(null);
     try {
-      const response = await fetch("/api/content/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(exportBundle()),
-      });
-      const payload = (await response.json()) as RepoSyncResponse;
-      if (!response.ok) {
-        const firstError = payload.issues?.find((issue) => issue.severity === "error");
-        setRepoStatus(firstError?.message ?? payload.message ?? "Failed to save to content/");
+      const bundle = exportBundle();
+      const payload = await saveBundleToContent(bundle);
+      if (!payload.ok) {
+        setRepoStatus(payload.message ?? "Failed to save to content/");
         return;
       }
+      markRepoSaved(bundle);
       const warningCount = payload.issues?.filter((issue) => issue.severity === "warning").length ?? 0;
       setRepoStatus(
         warningCount > 0
@@ -193,12 +197,52 @@ export function ExportPage() {
             <span className="summary-label">Interactables</span>
           </div>
           <div className="summary-item">
-            <span className="summary-count">{combos.length}</span>
-            <span className="summary-label">Combos</span>
+            <span className="summary-count">{dialogues.length}</span>
+            <span className="summary-label">Dialogues</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{cutscenes.length}</span>
+            <span className="summary-label">Cutscenes</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{quests.length}</span>
+            <span className="summary-label">Quests</span>
           </div>
           <div className="summary-item">
             <span className="summary-count">{recipes.length}</span>
             <span className="summary-label">Recipes</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{itemClasses.length}</span>
+            <span className="summary-label">Item Classes</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{affixTables.length}</span>
+            <span className="summary-label">Affix Tables</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{modifierStats.length}</span>
+            <span className="summary-label">Modifier Stats</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{itemBases.length}</span>
+            <span className="summary-label">Item Bases</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{affixes.length}</span>
+            <span className="summary-label">Affixes</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{itemQualityRules.length}</span>
+            <span className="summary-label">Quality Rules</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{uniqueItems.length}</span>
+            <span className="summary-label">Unique Items</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-count">{itemSets.length}</span>
+            <span className="summary-label">Item Sets</span>
           </div>
           <div className="summary-item">
             <span className="summary-count">{world.rooms.length}</span>
@@ -272,9 +316,14 @@ export function ExportPage() {
         <p className="section-desc">
           Load an existing bundle snapshot to continue editing locally. Import replaces the current in-browser editor state.
         </p>
-        <button className="btn" onClick={handleImport}>
-          Import JSON File
-        </button>
+        <div className="button-row">
+          <button className="btn" onClick={handleImport}>
+            Import JSON File
+          </button>
+          <button className="btn" onClick={handleStartBlankProject}>
+            Start Blank Project
+          </button>
+        </div>
         {importStatus && <p className="status-msg">{importStatus}</p>}
       </section>
 

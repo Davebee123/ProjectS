@@ -1,5 +1,7 @@
 import { useGame } from "../../GameContext";
 import { IconSlot } from "../shared/IconSlot";
+import { getBundle } from "../../data/loader";
+import { resolveEquipmentItem } from "../../data/bridge";
 import type { EquipmentSlot } from "../../state";
 
 const SLOT_ICONS: Record<EquipmentSlot, string> = {
@@ -36,6 +38,7 @@ const SLOT_LAYOUT: { slot: EquipmentSlot; label: string }[][] = [
 
 export function EquipmentGrid() {
   const { state, dispatch } = useGame();
+  const bundle = getBundle();
 
   return (
     <div className="equipment-grid">
@@ -43,19 +46,31 @@ export function EquipmentGrid() {
         <div key={ri} className="equipment-row">
           {row.map(({ slot, label }) => {
             const itemId = state.equipment[slot];
-            const itemName = itemId
-              ? state.inventory.find((i) => i.id === itemId)?.name
+            const itemInstance = itemId
+              ? state.inventoryEquipment.find((i) => i.instanceId === itemId)
+              : undefined;
+            const resolved = bundle && itemInstance
+              ? resolveEquipmentItem(itemInstance, bundle)
               : undefined;
             return (
               <div key={slot} className="equipment-cell">
                 <span className="slot-label">{label}</span>
                 <IconSlot
                   label={label}
-                  itemName={itemName}
+                  itemName={resolved?.name}
                   icon={SLOT_ICONS[slot]}
                   size={66}
                   variant="equipment"
                   active={Boolean(itemId)}
+                  tooltipData={resolved ? {
+                    name: resolved.name,
+                    description: resolved.description,
+                    quality: resolved.quality,
+                    image: resolved.image,
+                    slot: resolved.slot,
+                    modifiers: resolved.modifiers,
+                    attackTags: resolved.attackTags,
+                  } : undefined}
                   onClick={
                     itemId
                       ? () => dispatch({ type: "UNEQUIP_SLOT", slot })

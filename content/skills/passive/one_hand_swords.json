@@ -1,0 +1,19 @@
+{
+  "id": "one_hand_swords",
+  "name": "One-Hand Swords",
+  "kind": "passive",
+  "system": "combat",
+  "usableByInteractables": false,
+  "activityTags": [],
+  "abilityTags": [],
+  "baseDurationMs": 1400,
+  "baseEnergyCost": 10,
+  "basePower": 5,
+  "powerPerLevel": 1,
+  "baseXpToNext": 100,
+  "xpScaling": 1.25,
+  "barColor": "#555555",
+  "accentColor": "#777777",
+  "description": "",
+  "perkMilestones": []
+}

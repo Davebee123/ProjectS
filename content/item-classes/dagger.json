@@ -1,0 +1,11 @@
+{
+  "id": "dagger",
+  "label": "Dagger",
+  "slot": "mainHand",
+  "handedness": "one_hand",
+  "tags": [
+    "weapon",
+    "melee",
+    "blade"
+  ]
+}

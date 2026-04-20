@@ -1,14 +1,26 @@
 import type {
   AbilityTagDef,
+  AffixDefinition,
+  AffixTableDef,
   ActivityTagDef,
   ComboRuleTemplate,
+  CutsceneTemplate,
+  DialogueTemplate,
+  ItemBase,
+  ItemClassDef,
+  ItemQualityRuleSet,
+  ItemSetDefinition,
   InteractableTemplate,
   ItemTemplate,
+  ModifierStatDef,
+  QuestTemplate,
   RecipeTemplate,
   RoomTemplate,
   SkillTemplate,
   StatusEffectTemplate,
   StorageKeyDef,
+  UniqueItem,
+  WeatherTemplate,
 } from "./types.js";
 
 export interface ContentProjectConfig {
@@ -25,6 +37,7 @@ export interface WorldSource {
   startingRoomId: string;
   defaultSlotCount: number;
   startingItemIds: string[];
+  startingEquipmentBaseIds?: string[];
 }
 
 export interface LoadedEntity<T> {
@@ -45,9 +58,21 @@ export interface LoadedContentSource {
   storageKeys: LoadedEntity<StorageKeyDef>[];
   statusEffects: LoadedEntity<StatusEffectTemplate>[];
   items: LoadedEntity<ItemTemplate>[];
+  itemClasses: LoadedEntity<ItemClassDef>[];
+  affixTables: LoadedEntity<AffixTableDef>[];
+  modifierStats: LoadedEntity<ModifierStatDef>[];
+  itemBases: LoadedEntity<ItemBase>[];
+  affixes: LoadedEntity<AffixDefinition>[];
+  itemQualityRules: LoadedEntity<ItemQualityRuleSet>[];
+  uniqueItems: LoadedEntity<UniqueItem>[];
+  itemSets: LoadedEntity<ItemSetDefinition>[];
   skills: LoadedEntity<SkillTemplate>[];
   combos: LoadedEntity<ComboRuleTemplate>[];
   interactables: LoadedEntity<InteractableTemplate>[];
+  dialogues: LoadedEntity<DialogueTemplate>[];
+  cutscenes: LoadedEntity<CutsceneTemplate>[];
+  quests: LoadedEntity<QuestTemplate>[];
   recipes: LoadedEntity<RecipeTemplate>[];
+  weathers: LoadedEntity<WeatherTemplate>[];
   worlds: LoadedWorldSource[];
 }

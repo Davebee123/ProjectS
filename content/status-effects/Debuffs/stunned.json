@@ -1,0 +1,13 @@
+{
+  "id": "stunned",
+  "name": "Stunned",
+  "description": "You are stunned.",
+  "removalType": "timed",
+  "durationMs": 2000,
+  "statModifiers": [],
+  "stackable": false,
+  "maxStacks": 1,
+  "color": "#b84000",
+  "eventHooks": [],
+  "preventsWeaponAbilities": true
+}

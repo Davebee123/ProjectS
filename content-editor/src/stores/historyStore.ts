@@ -6,9 +6,13 @@ import { useSkillStore } from "./skillStore";
 import { useStatusEffectStore } from "./statusEffectStore";
 import { useInteractableStore } from "./interactableStore";
 import { useComboStore } from "./comboStore";
+import { useDialogueStore } from "./dialogueStore";
+import { useCutsceneStore } from "./cutsceneStore";
 import { useWorldStore } from "./worldStore";
 import { useProjectStore } from "./projectStore";
 import { useRecipeStore } from "./recipeStore";
+import { useQuestStore } from "./questStore";
+import { useItemizationStore } from "./itemizationStore";
 
 import type { ActivityTagDef, AbilityTagDef } from "../schema/types";
 import type { StorageKeyDef } from "../schema/types";
@@ -17,8 +21,21 @@ import type { SkillTemplate } from "../schema/types";
 import type { StatusEffectTemplate } from "../schema/types";
 import type { InteractableTemplate } from "../schema/types";
 import type { ComboRuleTemplate } from "../schema/types";
+import type { DialogueTemplate } from "../schema/types";
+import type { CutsceneTemplate } from "../schema/types";
 import type { WorldTemplate } from "../schema/types";
 import type { RecipeTemplate } from "../schema/types";
+import type { QuestTemplate } from "../schema/types";
+import type {
+  AffixDefinition,
+  AffixTableDef,
+  ItemBase,
+  ItemClassDef,
+  ItemQualityRuleSet,
+  ItemSetDefinition,
+  ModifierStatDef,
+  UniqueItem,
+} from "../schema/types";
 
 interface Snapshot {
   activityTags: ActivityTagDef[];
@@ -29,7 +46,18 @@ interface Snapshot {
   statusEffects: StatusEffectTemplate[];
   interactables: InteractableTemplate[];
   combos: ComboRuleTemplate[];
+  dialogues: DialogueTemplate[];
+  cutscenes: CutsceneTemplate[];
+  quests: QuestTemplate[];
   recipes: RecipeTemplate[];
+  itemClasses: ItemClassDef[];
+  affixTables: AffixTableDef[];
+  modifierStats: ModifierStatDef[];
+  itemBases: ItemBase[];
+  affixes: AffixDefinition[];
+  itemQualityRules: ItemQualityRuleSet[];
+  uniqueItems: UniqueItem[];
+  itemSets: ItemSetDefinition[];
   world: WorldTemplate;
   projectName: string;
 }
@@ -56,7 +84,18 @@ function takeSnapshot(): Snapshot {
     statusEffects: structuredClone(useStatusEffectStore.getState().statusEffects),
     interactables: structuredClone(useInteractableStore.getState().interactables),
     combos: structuredClone(useComboStore.getState().combos),
+    dialogues: structuredClone(useDialogueStore.getState().dialogues),
+    cutscenes: structuredClone(useCutsceneStore.getState().cutscenes),
+    quests: structuredClone(useQuestStore.getState().quests),
     recipes: structuredClone(useRecipeStore.getState().recipes),
+    itemClasses: structuredClone(useItemizationStore.getState().itemClasses),
+    affixTables: structuredClone(useItemizationStore.getState().affixTables),
+    modifierStats: structuredClone(useItemizationStore.getState().modifierStats),
+    itemBases: structuredClone(useItemizationStore.getState().itemBases),
+    affixes: structuredClone(useItemizationStore.getState().affixes),
+    itemQualityRules: structuredClone(useItemizationStore.getState().itemQualityRules),
+    uniqueItems: structuredClone(useItemizationStore.getState().uniqueItems),
+    itemSets: structuredClone(useItemizationStore.getState().itemSets),
     world: structuredClone(useWorldStore.getState().world),
     projectName: useProjectStore.getState().projectName,
   };
@@ -71,7 +110,20 @@ function restoreSnapshot(snap: Snapshot) {
   useStatusEffectStore.setState({ statusEffects: snap.statusEffects });
   useInteractableStore.setState({ interactables: snap.interactables });
   useComboStore.setState({ combos: snap.combos });
+  useDialogueStore.setState({ dialogues: snap.dialogues });
+  useCutsceneStore.setState({ cutscenes: snap.cutscenes });
+  useQuestStore.setState({ quests: snap.quests });
   useRecipeStore.setState({ recipes: snap.recipes });
+  useItemizationStore.setState({
+    itemClasses: snap.itemClasses,
+    affixTables: snap.affixTables,
+    modifierStats: snap.modifierStats,
+    itemBases: snap.itemBases,
+    affixes: snap.affixes,
+    itemQualityRules: snap.itemQualityRules,
+    uniqueItems: snap.uniqueItems,
+    itemSets: snap.itemSets,
+  });
   useWorldStore.setState({ world: snap.world });
   useProjectStore.setState({ projectName: snap.projectName });
   _isRestoring = false;
@@ -135,7 +187,11 @@ const stores = [
   useStatusEffectStore,
   useInteractableStore,
   useComboStore,
+  useDialogueStore,
+  useCutsceneStore,
+  useQuestStore,
   useRecipeStore,
+  useItemizationStore,
   useWorldStore,
   useProjectStore,
 ];

@@ -1,0 +1,10 @@
+{
+  "id": "energy",
+  "label": "Energy",
+  "category": "resource",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

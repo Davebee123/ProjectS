@@ -1,0 +1,10 @@
+{
+  "id": "mana_regen",
+  "label": "Mana Regen",
+  "category": "regen",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

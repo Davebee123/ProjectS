@@ -94,18 +94,6 @@ Define passive and active skills.
 
 ---
 
-### Combos
-Chain two active skills together for a timed bonus.
-
-- **From / To Skill** — the skill sequence that triggers the combo.
-- **Activity Tag** — limit the combo to a specific activity, or leave as "Any".
-- **Window (ms)** — how long after using the first skill the second must be used.
-- **Bonuses** — multipliers applied to time and energy cost. Values below `1.0` are reductions (e.g. `0.7` = 30% faster).
-
-The editor warns you if another combo has an identical from→to→tag combination.
-
----
-
 ### Interactables
 Define resources and objects the player can interact with (trees, rocks, chests, etc.).
 

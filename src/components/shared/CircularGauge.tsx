@@ -5,6 +5,11 @@ interface CircularGaugeProps {
   size?: number;
   strokeWidth?: number;
   label: string;
+  impactText?: {
+    id: string;
+    text: string;
+  };
+  isHitShaking?: boolean;
 }
 
 export function CircularGauge({
@@ -14,6 +19,8 @@ export function CircularGauge({
   size = 112,
   strokeWidth = 7,
   label,
+  impactText,
+  isHitShaking = false,
 }: CircularGaugeProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -23,7 +30,7 @@ export function CircularGauge({
 
   return (
     <div className="circular-gauge" style={{ width: size }}>
-      <div className="circular-gauge-face" style={{ width: size, height: size }}>
+      <div className={`circular-gauge-face ${isHitShaking ? "is-hit-shaking" : ""}`} style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle
           cx={center}
@@ -52,6 +59,11 @@ export function CircularGauge({
           {Math.floor(value)}
           </span>
         </div>
+        {impactText ? (
+          <div key={impactText.id} className="circular-gauge-impact-text">
+            {impactText.text}
+          </div>
+        ) : null}
       </div>
       <div className="circular-gauge-label">{label}</div>
     </div>

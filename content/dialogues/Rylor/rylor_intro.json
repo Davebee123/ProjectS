@@ -1,0 +1,47 @@
+{
+  "id": "rylor_intro",
+  "name": "Rylor Intro",
+  "description": "",
+  "startNodeId": "rylor_intro_start",
+  "nodes": [
+    {
+      "id": "rylor_intro_start",
+      "text": "Who knew cutting dead plants could work up such an appetite? [narration] He lets out an exacerbated sigh as he picks up his backpack [/narration].",
+      "options": [],
+      "nextNodeId": "rylor_intro_node_2",
+      "continueLabel": "Continue"
+    },
+    {
+      "id": "rylor_intro_node_2",
+      "text": "The sky is tired. We should head back before it gets too dangerous out here. [narration] He looks around, and then looks at you, confused. [/narration]. Where did you leave your backpack?",
+      "options": [
+        {
+          "id": "rylor_intro_node_2_option_1",
+          "text": "I'm not too sure.",
+          "nextNodeId": "rylor_intro_node_3"
+        }
+      ],
+      "continueLabel": "Continue",
+      "onEnterEffects": [],
+      "nextNodeId": "rylor_intro_node_3"
+    },
+    {
+      "id": "rylor_intro_node_3",
+      "text": "Ha! And I thought I was delirious. Well, we don't want you returning to Virelios without any haul, so let's try to find it.\n\nHit the [color=#FFA74E] Explore [/color] button on the top right of your screen to navigate around this area. I'm sure it will come up sooner rather than later.",
+      "options": [
+        {
+          "id": "rylor_intro_node_3_option_1",
+          "text": "Will do!",
+          "closeDialogue": true,
+          "effects": [
+            {
+              "type": "grant_quest",
+              "questId": "find_your_backpack"
+            }
+          ]
+        }
+      ],
+      "onEnterEffects": []
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "entropy_damage_multiplier",
+  "label": "Entropy Damage Multiplier",
+  "category": "damage",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

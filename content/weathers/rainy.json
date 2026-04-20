@@ -1,0 +1,13 @@
+{
+  "id": "rainy",
+  "name": "Rainy",
+  "description": "Steady rainfall dampens the land.",
+  "icon": "🌧️",
+  "weight": 2,
+  "energyRegenMult": 0.85,
+  "manaRegenMult": 1.25,
+  "successChanceMod": -5,
+  "ambientSound": "/Sound Files/Weather/LightRain.mp3",
+  "ambientSoundVolume": 0.25,
+  "ambientSoundLoop": true
+}

@@ -11,10 +11,11 @@ import { useItemStore } from "../../stores/itemStore";
 import { useSkillStore } from "../../stores/skillStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";
 import { useStatusEffectStore } from "../../stores/statusEffectStore";
+import { useQuestStore } from "../../stores/questStore";
 import { useWorldStore } from "../../stores/worldStore";
 
 interface Props {
-  value: string;
+  value?: string | null;
   onChange: (value: string) => void;
   placeholder?: string;
 }
@@ -102,15 +103,26 @@ const conditionLinter = linter((view) => {
   const text = view.state.doc.toString();
   if (!text.trim()) return [];
 
-  const { errors } = parse(text);
-  return errors.map(
-    (err): Diagnostic => ({
-      from: Math.min(err.start, text.length),
-      to: Math.min(err.end, text.length),
-      severity: "error",
-      message: err.message,
-    })
-  );
+  try {
+    const { errors } = parse(text);
+    return errors.map(
+      (err): Diagnostic => ({
+        from: Math.min(err.start, text.length),
+        to: Math.min(err.end, text.length),
+        severity: "error",
+        message: err.message,
+      })
+    );
+  } catch (error) {
+    return [
+      {
+        from: 0,
+        to: text.length,
+        severity: "error",
+        message: error instanceof Error ? error.message : "Condition parser failed",
+      },
+    ];
+  }
 });
 
 export function ConditionEditor({ value, onChange, placeholder }: Props) {
@@ -118,12 +130,14 @@ export function ConditionEditor({ value, onChange, placeholder }: Props) {
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const normalizedValue = typeof value === "string" ? value : "";
 
   // Push entity data into the completion provider
   const items = useItemStore((s) => s.items);
   const skills = useSkillStore((s) => s.skills);
   const storageKeys = useStorageKeyStore((s) => s.storageKeys);
   const statusEffects = useStatusEffectStore((s) => s.statusEffects);
+  const quests = useQuestStore((s) => s.quests);
   const rooms = useWorldStore((s) => s.world.rooms);
 
   useMemo(() => {
@@ -132,9 +146,10 @@ export function ConditionEditor({ value, onChange, placeholder }: Props) {
       skillIds: skills.map((s) => s.id),
       storageKeyIds: storageKeys.map((k) => k.id),
       statusEffectIds: statusEffects.map((e) => e.id),
+      questIds: quests.map((q) => q.id),
       roomIds: rooms.map((r) => r.id),
     });
-  }, [items, skills, storageKeys, statusEffects, rooms]);
+  }, [items, skills, storageKeys, statusEffects, quests, rooms]);
 
   // Create editor once
   useEffect(() => {
@@ -148,7 +163,7 @@ export function ConditionEditor({ value, onChange, placeholder }: Props) {
     });
 
     const state = EditorState.create({
-      doc: value,
+      doc: normalizedValue,
       extensions: [
         keymap.of(defaultKeymap),
         conditionLanguage,
@@ -184,12 +199,12 @@ export function ConditionEditor({ value, onChange, placeholder }: Props) {
     const view = viewRef.current;
     if (!view) return;
     const currentDoc = view.state.doc.toString();
-    if (currentDoc !== value) {
+    if (currentDoc !== normalizedValue) {
       view.dispatch({
-        changes: { from: 0, to: currentDoc.length, insert: value },
+        changes: { from: 0, to: currentDoc.length, insert: normalizedValue },
       });
     }
-  }, [value]);
+  }, [normalizedValue]);
 
   return <div ref={containerRef} />;
 }

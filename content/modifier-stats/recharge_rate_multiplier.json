@@ -1,0 +1,9 @@
+{
+  "id": "recharge_rate_multiplier",
+  "label": "Recharge Rate Multiplier",
+  "category": "timing",
+  "supportsScope": true,
+  "supportedOperations": [
+    "multiply"
+  ]
+}

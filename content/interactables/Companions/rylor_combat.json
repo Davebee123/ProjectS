@@ -1,0 +1,39 @@
+{
+  "id": "rylor_combat",
+  "name": "Rylor",
+  "description": "Your Agri-Farmer friend",
+  "activityTag": "friendly",
+  "abilityBehaviorMode": "priority",
+  "allowedAbilityTags": [],
+  "requiredLevel": 1,
+  "effectiveHealth": {
+    "min": 150,
+    "max": 200
+  },
+  "barColor": "#3f627f",
+  "accentColor": "#6e9fc8",
+  "meterLabel": "HP",
+  "lootTable": [],
+  "xpRewards": [],
+  "formRules": [
+    {
+      "id": "rylor_returns_to_dialogue",
+      "condition": "player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5",
+      "interactableId": "rylor"
+    }
+  ],
+  "abilities": [
+    {
+      "skillId": "stab",
+      "castTimeMs": 1800,
+      "cooldownMs": 8000,
+      "targetMode": "lowest_hp_enemy",
+      "resistChancePerLevel": 5
+    }
+  ],
+  "onInteractEffects": [],
+  "onDestroyEffects": [],
+  "imagePositionX": 50,
+  "imagePositionY": 25,
+  "image": "/Interactable Images/Rylor.png"
+}

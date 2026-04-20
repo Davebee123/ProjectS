@@ -1,4 +1,5 @@
 import { useSkillStore } from "../../stores/skillStore";
+import { ReferencePicker } from "../shared/ReferencePicker";
 import type { XpReward } from "../../schema/types";
 
 interface Props {
@@ -8,6 +9,11 @@ interface Props {
 
 export function XpRewardsPanel({ rewards, onChange }: Props) {
   const { skills } = useSkillStore();
+  const skillOptions = skills.map((skill) => ({
+    id: skill.id,
+    label: skill.name,
+    meta: `${skill.kind} • ${skill.system || "gathering"}`,
+  }));
 
   const add = () => {
     onChange([...rewards, { skillId: "", amount: 10 }]);
@@ -39,18 +45,14 @@ export function XpRewardsPanel({ rewards, onChange }: Props) {
           {rewards.map((r, idx) => (
             <tr key={idx}>
               <td>
-                <select
-                  className="input select"
+                <ReferencePicker
                   value={r.skillId}
-                  onChange={(e) => update(idx, { skillId: e.target.value })}
-                >
-                  <option value="">-- Select skill --</option>
-                  {skills.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  options={skillOptions}
+                  compact
+                  showSelectedPreview={false}
+                  placeholder="Select skill..."
+                  onChange={(value) => update(idx, { skillId: value })}
+                />
               </td>
               <td>
                 <input

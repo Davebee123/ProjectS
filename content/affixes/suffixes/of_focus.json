@@ -1,0 +1,52 @@
+{
+  "id": "of_focus",
+  "kind": "suffix",
+  "nameTemplate": "of Focus",
+  "description": "Adds energy regeneration.",
+  "tableId": "global_equipment",
+  "weight": 100,
+  "tiers": [
+    {
+      "tier": 1,
+      "itemLevelMin": 1,
+      "itemLevelMax": 10,
+      "rollMin": 1,
+      "rollMax": 1
+    },
+    {
+      "tier": 2,
+      "itemLevelMin": 11,
+      "itemLevelMax": 20,
+      "rollMin": 1,
+      "rollMax": 2
+    },
+    {
+      "tier": 3,
+      "itemLevelMin": 21,
+      "itemLevelMax": 30,
+      "rollMin": 2,
+      "rollMax": 3
+    },
+    {
+      "tier": 4,
+      "itemLevelMin": 31,
+      "itemLevelMax": 40,
+      "rollMin": 3,
+      "rollMax": 4
+    },
+    {
+      "tier": 5,
+      "itemLevelMin": 41,
+      "itemLevelMax": 50,
+      "rollMin": 4,
+      "rollMax": 5
+    }
+  ],
+  "modifiers": [
+    {
+      "statId": "energy_regen",
+      "operation": "add",
+      "valueSource": "rolled_value"
+    }
+  ]
+}

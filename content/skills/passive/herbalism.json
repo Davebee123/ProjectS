@@ -1,0 +1,21 @@
+{
+  "id": "herbalism",
+  "name": "Herbalism",
+  "kind": "passive",
+  "system": "gathering",
+  "usableByInteractables": false,
+  "activityTags": [],
+  "abilityTags": [
+    "bushes"
+  ],
+  "baseDurationMs": 1400,
+  "baseEnergyCost": 10,
+  "basePower": 5,
+  "powerPerLevel": 1,
+  "baseXpToNext": 25,
+  "xpScaling": 1.18,
+  "barColor": "#17644d",
+  "accentColor": "#17644d",
+  "description": "The art of gathering herbs.",
+  "perkMilestones": []
+}

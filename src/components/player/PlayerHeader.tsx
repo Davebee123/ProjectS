@@ -1,31 +1,30 @@
+import { useMemo } from "react";
 import { useGame } from "../../GameContext";
-import type { WeatherType } from "../../state";
-
-const WEATHER_ICONS: Record<WeatherType, string> = {
-  clear: "\u2600",    // ☀
-  cloudy: "\u2601",   // ☁
-  rainy: "\uD83C\uDF27\uFE0F",  // 🌧️
-  stormy: "\u26C8",   // ⛈
-};
+import { getWeatherDef } from "../../data/loader";
 
 export function PlayerHeader() {
   const { state } = useGame();
+  const weatherDef = useMemo(() => getWeatherDef(state.weather), [state.weather]);
+  const weatherLabel = weatherDef?.name ?? state.weather.charAt(0).toUpperCase() + state.weather.slice(1);
+  const weatherIcon = weatherDef?.icon ?? "?";
   return (
     <div className="player-header">
-      <div className="player-header-grid">
-        <div className="player-header-card player-header-card-main">
-          <span className="player-header-name">{state.playerName}</span>
-          <span className="player-header-level">{state.playerLevel}</span>
+      <div className="player-header-strip">
+        <div className="player-header-segment player-header-segment-main">
+          <span className="player-header-card-label">Adventurer</span>
+          <div className="player-header-main-row">
+            <span className="player-header-name">{state.playerName}</span>
+          </div>
         </div>
-        <div className="player-header-card">
-          <span className="player-header-card-label">Temporal Seed</span>
-          <span className="player-header-card-value">{state.seed}</span>
-        </div>
-        <div className="player-header-card player-header-card-weather" title={state.weather}>
-          <span className="player-header-card-icon">{WEATHER_ICONS[state.weather]}</span>
-          <span className="player-header-card-value player-header-card-value-weather">
-            {state.weather.charAt(0).toUpperCase() + state.weather.slice(1)}
-          </span>
+        <div className="player-header-divider" aria-hidden="true" />
+        <div className="player-header-segment player-header-segment-weather" title={state.weather}>
+          <span className="player-header-card-label">Weather</span>
+          <div className="player-header-weather-row">
+            <span className="player-header-card-icon">{weatherIcon}</span>
+            <span className="player-header-card-value player-header-card-value-weather">
+              {weatherLabel}
+            </span>
+          </div>
         </div>
       </div>
     </div>

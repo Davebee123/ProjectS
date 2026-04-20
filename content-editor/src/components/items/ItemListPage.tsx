@@ -1,10 +1,32 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageShell } from "../layout/PageShell";
-import { useItemStore, createDefaultItem } from "../../stores/itemStore";
+import { createDefaultItem, useItemStore } from "../../stores/itemStore";
+import type { ItemTemplate } from "../../schema/types";
 
 function slugify(str: string): string {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
+function makeUniqueId(base: string, existing: Set<string>): string {
+  if (!existing.has(base)) {
+    return base;
+  }
+  let index = 2;
+  while (existing.has(`${base}_${index}`)) {
+    index += 1;
+  }
+  return `${base}_${index}`;
+}
+
+function duplicateItem(source: ItemTemplate, items: ItemTemplate[]): ItemTemplate {
+  const existingIds = new Set(items.map((item) => item.id));
+  const nextId = makeUniqueId(`${source.id}_copy`, existingIds);
+  return {
+    ...source,
+    id: nextId,
+    name: `${source.name} Copy`,
+  };
 }
 
 export function ItemListPage() {
@@ -14,17 +36,30 @@ export function ItemListPage() {
   const [search, setSearch] = useState("");
   const [slotFilter, setSlotFilter] = useState("all");
   const [stackableFilter, setStackableFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [rarityFilter, setRarityFilter] = useState("all");
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
 
-  const slotOptions = useMemo(() => {
-    return Array.from(new Set(items.map((i) => i.slot).filter(Boolean))) as string[];
-  }, [items]);
+  const slotOptions = useMemo(() => Array.from(new Set(items.map((item) => item.slot).filter(Boolean))) as string[], [items]);
+  const categoryOptions = useMemo(
+    () => Array.from(new Set(items.map((item) => item.inventoryCategory).filter(Boolean))) as string[],
+    [items]
+  );
+  const rarityOptions = useMemo(
+    () => Array.from(new Set(items.map((item) => item.rarity).filter(Boolean))) as string[],
+    [items]
+  );
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
-      if (search) {
-        const q = search.toLowerCase();
-        if (!item.name.toLowerCase().includes(q) && !item.id.toLowerCase().includes(q)) return false;
+      const q = search.trim().toLowerCase();
+      const matchesSearch =
+        !q ||
+        item.name.toLowerCase().includes(q) ||
+        item.id.toLowerCase().includes(q) ||
+        (item.folder ?? "").toLowerCase().includes(q);
+      if (!matchesSearch) {
+        return false;
       }
       if (slotFilter === "") {
         if (item.slot !== undefined) return false;
@@ -33,15 +68,19 @@ export function ItemListPage() {
       }
       if (stackableFilter === "yes" && !item.stackable) return false;
       if (stackableFilter === "no" && item.stackable) return false;
+      if (categoryFilter !== "all" && (item.inventoryCategory || "") !== categoryFilter) return false;
+      if (rarityFilter !== "all" && (item.rarity || "common") !== rarityFilter) return false;
       return true;
     });
-  }, [items, search, slotFilter, stackableFilter]);
+  }, [categoryFilter, items, rarityFilter, search, slotFilter, stackableFilter]);
 
   const groups = useMemo(() => {
-    const map = new Map<string, typeof items>();
+    const map = new Map<string, typeof filtered>();
     for (const item of filtered) {
       const key = item.folder?.trim() || "(Ungrouped)";
-      if (!map.has(key)) map.set(key, []);
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
       map.get(key)!.push(item);
     }
     return Array.from(map.entries()).sort(([a], [b]) => {
@@ -63,44 +102,58 @@ export function ItemListPage() {
     const name = newName.trim();
     if (!name) return;
     const id = slugify(name);
-    if (items.some((i) => i.id === id)) return;
+    if (items.some((item) => item.id === id)) return;
     addItem(createDefaultItem(id, name));
     setNewName("");
     navigate(`/items/${id}`);
   };
 
+  const handleDuplicate = (item: ItemTemplate) => {
+    const duplicate = duplicateItem(item, items);
+    addItem(duplicate);
+    navigate(`/items/${duplicate.id}`);
+  };
+
   return (
     <PageShell title="Items">
       <section className="editor-section">
-        <p className="section-desc">
-          Define item templates — equipment, consumables, and materials.
-        </p>
+        <p className="section-desc">Define item templates for equipment, consumables, and materials.</p>
         <div className="filter-bar">
           <input
             className="input"
-            placeholder="Search name or ID..."
+            placeholder="Search name, ID, or folder..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <select
-            className="input select"
-            value={slotFilter}
-            onChange={(e) => setSlotFilter(e.target.value)}
-          >
-            <option value="all">All Slots</option>
+          <select className="input select" value={slotFilter} onChange={(e) => setSlotFilter(e.target.value)}>
+            <option value="all">Slot: All</option>
             <option value="">No Slot</option>
-            {slotOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
+            {slotOptions.map((slot) => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
             ))}
           </select>
-          <select
-            className="input select"
-            value={stackableFilter}
-            onChange={(e) => setStackableFilter(e.target.value)}
-          >
+          <select className="input select" value={stackableFilter} onChange={(e) => setStackableFilter(e.target.value)}>
             <option value="all">Stackable: All</option>
             <option value="yes">Stackable: Yes</option>
             <option value="no">Stackable: No</option>
+          </select>
+          <select className="input select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option value="all">Category: All</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+          <select className="input select" value={rarityFilter} onChange={(e) => setRarityFilter(e.target.value)}>
+            <option value="all">Rarity: All</option>
+            {rarityOptions.map((rarity) => (
+              <option key={rarity} value={rarity}>
+                {rarity}
+              </option>
+            ))}
           </select>
         </div>
         <table className="editor-table">
@@ -108,6 +161,8 @@ export function ItemListPage() {
             <tr>
               <th>ID</th>
               <th>Name</th>
+              <th>Category</th>
+              <th>Rarity</th>
               <th>Slot</th>
               <th>Stackable</th>
               <th></th>
@@ -119,31 +174,42 @@ export function ItemListPage() {
               return (
                 <React.Fragment key={folderName}>
                   <tr>
-                    <td colSpan={5} style={{ padding: 0 }}>
+                    <td colSpan={7} style={{ padding: 0 }}>
                       <div className="folder-header" onClick={() => toggleFolder(folderName)}>
-                        <span className={`folder-chevron${collapsed ? "" : " folder-chevron--open"}`}>▶</span>
+                        <span className={`folder-chevron${collapsed ? "" : " folder-chevron--open"}`}>{">"}</span>
                         {folderName}
                         <span className="folder-count">({groupItems.length})</span>
                       </div>
                     </td>
                   </tr>
-                  {!collapsed && groupItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className="cell-id">{item.id}</td>
-                      <td>
-                        <button className="link-btn" onClick={() => navigate(`/items/${item.id}`)}>
-                          {item.name}
-                        </button>
-                      </td>
-                      <td>{item.slot || "—"}</td>
-                      <td>{item.stackable ? "Yes" : "No"}</td>
-                      <td>
-                        <button className="btn btn--danger btn--sm" onClick={() => removeItem(item.id)}>
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {!collapsed &&
+                    groupItems
+                      .slice()
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((item) => (
+                        <tr key={item.id}>
+                          <td className="cell-id">{item.id}</td>
+                          <td>
+                            <button className="link-btn" onClick={() => navigate(`/items/${item.id}`)}>
+                              {item.name}
+                            </button>
+                          </td>
+                          <td>{item.inventoryCategory || "misc"}</td>
+                          <td>{item.rarity || "common"}</td>
+                          <td>{item.slot || "-"}</td>
+                          <td>{item.stackable ? "Yes" : "No"}</td>
+                          <td>
+                            <div className="entity-row-actions">
+                              <button className="btn btn--sm" onClick={() => handleDuplicate(item)}>
+                                Duplicate
+                              </button>
+                              <button className="btn btn--danger btn--sm" onClick={() => removeItem(item.id)}>
+                                Remove
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                 </React.Fragment>
               );
             })}

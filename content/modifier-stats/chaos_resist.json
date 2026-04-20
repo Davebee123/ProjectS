@@ -1,0 +1,10 @@
+{
+  "id": "chaos_resist",
+  "label": "Chaos Resist",
+  "category": "resistance",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

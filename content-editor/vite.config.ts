@@ -1,4 +1,5 @@
 import path from "node:path";
+import { promises as fs } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
@@ -6,6 +7,29 @@ import { validateBundle } from "../shared/content/validation";
 import type { GameContentBundle } from "../shared/content/types";
 import { loadContentSource, buildBundleFromSource, validateBuiltBundle } from "../tools/content/pipeline";
 import { writeContentSourceFromBundle, writeRuntimeBundleFromSource } from "../tools/content/source-writer";
+
+async function walkPublicAssets(root: string): Promise<string[]> {
+  const results: string[] = [];
+  async function walk(rel: string): Promise<void> {
+    const abs = path.join(root, rel);
+    const entries = await fs.readdir(abs, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      const next = rel ? `${rel}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        await walk(next);
+      } else if (entry.isFile()) {
+        results.push(`/${next}`);
+      }
+    }
+  }
+  try {
+    await walk("");
+  } catch {
+    // public/ missing — return empty
+  }
+  return results.sort((a, b) => a.localeCompare(b));
+}
 
 const repoRoot = path.resolve(__dirname, "..");
 
@@ -37,6 +61,12 @@ function contentBridgePlugin(): Plugin {
         try {
           if (req.method === "GET" && req.url === "/api/content/status") {
             sendJson(res, 200, { ok: true, mode: "local-files" });
+            return;
+          }
+
+          if (req.method === "GET" && req.url === "/api/content/public-assets") {
+            const assets = await walkPublicAssets(path.join(repoRoot, "public"));
+            sendJson(res, 200, { ok: true, assets });
             return;
           }
 

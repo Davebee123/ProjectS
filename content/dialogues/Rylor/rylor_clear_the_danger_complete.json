@@ -1,0 +1,25 @@
+{
+  "id": "rylor_clear_the_danger_complete",
+  "name": "Rylor - Clear the Danger Complete",
+  "description": "Rylor returns to dialogue after helping the player clear the farmstead threat.",
+  "startNodeId": "rylor_clear_the_danger_complete_start",
+  "nodes": [
+    {
+      "id": "rylor_clear_the_danger_complete_start",
+      "text": "That should hold the Threadhorns back for now. The Farmstead can breathe again, at least for a little while.",
+      "options": [
+        {
+          "id": "rylor_clear_the_danger_complete_start_option_1",
+          "text": "Glad you're safe.",
+          "closeDialogue": true,
+          "effects": [
+            {
+              "type": "complete_quest",
+              "questId": "clear_the_danger"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

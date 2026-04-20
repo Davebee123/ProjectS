@@ -1,0 +1,13 @@
+{
+  "id": "game_world",
+  "name": "Sylorin-Beta",
+  "gridWidth": 10,
+  "gridHeight": 10,
+  "startingRoomId": "room_3_4",
+  "defaultSlotCount": 4,
+  "startingItemIds": [
+    "agri_farmer_s_blade"
+  ],
+  "startingEquipmentBaseIds": [],
+  "startingCutsceneId": "intro_cutscene"
+}

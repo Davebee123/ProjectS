@@ -1,0 +1,10 @@
+{
+  "id": "energy_regen",
+  "label": "Energy Regen",
+  "category": "regen",
+  "supportsScope": false,
+  "supportedOperations": [
+    "add",
+    "multiply"
+  ]
+}

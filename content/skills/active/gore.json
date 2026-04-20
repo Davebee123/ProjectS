@@ -1,0 +1,31 @@
+{
+  "id": "gore",
+  "name": "Gore",
+  "kind": "active",
+  "system": "combat",
+  "usableByInteractables": true,
+  "activityTags": [
+    "enemy"
+  ],
+  "abilityTags": [],
+  "baseDurationMs": 2000,
+  "baseEnergyCost": 10,
+  "basePower": 10,
+  "powerPerLevel": 1,
+  "baseXpToNext": 25,
+  "xpScaling": 1.18,
+  "barColor": "#555555",
+  "accentColor": "#777777",
+  "description": "An attack for the Threadhorn",
+  "perkMilestones": [],
+  "basePowerMax": 15,
+  "usageProfile": {
+    "castMode": "cast",
+    "targetPattern": "single",
+    "usageContext": "combat"
+  },
+  "castSound": "/Sound Files/Skills/Interactable Sounds/ThreadhornAttack.mp3",
+  "hitSound": "/Sound Files/Skills/Weapon Skills/Getting Hit.mp3",
+  "hitSoundVolume": 0.225,
+  "castSoundVolume": 0.1
+}
