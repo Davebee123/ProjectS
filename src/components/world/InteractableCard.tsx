@@ -118,6 +118,8 @@ interface InteractableCardProps {
   isExtinguishing?: boolean;
   shouldReveal?: boolean;
   revealDelay?: number;
+  revealDuration?: number;
+  hasQuestBang?: boolean;
   onClick: () => void;
 }
 
@@ -136,6 +138,8 @@ export function InteractableCard({
   isExtinguishing,
   shouldReveal,
   revealDelay,
+  revealDuration,
+  hasQuestBang,
   onClick,
 }: InteractableCardProps) {
   const imageSrc = getInteractableDisplayImageSrc(object);
@@ -171,10 +175,15 @@ export function InteractableCard({
       ref={cardRef}
       type="button"
       className={`interactable-card ${selected ? "is-selected" : ""} ${isHostile ? "is-hostile" : ""} ${isAttackAnimating ? "is-attacking" : ""} ${isHitShaking ? "is-hit-shaking" : ""} ${isExtinguishing ? "is-extinguishing" : ""} ${shouldReveal ? "is-reveal-in" : ""}`}
-      style={shouldReveal ? { animationDelay: `${revealDelay}ms` } : undefined}
+      style={shouldReveal ? { animationDelay: `${revealDelay}ms`, animationDuration: `${revealDuration}ms` } : undefined}
       disabled={isExtinguishing}
       onClick={onClick}
     >
+      {hasQuestBang ? (
+        <span className="quest-bang" aria-label="Quest step" title="Quest objective">
+          !
+        </span>
+      ) : null}
       <div className="interactable-card-header">
         <div
           className="interactable-card-header-fill"

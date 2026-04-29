@@ -20,8 +20,8 @@ const ACTION_TYPES: { value: EventActionType; label: string }[] = [
   { value: "show_emote", label: "Show Emote" },
   { value: "complete_quest", label: "Complete Quest" },
   { value: "damage", label: "Damage" },
-  { value: "heal", label: "Gain Life" },
-  { value: "restore_mana", label: "Gain Mana" },
+  { value: "heal", label: "Restore Health" },
+  { value: "restore_mana", label: "Restore Mana" },
   { value: "restore_energy", label: "Restore Energy" },
   { value: "damage_mana", label: "Lose Mana" },
   { value: "damage_energy", label: "Lose Energy" },
@@ -46,26 +46,47 @@ type ActionPreset =
   | "give_xp"
   | "set_flag"
   | "apply_status"
+  | "remove_status"
+  | "restore_health"
+  | "restore_energy"
+  | "restore_mana"
   | "show_emote"
   | "spawn_interactable"
   | "travel_to_room"
   | "start_cutscene";
 
-const ACTION_PRESETS: Array<{
+const ACTION_PRESET_DEFINITIONS: Record<ActionPreset, {
   id: ActionPreset;
   label: string;
   description: string;
-}> = [
-  { id: "accept_quest", label: "Accept Quest", description: "Grant a quest directly" },
-  { id: "complete_quest", label: "Complete Quest", description: "Mark a quest complete directly" },
-  { id: "give_item", label: "Give Item", description: "Award an item to inventory" },
-  { id: "give_xp", label: "Give XP", description: "Award skill experience" },
-  { id: "set_flag", label: "Set Flag", description: "Turn on a storage flag" },
-  { id: "apply_status", label: "Apply Status", description: "Apply a status effect" },
-  { id: "show_emote", label: "Show Emote", description: "Show a short text bubble over an interactable" },
-  { id: "spawn_interactable", label: "Spawn Interactable", description: "Create a live interactable in the current room" },
-  { id: "travel_to_room", label: "Travel", description: "Move the player to another room" },
-  { id: "start_cutscene", label: "Start Cutscene", description: "Launch a narrative cutscene" },
+}> = {
+  restore_health: { id: "restore_health", label: "Restore Health", description: "Restore player health" },
+  restore_energy: { id: "restore_energy", label: "Restore Energy", description: "Restore player energy" },
+  restore_mana: { id: "restore_mana", label: "Restore Mana", description: "Restore player mana" },
+  accept_quest: { id: "accept_quest", label: "Accept Quest", description: "Grant a quest directly" },
+  complete_quest: { id: "complete_quest", label: "Complete Quest", description: "Mark a quest complete directly" },
+  give_item: { id: "give_item", label: "Give Item", description: "Award an item to inventory" },
+  give_xp: { id: "give_xp", label: "Give XP", description: "Award skill experience" },
+  set_flag: { id: "set_flag", label: "Set Flag", description: "Turn on a storage flag" },
+  apply_status: { id: "apply_status", label: "Apply Status", description: "Apply a status effect" },
+  remove_status: { id: "remove_status", label: "Remove Status", description: "Remove a status effect" },
+  show_emote: { id: "show_emote", label: "Show Emote", description: "Show a short text bubble over an interactable" },
+  spawn_interactable: { id: "spawn_interactable", label: "Spawn Interactable", description: "Create a live interactable in the current room" },
+  travel_to_room: { id: "travel_to_room", label: "Travel", description: "Move the player to another room" },
+  start_cutscene: { id: "start_cutscene", label: "Start Cutscene", description: "Launch a narrative cutscene" },
+};
+
+const DEFAULT_ACTION_PRESET_IDS: ActionPreset[] = [
+  "accept_quest",
+  "complete_quest",
+  "give_item",
+  "give_xp",
+  "set_flag",
+  "apply_status",
+  "show_emote",
+  "spawn_interactable",
+  "travel_to_room",
+  "start_cutscene",
 ];
 
 interface Props {
@@ -73,6 +94,7 @@ interface Props {
   onChange: (actions: EventAction[]) => void;
   emptyText?: string;
   actionTargetOptions?: Array<{ value: EventActionTarget; label: string }>;
+  presetIds?: ActionPreset[] | false;
 }
 
 const TARGETABLE_ACTIONS = new Set<EventActionType>([
@@ -89,6 +111,7 @@ export function EventActionListEditor({
   onChange,
   emptyText = "No actions configured.",
   actionTargetOptions,
+  presetIds,
 }: Props) {
   const navigate = useNavigate();
   const { statusEffects, addStatusEffect } = useStatusEffectStore();
@@ -195,6 +218,12 @@ export function EventActionListEditor({
 
   const createPresetAction = (preset: ActionPreset): EventAction | null => {
     switch (preset) {
+      case "restore_health":
+        return { type: "heal", value: 25 };
+      case "restore_energy":
+        return { type: "restore_energy", value: 25 };
+      case "restore_mana":
+        return { type: "restore_mana", value: 25 };
       case "accept_quest":
         return quests[0] ? { type: "grant_quest", questId: quests[0].id } : null;
       case "complete_quest":
@@ -209,6 +238,8 @@ export function EventActionListEditor({
           : null;
       case "apply_status":
         return statusEffects[0] ? { type: "apply_status", statusEffectId: statusEffects[0].id } : null;
+      case "remove_status":
+        return statusEffects[0] ? { type: "remove_status", statusEffectId: statusEffects[0].id } : null;
       case "show_emote":
         return { type: "show_emote", target: "bearer", emoteText: "...", emoteChance: 100 };
       case "spawn_interactable":
@@ -240,28 +271,35 @@ export function EventActionListEditor({
     onChange([...actions, action]);
   };
 
+  const visiblePresets =
+    presetIds === false
+      ? []
+      : (presetIds ?? DEFAULT_ACTION_PRESET_IDS).map((id) => ACTION_PRESET_DEFINITIONS[id]);
+
   return (
     <div className="stack-lg">
-      <div className="action-preset-block">
-        <div className="field-label">Quick Add</div>
-        <div className="action-preset-row">
-          {ACTION_PRESETS.map((preset) => {
-            const isDisabled = !createPresetAction(preset.id);
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                className="action-preset-button"
-                title={preset.description}
-                disabled={isDisabled}
-                onClick={() => addPresetAction(preset.id)}
-              >
-                {preset.label}
-              </button>
-            );
-          })}
+      {visiblePresets.length > 0 ? (
+        <div className="action-preset-block">
+          <div className="field-label">Quick Add</div>
+          <div className="action-preset-row">
+            {visiblePresets.map((preset) => {
+              const isDisabled = !createPresetAction(preset.id);
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className="action-preset-button"
+                  title={preset.description}
+                  disabled={isDisabled}
+                  onClick={() => addPresetAction(preset.id)}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {actions.length === 0 ? (
         <p className="section-desc" style={{ marginBottom: 0 }}>
@@ -334,6 +372,22 @@ export function EventActionListEditor({
                   onOpenSelected={(value) => navigate(`/interactables/${value}`)}
                   onCreate={createInteractable}
                   createPlaceholder="New interactable name..."
+                />
+              ) : null}
+
+              {action.type === "spawn_interactable" ? (
+                <input
+                  type="number"
+                  min={0}
+                  className="input input--sm"
+                  placeholder="Reveal ms"
+                  title="Optional fade-in duration for the spawned interactable."
+                  value={typeof action.durationMs === "number" ? action.durationMs : ""}
+                  onChange={(e) =>
+                    updateAction(actionIndex, {
+                      durationMs: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)),
+                    })
+                  }
                 />
               ) : null}
 

@@ -51,6 +51,7 @@ export type {
   PlacementEffect,
   PlacementEffectType,
   QuestCategory,
+  QuestHighlightTargets,
   QuestObjective,
   QuestProgress,
   QuestProgressSource,

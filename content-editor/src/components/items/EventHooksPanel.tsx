@@ -15,6 +15,7 @@ const EVENT_TYPES: { value: ItemEventType; label: string; desc: string }[] = [
   { value: "on_explore", label: "On Explore", desc: "When player explores a room" },
   { value: "on_damage_taken", label: "On Damage Taken", desc: "When player takes damage" },
   { value: "on_tick", label: "On Tick", desc: "Every game tick while equipped" },
+  { value: "on_use", label: "On Use", desc: "When consumable is used via a Quick Slot" },
 ];
 
 type HookLike<E extends string> = {

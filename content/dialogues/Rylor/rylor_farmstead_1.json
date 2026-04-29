@@ -21,6 +21,10 @@
           "closeDialogue": true,
           "effects": [
             {
+              "type": "complete_quest",
+              "questId": "head_to_farmstead"
+            },
+            {
               "type": "spawn_interactable",
               "interactableId": "threadhorn_staglet"
             },

@@ -19,6 +19,7 @@ import { toPublicAssetPath } from "../../utils/assets";
 import { createUniqueId } from "../../utils/ids";
 import { normalizeNpcTemplate } from "../../utils/interactables";
 import { useSkillStore } from "../../stores/skillStore";
+import { useQuestStore } from "../../stores/questStore";
 
 const INTERACTABLE_ACTION_TARGETS = [
   { value: "player" as const, label: "Player" },
@@ -32,6 +33,7 @@ export function InteractableEditPage() {
   const { activityTags, abilityTags } = useTagStore();
   const { dialogues, addDialogue } = useDialogueStore();
   const { skills } = useSkillStore();
+  const { quests } = useQuestStore();
   const item = interactables.find((t) => t.id === id);
 
   if (!item) {
@@ -619,6 +621,37 @@ export function InteractableEditPage() {
       </CollapsibleEditorSection>
 
       <CollapsibleEditorSection
+        title="Offers Quests"
+        summary={
+          (item.offersQuestIds?.length ?? 0) === 0
+            ? "No quests offered"
+            : `${item.offersQuestIds!.length} quest${item.offersQuestIds!.length === 1 ? "" : "s"} offered`
+        }
+        defaultOpen={(item.offersQuestIds?.length ?? 0) > 0}
+      >
+        <section className="editor-section">
+          <p className="section-desc">
+            Quests this interactable can offer to the player. Shows a "!" badge
+            in-game whenever any listed quest has not been granted and has not
+            been completed. Useful for quest-giver NPCs so players know who to
+            talk to next. (This does NOT grant the quest — use a dialogue
+            effect for that.)
+          </p>
+          <OffersQuestPicker
+            value={item.offersQuestIds ?? []}
+            options={quests.map((q) => ({
+              id: q.id,
+              label: q.name || q.id,
+              meta: q.category,
+            }))}
+            onChange={(offersQuestIds) =>
+              update({ offersQuestIds: offersQuestIds.length === 0 ? undefined : offersQuestIds })
+            }
+          />
+        </section>
+      </CollapsibleEditorSection>
+
+      <CollapsibleEditorSection
         title="On Interact Actions"
         summary={item.onInteractEffects.length === 0 ? "No interact actions" : `${item.onInteractEffects.length} action${item.onInteractEffects.length === 1 ? "" : "s"}`}
         defaultOpen={item.onInteractEffects.length > 0}
@@ -668,36 +701,66 @@ export function InteractableEditPage() {
             Paths to audio files (relative to <code>public/</code>). Leave blank to play no sound.
           </p>
           <div className="form-row">
-            <FilePathInput
-              label="On Hit Sound"
-              value={item.sounds?.onHit || ""}
-              onChange={(v) =>
-                update({ sounds: { ...item.sounds, onHit: v || undefined } })
-              }
-              placeholder="audio/hit.ogg"
-              accept="audio/*"
-              pathPrefix="audio"
-            />
-            <FilePathInput
-              label="On Destroy Sound"
-              value={item.sounds?.onDestroy || ""}
-              onChange={(v) =>
-                update({ sounds: { ...item.sounds, onDestroy: v || undefined } })
-              }
-              placeholder="audio/destroy.ogg"
-              accept="audio/*"
-              pathPrefix="audio"
-            />
-            <FilePathInput
-              label="On Ability Cast Sound"
-              value={item.sounds?.onAbilityCast || ""}
-              onChange={(v) =>
-                update({ sounds: { ...item.sounds, onAbilityCast: v || undefined } })
-              }
-              placeholder="audio/cast.ogg"
-              accept="audio/*"
-              pathPrefix="audio"
-            />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <FilePathInput
+                label="On Hit Sound"
+                value={item.sounds?.onHit || ""}
+                onChange={(v) =>
+                  update({ sounds: { ...item.sounds, onHit: v || undefined } })
+                }
+                placeholder="audio/hit.ogg"
+                accept="audio/*"
+                pathPrefix="audio"
+              />
+              <VolumeSlider
+                label="Volume"
+                value={item.sounds?.onHitVolume ?? 1}
+                onChange={(v) =>
+                  update({ sounds: { ...item.sounds, onHitVolume: v } })
+                }
+                disabled={!item.sounds?.onHit}
+              />
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <FilePathInput
+                label="On Destroy Sound"
+                value={item.sounds?.onDestroy || ""}
+                onChange={(v) =>
+                  update({ sounds: { ...item.sounds, onDestroy: v || undefined } })
+                }
+                placeholder="audio/destroy.ogg"
+                accept="audio/*"
+                pathPrefix="audio"
+              />
+              <VolumeSlider
+                label="Volume"
+                value={item.sounds?.onDestroyVolume ?? 1}
+                onChange={(v) =>
+                  update({ sounds: { ...item.sounds, onDestroyVolume: v } })
+                }
+                disabled={!item.sounds?.onDestroy}
+              />
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <FilePathInput
+                label="On Ability Cast Sound"
+                value={item.sounds?.onAbilityCast || ""}
+                onChange={(v) =>
+                  update({ sounds: { ...item.sounds, onAbilityCast: v || undefined } })
+                }
+                placeholder="audio/cast.ogg"
+                accept="audio/*"
+                pathPrefix="audio"
+              />
+              <VolumeSlider
+                label="Volume"
+                value={item.sounds?.onAbilityCastVolume ?? 1}
+                onChange={(v) =>
+                  update({ sounds: { ...item.sounds, onAbilityCastVolume: v } })
+                }
+                disabled={!item.sounds?.onAbilityCast}
+              />
+            </div>
           </div>
         </section>
       </CollapsibleEditorSection>
@@ -705,3 +768,115 @@ export function InteractableEditPage() {
   );
 }
 
+function VolumeSlider({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+}) {
+  const clamped = Math.max(0, Math.min(1, value));
+  return (
+    <div className="form-field" style={{ opacity: disabled ? 0.5 : 1 }}>
+      <label className="field-label" style={{ display: "flex", justifyContent: "space-between" }}>
+        <span>{label}</span>
+        <span style={{ opacity: 0.7, fontVariantNumeric: "tabular-nums" }}>
+          {Math.round(clamped * 100)}%
+        </span>
+      </label>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={clamped}
+        disabled={disabled}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ width: "100%" }}
+      />
+    </div>
+  );
+}
+
+interface OffersQuestPickerOption {
+  id: string;
+  label: string;
+  meta?: string;
+}
+
+function OffersQuestPicker({
+  value,
+  options,
+  onChange,
+}: {
+  value: string[];
+  options: OffersQuestPickerOption[];
+  onChange: (ids: string[]) => void;
+}) {
+  const available = options.filter((o) => !value.includes(o.id));
+  return (
+    <div className="form-field" style={{ marginTop: 4 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+        {value.length === 0 ? (
+          <span style={{ opacity: 0.6, fontSize: 12 }}>(none)</span>
+        ) : (
+          value.map((id) => {
+            const opt = options.find((o) => o.id === id);
+            return (
+              <span
+                key={id}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "2px 8px",
+                  background: "rgba(120, 140, 170, 0.22)",
+                  border: "1px solid rgba(140, 160, 190, 0.4)",
+                  borderRadius: 3,
+                  fontSize: 12,
+                }}
+              >
+                {opt?.label ?? id}
+                <button
+                  type="button"
+                  onClick={() => onChange(value.filter((v) => v !== id))}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "inherit",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: 14,
+                    lineHeight: 1,
+                  }}
+                  aria-label={`Remove ${opt?.label ?? id}`}
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })
+        )}
+      </div>
+      <select
+        className="input"
+        value=""
+        onChange={(e) => {
+          if (e.target.value) onChange([...value, e.target.value]);
+        }}
+      >
+        <option value="">Add quest offered...</option>
+        {available.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.label}
+            {o.meta ? ` — ${o.meta}` : ""}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}

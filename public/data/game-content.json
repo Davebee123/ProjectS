@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "exportedAt": "2026-04-20T13:45:32.276Z",
+  "exportedAt": "2026-04-26T15:07:31.428Z",
   "tags": {
     "activityTags": [
       {
@@ -125,13 +125,27 @@
     {
       "id": "fae_berry",
       "name": "Fae Berry",
-      "description": "A bright red berry that is known to have healing properties. It cannot be eaten raw.",
+      "description": "A bright red berry that is known to restore some energy.",
       "rarity": "common",
-      "inventoryCategory": "materials",
+      "inventoryCategory": "consumables",
       "stackable": true,
       "stats": {},
-      "eventHooks": [],
-      "folder": "resources"
+      "eventHooks": [
+        {
+          "id": "on_use_1776893291038_0",
+          "event": "on_use",
+          "actions": [
+            {
+              "type": "restore_energy",
+              "value": 25
+            }
+          ]
+        }
+      ],
+      "quickSlotCooldownMs": 10000,
+      "consumeSound": "/Sound Files/EatingSound.mp3",
+      "consumeSoundVolume": 0.2,
+      "folder": "Consumable"
     }
   ],
   "itemClasses": [
@@ -785,7 +799,7 @@
         "one_hand_sword"
       ],
       "baseDurationMs": 2000,
-      "baseEnergyCost": 15,
+      "baseEnergyCost": 10,
       "basePower": 5,
       "powerPerLevel": 1,
       "baseXpToNext": 50,
@@ -983,7 +997,7 @@
         "targetPattern": "single",
         "usageContext": "combat"
       },
-      "hitSound": "/Sound Files/OneHandSword_WeaponSkill_Stab.wav",
+      "hitSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_Stab.wav",
       "hitSoundVolume": 0.2,
       "effects": [
         {
@@ -991,14 +1005,12 @@
           "trigger": "on_hit",
           "target": "target",
           "type": "show_emote",
-          "emoteChance": 50,
+          "emoteChance": 100,
           "durationMs": 3000,
-          "customText": "Take that!"
+          "customText": "Die, beast!"
         }
       ],
       "basePowerMax": 3,
-      "disableAutoCast": true,
-      "castSoundOnComplete": true,
       "folder": "active"
     }
   ],
@@ -1070,6 +1082,9 @@
       "abilities": [],
       "onInteractEffects": [],
       "onDestroyEffects": [],
+      "offersQuestIds": [
+        "find_your_backpack"
+      ],
       "npc": {
         "portraitImage": "/Interactable Images/Rylor.png",
         "dialogues": [
@@ -1173,7 +1188,8 @@
       "image": "/Interactable Images/ThreadhornStaglet.png",
       "formRules": [],
       "sounds": {
-        "onDestroy": "/Sound Files/Skills/Interactable Sounds/DeathStag.mp3"
+        "onDestroy": "/Sound Files/Skills/Interactable Sounds/DeathStag.mp3",
+        "onDestroyVolume": 0.3
       },
       "folder": "Enemies"
     }
@@ -1199,6 +1215,10 @@
             {
               "type": "complete_quest",
               "questId": "find_your_backpack"
+            },
+            {
+              "type": "grant_quest",
+              "questId": "head_to_farmstead"
             }
           ]
         }
@@ -1253,6 +1273,10 @@
               "text": "For Lyoris!",
               "closeDialogue": true,
               "effects": [
+                {
+                  "type": "complete_quest",
+                  "questId": "head_to_farmstead"
+                },
                 {
                   "type": "spawn_interactable",
                   "interactableId": "threadhorn_staglet"
@@ -1373,7 +1397,7 @@
           "description": "Rylor wants you to clear the area of danger to ensure the safety of Lyoris.",
           "progress": {
             "kind": "structured",
-            "label": "Progress",
+            "label": "Fauna Killed",
             "source": {
               "type": "interactable_defeat_count",
               "interactableId": "threadhorn_staglet"
@@ -1399,7 +1423,7 @@
           "description": "Rylor wants you to Explore around Lyorin Outskirts to try to find your backpack.",
           "progress": {
             "kind": "structured",
-            "label": "Progress",
+            "label": "Backpack Collected",
             "source": {
               "type": "item_count",
               "itemId": "backpack"
@@ -1414,6 +1438,51 @@
           "progress": {
             "kind": "freeform",
             "text": "Talk to Rylor"
+          },
+          "highlightTargets": {
+            "interactableIds": [
+              "rylor"
+            ]
+          }
+        }
+      ],
+      "folder": "main_story"
+    },
+    {
+      "id": "head_to_farmstead",
+      "name": "Head to the Farmstead",
+      "description": "Rylor wants to regroup at the Lyorin Farmstead. Travel there and check in with him.",
+      "category": "main_story",
+      "level": 1,
+      "unlockCondition": "player.hasQuest(\"head_to_farmstead\")",
+      "objectives": [
+        {
+          "id": "head_to_farmstead_objective_1",
+          "title": "Travel to Lyorin Farmstead",
+          "description": "Head east to the Lyorin Farmstead.",
+          "completeCondition": "room.id == \"room_4_4\"",
+          "progress": {
+            "kind": "freeform",
+            "text": "Travel to the Farmstead"
+          },
+          "highlightTargets": {
+            "roomIds": [
+              "room_4_4"
+            ]
+          }
+        },
+        {
+          "id": "head_to_farmstead_objective_2",
+          "title": "Talk to Rylor",
+          "description": "Speak with Rylor at the Farmstead.",
+          "progress": {
+            "kind": "freeform",
+            "text": "Speak with Rylor"
+          },
+          "highlightTargets": {
+            "interactableIds": [
+              "rylor"
+            ]
           }
         }
       ],
@@ -1487,9 +1556,9 @@
           {
             "id": "st_1776616283541_1",
             "interactableId": "faeberry_bush",
-            "spawnChance": 50,
+            "spawnChance": 100,
             "minCount": 1,
-            "maxCount": 1,
+            "maxCount": 2,
             "neverRespawnAfterDefeat": false
           }
         ],

@@ -1,11 +1,14 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { PageShell } from "../layout/PageShell";
+import { ConsumableUsePanel } from "./ConsumableUsePanel";
 import { useItemStore } from "../../stores/itemStore";
 import { EventHooksPanel } from "./EventHooksPanel";
 import { EditorItemPreview, type EditorItemPreviewRow } from "../shared/EditorItemPreview";
 import type {
   EquipmentSlot,
   InventoryCategory,
+  ItemEventHook,
+  ItemEventType,
   ItemRarity,
   ItemStats,
   PlacementEffect,
@@ -54,6 +57,17 @@ const INVENTORY_CATEGORY_OPTIONS: { value: InventoryCategory; label: string }[] 
   { value: "misc", label: "Misc" },
 ];
 
+const ADVANCED_ITEM_EVENT_TYPES: { value: ItemEventType; label: string; desc: string }[] = [
+  { value: "on_equip", label: "On Equip", desc: "When item is equipped" },
+  { value: "on_unequip", label: "On Unequip", desc: "When item is unequipped" },
+  { value: "on_hit", label: "On Hit", desc: "When player lands a hit with this equipped" },
+  { value: "on_kill", label: "On Kill", desc: "When player destroys an interactable" },
+  { value: "on_interact", label: "On Interact", desc: "When player interacts with anything" },
+  { value: "on_explore", label: "On Explore", desc: "When player explores a room" },
+  { value: "on_damage_taken", label: "On Damage Taken", desc: "When player takes damage" },
+  { value: "on_tick", label: "On Tick", desc: "Every game tick while equipped" },
+];
+
 export function ItemEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -75,6 +89,25 @@ export function ItemEditPage() {
   const updateStat = (key: keyof ItemStats, raw: string) => {
     const val = raw === "" ? undefined : Number(raw);
     updateItem(item.id, { stats: { ...item.stats, [key]: val } });
+  };
+
+  const consumeHooks = item.eventHooks.filter((hook) => hook.event === "on_use");
+  const advancedHooks = item.eventHooks.filter((hook) => hook.event !== "on_use");
+  const setConsumeHooks = (hooks: ItemEventHook[]) => {
+    updateItem(item.id, {
+      eventHooks: [
+        ...advancedHooks,
+        ...hooks.map((hook) => ({ ...hook, event: "on_use" as const })),
+      ],
+    });
+  };
+  const setAdvancedHooks = (hooks: ItemEventHook[]) => {
+    updateItem(item.id, {
+      eventHooks: [
+        ...hooks,
+        ...consumeHooks,
+      ],
+    });
   };
 
   const previewRows: EditorItemPreviewRow[] = STAT_FIELDS.flatMap((field) => {
@@ -208,6 +241,26 @@ export function ItemEditPage() {
           </div>
         </div>
       </section>
+
+      <ConsumableUsePanel
+        hooks={consumeHooks}
+        inventoryCategory={item.inventoryCategory}
+        stackable={item.stackable}
+        cooldownMs={item.quickSlotCooldownMs}
+        consumeSound={item.consumeSound}
+        consumeSoundVolume={item.consumeSoundVolume}
+        onChange={setConsumeHooks}
+        onMakeConsumable={() =>
+          updateItem(item.id, {
+            inventoryCategory: "consumables",
+            stackable: true,
+            slot: undefined,
+          })
+        }
+        onCooldownChange={(quickSlotCooldownMs) => updateItem(item.id, { quickSlotCooldownMs })}
+        onConsumeSoundChange={(consumeSound) => updateItem(item.id, { consumeSound })}
+        onConsumeSoundVolumeChange={(consumeSoundVolume) => updateItem(item.id, { consumeSoundVolume })}
+      />
 
       <section className="editor-section">
         <h3 className="section-title">Preview</h3>
@@ -427,8 +480,13 @@ export function ItemEditPage() {
       </section>
 
       <EventHooksPanel
-        hooks={item.eventHooks}
-        onChange={(eventHooks) => updateItem(item.id, { eventHooks })}
+        hooks={advancedHooks}
+        onChange={(eventHooks) => setAdvancedHooks(eventHooks as ItemEventHook[])}
+        eventTypes={ADVANCED_ITEM_EVENT_TYPES}
+        defaultEvent="on_equip"
+        title="Advanced Item Hooks"
+        description="Optional equipment and world-event hooks. Consumable behavior is authored in Consumable Use above."
+        addLabel="+ Add Advanced Hook"
       />
     </PageShell>
   );

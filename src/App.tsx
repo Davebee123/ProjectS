@@ -11,6 +11,7 @@ import { PlayerColumn } from "./components/player/PlayerColumn";
 import { SkillsColumn } from "./components/skills/SkillsColumn";
 import { WorldColumn } from "./components/world/WorldColumn";
 import { CutsceneOverlay } from "./components/cutscenes/CutsceneOverlay";
+import { QuestProgressToasts } from "./components/quests/QuestProgressToasts";
 
 // ── Game App (renders after content is loaded) ──
 
@@ -138,6 +139,7 @@ function GameApp({ changelog }: { changelog: ChangelogData | null }) {
           right={<WorldColumn />}
         />
         <div className="screen-noise-overlay" aria-hidden="true" />
+        <QuestProgressToasts />
         <CutsceneOverlay />
       </div>
     </GameContext.Provider>

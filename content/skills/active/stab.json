@@ -23,7 +23,7 @@
     "targetPattern": "single",
     "usageContext": "combat"
   },
-  "hitSound": "/Sound Files/OneHandSword_WeaponSkill_Stab.wav",
+  "hitSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_Stab.wav",
   "hitSoundVolume": 0.2,
   "effects": [
     {
@@ -31,12 +31,10 @@
       "trigger": "on_hit",
       "target": "target",
       "type": "show_emote",
-      "emoteChance": 50,
+      "emoteChance": 100,
       "durationMs": 3000,
-      "customText": "Take that!"
+      "customText": "Die, beast!"
     }
   ],
-  "basePowerMax": 3,
-  "disableAutoCast": true,
-  "castSoundOnComplete": true
+  "basePowerMax": 3
 }

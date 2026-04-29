@@ -18,9 +18,9 @@
     {
       "id": "st_1776616283541_1",
       "interactableId": "faeberry_bush",
-      "spawnChance": 50,
+      "spawnChance": 100,
       "minCount": 1,
-      "maxCount": 1,
+      "maxCount": 2,
       "neverRespawnAfterDefeat": false
     }
   ],

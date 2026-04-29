@@ -18,6 +18,9 @@
   "abilities": [],
   "onInteractEffects": [],
   "onDestroyEffects": [],
+  "offersQuestIds": [
+    "find_your_backpack"
+  ],
   "npc": {
     "portraitImage": "/Interactable Images/Rylor.png",
     "dialogues": [

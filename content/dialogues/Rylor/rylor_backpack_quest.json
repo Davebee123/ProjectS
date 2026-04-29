@@ -18,6 +18,10 @@
         {
           "type": "complete_quest",
           "questId": "find_your_backpack"
+        },
+        {
+          "type": "grant_quest",
+          "questId": "head_to_farmstead"
         }
       ]
     }

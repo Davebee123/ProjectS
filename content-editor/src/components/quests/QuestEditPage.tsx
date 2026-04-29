@@ -7,7 +7,8 @@ import { useQuestStore } from "../../stores/questStore";
 import { useItemStore } from "../../stores/itemStore";
 import { useStorageKeyStore } from "../../stores/storageKeyStore";
 import { useInteractableStore } from "../../stores/interactableStore";
-import type { QuestObjective, QuestProgress } from "../../schema/types";
+import { useWorldStore } from "../../stores/worldStore";
+import type { QuestHighlightTargets, QuestObjective, QuestProgress } from "../../schema/types";
 
 function createObjective(idPrefix: string, index: number): QuestObjective {
   return {
@@ -28,6 +29,7 @@ export function QuestEditPage() {
   const { items } = useItemStore();
   const { storageKeys } = useStorageKeyStore();
   const { interactables } = useInteractableStore();
+  const { world } = useWorldStore();
 
   const quest = quests.find((entry) => entry.id === id);
   const itemOptions = items.map((item) => ({
@@ -47,6 +49,12 @@ export function QuestEditPage() {
     label: interactable.name || interactable.id,
     meta: `${interactable.activityTag || "none"} - Level ${interactable.requiredLevel || 1}`,
     description: interactable.description || undefined,
+  }));
+  const roomOptions = world.rooms.map((room) => ({
+    id: room.id,
+    label: room.name || room.id,
+    meta: room.id,
+    description: room.description || undefined,
   }));
 
   if (!quest) {
@@ -72,6 +80,18 @@ export function QuestEditPage() {
 
   const replaceObjectiveProgress = (index: number, progress: QuestProgress) => {
     updateObjective(index, { progress });
+  };
+
+  const updateHighlightTargets = (
+    index: number,
+    patch: Partial<QuestHighlightTargets>
+  ): void => {
+    const current = quest.objectives[index]?.highlightTargets ?? {};
+    const merged: QuestHighlightTargets = { ...current, ...patch };
+    if (!merged.interactableIds?.length) delete merged.interactableIds;
+    if (!merged.roomIds?.length) delete merged.roomIds;
+    const next = Object.keys(merged).length > 0 ? merged : undefined;
+    updateObjective(index, { highlightTargets: next });
   };
 
   const addObjective = () => {
@@ -287,6 +307,31 @@ export function QuestEditPage() {
                 </div>
               </CollapsibleEditorSection>
 
+              <CollapsibleEditorSection
+                title="Highlight Targets"
+                summary={`${(objective.highlightTargets?.interactableIds?.length ?? 0)} interactable, ${(objective.highlightTargets?.roomIds?.length ?? 0)} room`}
+                defaultOpen={false}
+              >
+                <p className="hint-text" style={{ marginTop: 0 }}>
+                  When this objective is the active step of a visible quest, these elements
+                  get a "!" indicator in-game.
+                </p>
+                <MultiIdPicker
+                  label="Interactables"
+                  value={objective.highlightTargets?.interactableIds ?? []}
+                  options={interactableOptions}
+                  onChange={(ids) => updateHighlightTargets(index, { interactableIds: ids })}
+                  placeholder="Add interactable..."
+                />
+                <MultiIdPicker
+                  label="Rooms"
+                  value={objective.highlightTargets?.roomIds ?? []}
+                  options={roomOptions}
+                  onChange={(ids) => updateHighlightTargets(index, { roomIds: ids })}
+                  placeholder="Add room..."
+                />
+              </CollapsibleEditorSection>
+
               <div className="form-grid" style={{ marginTop: 16 }}>
                 <div className="form-field">
                   <label className="field-label">Progress Type</label>
@@ -325,7 +370,7 @@ export function QuestEditPage() {
               {structuredProgress ? (
                 <div className="form-grid" style={{ marginTop: 16 }}>
                   <div className="form-field">
-                    <label className="field-label">Progress Label</label>
+                    <label className="field-label">Progress Header</label>
                     <input
                       className="input"
                       value={structuredProgress.label}
@@ -335,7 +380,11 @@ export function QuestEditPage() {
                           label: e.target.value,
                         })
                       }
+                      placeholder="e.g. Backpack Collected"
                     />
+                    <p className="hint-text">
+                      Player-facing header above the progress bar. A trailing colon is added in-game if omitted.
+                    </p>
                   </div>
                   <div className="form-field">
                     <label className="field-label">Progress Source</label>
@@ -467,5 +516,90 @@ export function QuestEditPage() {
         </button>
       </section>
     </PageShell>
+  );
+}
+
+interface MultiIdPickerOption {
+  id: string;
+  label: string;
+  meta?: string;
+  description?: string;
+}
+
+function MultiIdPicker({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string[];
+  options: MultiIdPickerOption[];
+  onChange: (ids: string[]) => void;
+  placeholder?: string;
+}) {
+  const available = options.filter((o) => !value.includes(o.id));
+  return (
+    <div className="form-field" style={{ marginTop: 10 }}>
+      <label className="field-label">{label}</label>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+        {value.length === 0 ? (
+          <span style={{ opacity: 0.6, fontSize: 12 }}>(none)</span>
+        ) : (
+          value.map((id) => {
+            const opt = options.find((o) => o.id === id);
+            return (
+              <span
+                key={id}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "2px 8px",
+                  background: "rgba(120, 140, 170, 0.22)",
+                  border: "1px solid rgba(140, 160, 190, 0.4)",
+                  borderRadius: 3,
+                  fontSize: 12,
+                }}
+              >
+                {opt?.label ?? id}
+                <button
+                  type="button"
+                  onClick={() => onChange(value.filter((v) => v !== id))}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "inherit",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: 14,
+                    lineHeight: 1,
+                  }}
+                  aria-label={`Remove ${opt?.label ?? id}`}
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })
+        )}
+      </div>
+      <select
+        className="input"
+        value=""
+        onChange={(e) => {
+          if (e.target.value) onChange([...value, e.target.value]);
+        }}
+      >
+        <option value="">{placeholder ?? `Add ${label.toLowerCase()}...`}</option>
+        {available.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.label}
+            {o.meta ? ` — ${o.meta}` : ""}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

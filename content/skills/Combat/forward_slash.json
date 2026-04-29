@@ -11,7 +11,7 @@
     "one_hand_sword"
   ],
   "baseDurationMs": 2000,
-  "baseEnergyCost": 15,
+  "baseEnergyCost": 10,
   "basePower": 5,
   "powerPerLevel": 1,
   "baseXpToNext": 50,

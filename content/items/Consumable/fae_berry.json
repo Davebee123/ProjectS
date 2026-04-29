@@ -1,0 +1,24 @@
+{
+  "id": "fae_berry",
+  "name": "Fae Berry",
+  "description": "A bright red berry that is known to restore some energy.",
+  "rarity": "common",
+  "inventoryCategory": "consumables",
+  "stackable": true,
+  "stats": {},
+  "eventHooks": [
+    {
+      "id": "on_use_1776893291038_0",
+      "event": "on_use",
+      "actions": [
+        {
+          "type": "restore_energy",
+          "value": 25
+        }
+      ]
+    }
+  ],
+  "quickSlotCooldownMs": 10000,
+  "consumeSound": "/Sound Files/EatingSound.mp3",
+  "consumeSoundVolume": 0.2
+}

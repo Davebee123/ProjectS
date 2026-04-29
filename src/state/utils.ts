@@ -490,6 +490,11 @@ export function executeEventActions(
           id: `${def.id}_spawned_${state.now}_${objects.length}`,
           drops: rollLootDrops(bundle, def, seededRandom(state.seed + state.now + objects.length), ctx),
           now: state.now,
+          revealStartedAt: state.now,
+          revealDurationMs:
+            typeof action.durationMs === "number" && action.durationMs > 0
+              ? action.durationMs
+              : undefined,
         });
         objects = [...objects, object];
         logLines.push(`${def.name} appeared.`);

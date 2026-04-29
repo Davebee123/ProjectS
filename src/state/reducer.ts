@@ -78,8 +78,27 @@ export function pickWeather(seed: number): WeatherType {
 }
 
 const DEFAULT_MODIFIERS = { energyRegenMult: 1.0, manaRegenMult: 1.0, successChanceMod: 0 };
+const PLAYER_SKILL_CRIT_CHANCE = 0.05;
 
-function playHostileSkillHitSound(skillId: string | undefined | null): void {
+function rollPlayerSkillCrit(baseAmount: number): { amount: number; didCrit: boolean } {
+  const amount = Math.max(0, Math.round(baseAmount));
+  if (amount <= 0) {
+    return { amount: 0, didCrit: false };
+  }
+
+  const didCrit = Math.random() < PLAYER_SKILL_CRIT_CHANCE;
+  return { amount: didCrit ? amount * 2 : amount, didCrit };
+}
+
+function formatSkillDamageText(amount: number, didCrit: boolean): string {
+  return didCrit ? `-${amount} CRIT` : `-${amount}`;
+}
+
+function formatSkillHealText(amount: number, didCrit: boolean): string {
+  return didCrit ? `+${amount} HP CRIT` : `+${amount} HP`;
+}
+
+function playInteractableSkillHitSound(skillId: string | undefined | null): void {
   if (!skillId) return;
   const hitSkillDef = getBundle()?.skills.find((entry) => entry.id === skillId);
   if (hitSkillDef?.hitSound) {
@@ -282,6 +301,90 @@ function pushQuestReceiptCues(
   return {
     announcedQuestIds: Array.from(new Set([...nextState.announcedQuestIds, ...newQuestIds])),
     questReceiptCues: [...activeCues, ...nextCues].slice(-4),
+  };
+}
+
+function getQuestProgressSourceValue(
+  source: NonNullable<ReturnType<typeof getBundle>>["quests"][number]["objectives"][number]["progress"] extends infer Progress
+    ? Progress extends { kind: "structured"; source: infer Source }
+      ? Source
+      : never
+    : never,
+  state: GameState
+): number {
+  const ctx = buildEvalContext(state);
+  switch (source.type) {
+    case "item_count":
+      return ctx.itemCount(source.itemId);
+    case "storage_counter":
+      return ctx.counter(source.storageKeyId);
+    case "interactable_defeat_count":
+      return ctx.counter(`interactable_defeated:${source.interactableId}`);
+    default:
+      return 0;
+  }
+}
+
+function pushQuestProgressCues(
+  state: GameState
+): Pick<GameState, "questProgressCues" | "questProgressSeen"> {
+  const bundle = getBundle();
+  const activeCues = state.questProgressCues.filter((cue) => cue.expiresAt > state.now);
+  if (!bundle) {
+    return {
+      questProgressCues: activeCues,
+      questProgressSeen: state.questProgressSeen,
+    };
+  }
+
+  const ctx = buildEvalContext(state);
+  const nextSeen = { ...state.questProgressSeen };
+  const nextCues: GameState["questProgressCues"] = [];
+
+  for (const quest of bundle.quests) {
+    if (!ctx.hasQuest?.(quest.id) || ctx.hasCompletedQuest?.(quest.id)) {
+      continue;
+    }
+
+    for (const objective of quest.objectives) {
+      if (objective.unlockCondition && !evaluateCondition(objective.unlockCondition, ctx)) {
+        continue;
+      }
+      if (objective.progress.kind !== "structured") {
+        continue;
+      }
+
+      const currentValue = Math.max(
+        0,
+        Math.min(
+          objective.progress.requiredValue,
+          Math.floor(getQuestProgressSourceValue(objective.progress.source, state))
+        )
+      );
+      const seenKey = `${quest.id}:${objective.id}`;
+      const previousValue = nextSeen[seenKey];
+      nextSeen[seenKey] = currentValue;
+
+      if (previousValue === undefined || currentValue <= previousValue) {
+        continue;
+      }
+
+      nextCues.push({
+        id: `quest_progress_${quest.id}_${objective.id}_${state.now}_${nextCues.length}`,
+        questId: quest.id,
+        objectiveId: objective.id,
+        title: objective.progress.label || objective.title,
+        currentValue,
+        requiredValue: objective.progress.requiredValue,
+        appearsAt: state.now,
+        expiresAt: state.now + 2600,
+      });
+    }
+  }
+
+  return {
+    questProgressCues: [...activeCues, ...nextCues].slice(-4),
+    questProgressSeen: nextSeen,
   };
 }
 
@@ -1766,7 +1869,7 @@ function resolveDueHostileActionTicks(state: GameState): GameState {
 
       if (tickDamageDealt > 0) {
         if (nextState.health < previousHealth) {
-          playHostileSkillHitSound(linkedSkill?.id ?? ability.skillId);
+          playInteractableSkillHitSound(linkedSkill?.id ?? ability.skillId);
         }
         const hookBundle = getBundle();
         if (hookBundle) {
@@ -2139,7 +2242,7 @@ function resolveCompletedHostileAction(state: GameState): GameState {
   const totalDamage = hostileAction.damageDealt + completionDamage;
   if (completionDamage > 0) {
     if (nextState.health < healthBeforeCompletion) {
-      playHostileSkillHitSound(linkedSkill?.id ?? ability.skillId);
+      playInteractableSkillHitSound(linkedSkill?.id ?? ability.skillId);
     }
     const hookBundle = getBundle();
     if (hookBundle) {
@@ -2308,6 +2411,10 @@ function resolveDueFriendlyActionTicks(state: GameState): GameState {
     }
 
     if (tickDamageDealt > 0) {
+      const damagedTarget = nextState.objects.find((entry) => entry.id === targetObject.id);
+      if (damagedTarget && damagedTarget.integrity < previousIntegrity) {
+        playInteractableSkillHitSound(linkedSkill?.id ?? ability.skillId);
+      }
       const hookBundle = getBundle();
       if (hookBundle) {
         nextState = applyHookResultState(
@@ -2493,6 +2600,10 @@ function resolveCompletedFriendlyAction(state: GameState): GameState {
   }
 
   if (completionDamage > 0) {
+    const damagedTarget = nextState.objects.find((entry) => entry.id === targetObject.id);
+    if (damagedTarget && damagedTarget.integrity < targetObject.integrity) {
+      playInteractableSkillHitSound(linkedSkill?.id ?? ability.skillId);
+    }
     const hookBundle = getBundle();
     if (hookBundle) {
       nextState = applyHookResultState(
@@ -2871,7 +2982,7 @@ function executeTriggeredSkillEffects(
     switch (effect.type) {
       case "damage": {
         handledDamage = true;
-        const amount = Math.max(
+        const baseAmount = Math.max(
           0,
           Math.round(
             typeof effect.value === "number"
@@ -2881,6 +2992,8 @@ function executeTriggeredSkillEffects(
                 })
           )
         );
+        const critResult = rollPlayerSkillCrit(baseAmount);
+        const amount = critResult.amount;
         if (amount <= 0) {
           break;
         }
@@ -2895,7 +3008,7 @@ function executeTriggeredSkillEffects(
           ),
           floatTexts: pushFloatingText(
             nextState.floatTexts,
-            `-${amount}`,
+            formatSkillDamageText(amount, critResult.didCrit),
             nextState.now,
             { durationMs: 1000, zone: "objects", objectId: currentTarget.id }
           ),
@@ -2959,17 +3072,24 @@ function executeTriggeredSkillEffects(
       }
 
       case "heal": {
-        const amount = Math.max(0, Math.round(typeof effect.value === "number" ? effect.value : 0));
+        const baseAmount = Math.max(0, Math.round(typeof effect.value === "number" ? effect.value : 0));
+        const critResult = rollPlayerSkillCrit(baseAmount);
+        const amount = critResult.amount;
         if (amount <= 0) {
           break;
         }
         nextState = {
           ...nextState,
           health: Math.min(nextState.maxHealth, nextState.health + amount),
-          floatTexts: pushFloatingText(nextState.floatTexts, `+${amount} HP`, nextState.now, {
-            zone: "skills",
-            skillId: skill.id,
-          }),
+          floatTexts: pushFloatingText(
+            nextState.floatTexts,
+            formatSkillHealText(amount, critResult.didCrit),
+            nextState.now,
+            {
+              zone: "skills",
+              skillId: skill.id,
+            }
+          ),
         };
         break;
       }
@@ -3097,7 +3217,10 @@ function resolveDueActionTicks(state: GameState): GameState {
       if (!currentTarget) {
         return { ...nextState, action: null };
       }
-      const tickImpact = getActionPulseImpact(nextState, usedSkill, currentTarget, { splitAcrossTicks: true });
+      const tickCritResult = rollPlayerSkillCrit(
+        getActionPulseImpact(nextState, usedSkill, currentTarget, { splitAcrossTicks: true })
+      );
+      const tickImpact = tickCritResult.amount;
       const remainingIntegrity = Math.max(0, currentTarget.integrity - tickImpact);
       nextState = {
         ...nextState,
@@ -3110,7 +3233,7 @@ function resolveDueActionTicks(state: GameState): GameState {
           tickImpact > 0
             ? pushFloatingText(
                 nextState.floatTexts,
-                `-${tickImpact}`,
+                formatSkillDamageText(tickImpact, tickCritResult.didCrit),
                 nextState.now,
                 { durationMs: 1000, zone: "objects", objectId: currentTarget.id }
               )
@@ -3209,6 +3332,11 @@ function resolveCompletedAction(state: GameState): GameState {
   let impact = didSucceed && !actionHasTicks
     ? getActionPulseImpact(state, usedSkill, targetObject)
     : 0;
+  let fallbackImpactCritResult = { amount: impact, didCrit: false };
+  if (impact > 0) {
+    fallbackImpactCritResult = rollPlayerSkillCrit(impact);
+    impact = fallbackImpactCritResult.amount;
+  }
   let nextTargetEffects = [...(targetObject.activeEffects ?? [])];
   let nextActiveEffects = state.activeEffects ?? [];
   let effectExecutionState: GameState | null = null;
@@ -3326,7 +3454,7 @@ function resolveCompletedAction(state: GameState): GameState {
   if (didSucceed && impact > 0 && !completionEffectsHandledDamage) {
     updatedFloatTexts = pushFloatingText(
       updatedFloatTexts,
-      `-${impact}`,
+      formatSkillDamageText(impact, fallbackImpactCritResult.didCrit),
       state.now,
       { durationMs: 1000, zone: "objects", objectId: targetObject.id }
     );
@@ -5250,6 +5378,7 @@ export function reducer(state: GameState, action: GameAction): GameState {
         objectEmoteCues: state.objectEmoteCues.filter((entry) => entry.expiresAt > now),
         lootReceiptCues: state.lootReceiptCues.filter((entry) => entry.expiresAt > now),
         questReceiptCues: state.questReceiptCues.filter((entry) => entry.expiresAt > now),
+        questProgressCues: state.questProgressCues.filter((entry) => entry.expiresAt > now),
       };
 
       if (nextState.craftingAction && now >= nextState.craftingAction.endsAt) {
@@ -5299,10 +5428,25 @@ export function reducer(state: GameState, action: GameAction): GameState {
           nextState
         );
         const nextExploreCount = nextState.exploreCount + 1;
+        // Track per-room interactable spawn counts (only non-fixed spawns would be interesting,
+        // but including fixed is still useful context). Counts every object returned for this room.
+        const roomId = nextState.currentRoomId;
+        const existingRoomCounts = nextState.roomSpawnCounts[roomId] ?? {};
+        const updatedRoomCounts: Record<string, number> = { ...existingRoomCounts };
+        for (const obj of nextObjects) {
+          const interId = obj.interactableId;
+          if (!interId) continue;
+          updatedRoomCounts[interId] = (updatedRoomCounts[interId] ?? 0) + 1;
+        }
+        const nextRoomSpawnCounts = {
+          ...nextState.roomSpawnCounts,
+          [roomId]: updatedRoomCounts,
+        };
         nextState = {
           ...nextState,
           seed: nextState.exploreAction.seed,
           exploreCount: nextExploreCount,
+          roomSpawnCounts: nextRoomSpawnCounts,
           objects: nextObjects,
           selectedObjectId: null,
           activeDialogue: null,
@@ -5563,6 +5707,13 @@ export function reducer(state: GameState, action: GameAction): GameState {
         questReceiptCues: questPopupState.questReceiptCues,
       };
 
+      const questProgressState = pushQuestProgressCues(nextState);
+      nextState = {
+        ...nextState,
+        questProgressCues: questProgressState.questProgressCues,
+        questProgressSeen: questProgressState.questProgressSeen,
+      };
+
       return nextState;
     }
 
@@ -5598,6 +5749,99 @@ export function reducer(state: GameState, action: GameAction): GameState {
         ...state,
         feyRunes: runes,
         log: appendLog(state.log, `${name} removed from rune slot ${action.slot + 1}.`),
+      };
+    }
+
+    case "BIND_QUICK_SLOT": {
+      const bundle = getBundle();
+      if (!bundle) return state;
+      const itemDef = bundle.items.find((i) => i.id === action.itemId);
+      if (!itemDef) return state;
+      const slots = state.quickSlots.map((slotItemId) =>
+        slotItemId === action.itemId ? null : slotItemId
+      ) as GameState["quickSlots"];
+      slots[action.slot] = action.itemId;
+      const cooldowns = [...state.quickSlotCooldowns] as GameState["quickSlotCooldowns"];
+      cooldowns[action.slot] = 0;
+      playSound("/Sound Files/UI/Equip_Armour.wav", 0.6);
+      return {
+        ...state,
+        quickSlots: slots,
+        quickSlotCooldowns: cooldowns,
+        log: appendLog(state.log, `${itemDef.name} bound to Quick Slot ${action.slot + 1}.`),
+      };
+    }
+
+    case "CLEAR_QUICK_SLOT": {
+      if (!state.quickSlots[action.slot]) return state;
+      const slots = [...state.quickSlots] as GameState["quickSlots"];
+      slots[action.slot] = null;
+      const cooldowns = [...state.quickSlotCooldowns] as GameState["quickSlotCooldowns"];
+      cooldowns[action.slot] = 0;
+      return {
+        ...state,
+        quickSlots: slots,
+        quickSlotCooldowns: cooldowns,
+        log: appendLog(state.log, `Quick Slot ${action.slot + 1} cleared.`),
+      };
+    }
+
+    case "USE_QUICK_SLOT": {
+      const bundle = getBundle();
+      if (!bundle) return state;
+      const itemId = state.quickSlots[action.slot];
+      if (!itemId) return state;
+      // Cooldown gate
+      if (state.quickSlotCooldowns[action.slot] > state.now) return state;
+      // Require at least one in inventory
+      const invIndex = state.inventory.findIndex((i) => i.id === itemId && i.qty > 0);
+      if (invIndex < 0) return state;
+      const itemDef = bundle.items.find((i) => i.id === itemId);
+      if (!itemDef) return state;
+
+      // Decrement inventory
+      const inventory = [...state.inventory];
+      const entry = { ...inventory[invIndex], qty: inventory[invIndex].qty - 1 };
+      if (entry.qty <= 0) {
+        inventory.splice(invIndex, 1);
+      } else {
+        inventory[invIndex] = entry;
+      }
+
+      // Fire on_use event hooks
+      const hookResult = executeItemEventHooks(
+        [itemId],
+        "on_use",
+        { ...state, inventory },
+        bundle
+      );
+
+      // Apply cooldown
+      const cooldowns = [...state.quickSlotCooldowns] as GameState["quickSlotCooldowns"];
+      const cdMs = itemDef.quickSlotCooldownMs ?? 0;
+      cooldowns[action.slot] = cdMs > 0 ? state.now + cdMs : 0;
+
+      // If the stack just emptied, keep the slot bound but the UI will show 0.
+      let nextLog = appendLog(state.log, `Used ${itemDef.name}.`);
+      for (const line of hookResult.log ?? []) nextLog = appendLog(nextLog, line);
+      if (itemDef.consumeSound) {
+        playSound(itemDef.consumeSound, itemDef.consumeSoundVolume ?? 1);
+      }
+
+      return {
+        ...state,
+        inventory: hookResult.inventory ?? inventory,
+        inventoryEquipment: hookResult.inventoryEquipment ?? state.inventoryEquipment,
+        activeEffects: hookResult.activeEffects ?? state.activeEffects,
+        playerStorage: hookResult.playerStorage ?? state.playerStorage,
+        energy: hookResult.energy ?? state.energy,
+        mana: hookResult.mana ?? state.mana,
+        health: hookResult.health ?? state.health,
+        skills: hookResult.skills ?? state.skills,
+        unlockCues: hookResult.unlockCues ?? state.unlockCues,
+        objectEmoteCues: hookResult.objectEmoteCues ?? state.objectEmoteCues,
+        quickSlotCooldowns: cooldowns,
+        log: nextLog,
       };
     }
 

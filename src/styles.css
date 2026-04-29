@@ -585,9 +585,10 @@ button {
   margin-top: 18px;
 }
 
-.object-entry.is-reveal-in {
+.object-entry.is-reveal-in,
+.interactable-card.is-reveal-in {
   opacity: 0;
-  animation: object-entry-in 0.45s ease-out forwards;
+  animation: object-entry-in 1.15s ease-out forwards;
 }
 
 .selection-main {
@@ -899,11 +900,15 @@ button {
 @keyframes object-entry-in {
   0% {
     opacity: 0;
-    transform: translateY(8px);
+    filter: brightness(0.5) blur(1.5px);
+  }
+  48% {
+    opacity: 0.38;
+    filter: brightness(0.72) blur(0.8px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    filter: brightness(1) blur(0);
   }
 }
 
@@ -1473,8 +1478,12 @@ button {
 .equip-runes-right {
   display: flex;
   flex-direction: column;
-  width: 136px;
+  width: 156px;
   flex-shrink: 0;
+}
+
+.equip-runes-right .section-label {
+  white-space: nowrap;
 }
 
 /* Equipment grid */
@@ -1728,6 +1737,71 @@ button {
   justify-content: start;
 }
 
+/* Quick Slots — 2x2 grid of equipment-cells, matching the Equipment look */
+.quick-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 66px);
+  column-gap: 8px;
+  row-gap: 10px;
+  margin-top: 6px;
+  justify-content: start;
+}
+
+.quick-slot-wrap {
+  position: relative;
+  width: 66px;
+  height: 66px;
+}
+
+.quick-slot-count {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #f1f1f1;
+  background: rgba(126, 126, 126, 0.88);
+  border: 1px solid rgba(198, 198, 198, 0.32);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.quick-slot-cooldown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.quick-slot-tooltip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  z-index: 1000;
+  width: 210px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+}
+
+.quick-slot-wrap:hover .quick-slot-tooltip,
+.quick-slot-wrap:focus-within .quick-slot-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 /* Backpack */
 .backpack-section,
 .minimap-section {
@@ -1803,6 +1877,7 @@ button {
 }
 
 .minimap-tile {
+  position: relative;
   width: 56px;
   height: 56px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1817,9 +1892,131 @@ button {
   transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
 }
 
-.minimap-tile.is-room {
+.minimap-tile.is-room,
+.minimap-tile.is-reachable {
   background: rgba(112, 112, 112, 0.38);
   color: transparent;
+}
+
+.minimap-tile.is-locked {
+  background: rgba(40, 40, 40, 0.55);
+  color: rgba(220, 220, 220, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
+  cursor: help;
+}
+
+.quest-bang {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  transform: translate(50%, -50%);
+  border-radius: 0;
+  background: #f5c84b;
+  color: #1a1405;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: center;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 8px rgba(245, 200, 75, 0.55);
+  pointer-events: none;
+  z-index: 4;
+  animation: quest-bang-pulse 1.6s ease-in-out infinite;
+}
+
+.quest-bang--inline {
+  position: static;
+  transform: none;
+  top: auto;
+  right: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 11px;
+  line-height: 1;
+  margin-right: 8px;
+  vertical-align: -2px;
+  animation: none;
+  flex-shrink: 0;
+}
+
+.quest-bang--minimap {
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+@keyframes quest-bang-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 6px rgba(245, 200, 75, 0.45); }
+  50%      { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 14px rgba(245, 200, 75, 0.9); }
+}
+
+.minimap-tooltip {
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 8px 10px;
+  min-width: 180px;
+  max-width: 260px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.minimap-tooltip-name {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
+}
+
+.minimap-tooltip-empty {
+  color: rgba(255, 255, 255, 0.55);
+  font-style: italic;
+}
+
+.minimap-tooltip-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 6px;
+  margin-bottom: 3px;
+}
+
+.minimap-tooltip-section-label:first-of-type {
+  margin-top: 0;
+}
+
+.minimap-tooltip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.minimap-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.minimap-tooltip-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.minimap-tooltip-value {
+  color: rgba(255, 255, 255, 0.65);
+  font-variant-numeric: tabular-nums;
 }
 
 .minimap-tile.is-current {
@@ -2005,7 +2202,7 @@ button {
 @keyframes quest-receipt-slide-in {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -2165,6 +2362,8 @@ button {
   font-weight: 700;
   line-height: 1.2;
   color: #f5f5f5;
+  display: flex;
+  align-items: center;
 }
 
 .quest-card-level {
@@ -2219,7 +2418,8 @@ button {
 .quest-card-bottom {
   padding: 0 18px 18px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
 }
 
 .quest-card-progress {
@@ -2227,6 +2427,26 @@ button {
   font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
+  color: #f4f4f4;
+}
+
+.quest-card-progress-block {
+  width: min(340px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 auto;
+}
+
+.quest-card-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 700;
   color: #f4f4f4;
 }
 
@@ -2319,6 +2539,13 @@ button {
   --backpack-accent: #0768c3;
 }
 
+.backpack-slot-card.is-consumable {
+  --backpack-row-bg: rgba(219, 219, 219, 0.08);
+  --backpack-accent: #9b9b9b;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
 .backpack-slot-card.is-equipped {
   border-color: var(--backpack-accent);
   box-shadow:
@@ -2332,6 +2559,11 @@ button {
     inset 0 0 0 1px rgba(255, 255, 255, 0.02),
     0 0 0 1px rgba(255, 252, 151, 0.52),
     0 0 18px rgba(255, 252, 151, 0.12);
+}
+
+.backpack-slot-card.is-consumable.is-new {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 .backpack-slot-card:focus-visible {
@@ -2353,6 +2585,25 @@ button {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.backpack-slot-count {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #f1f1f1;
+  background: rgba(126, 126, 126, 0.9);
+  border: 1px solid rgba(198, 198, 198, 0.32);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .backpack-item-tooltip {
@@ -2392,7 +2643,11 @@ button {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  pointer-events: none;
+  pointer-events: auto;
+}
+
+.backpack-quick-slot-select {
+  width: min(240px, 100%);
 }
 
 .backpack-tooltip-header {
@@ -3271,7 +3526,16 @@ button {
 }
 
 .quest-receipt-popup {
-  width: min(460px, calc(100vw - 72px));
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.quest-receipt-popup .quest-receipt-description,
+.quest-receipt-popup .quest-receipt-name {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .loot-receipt-header {
@@ -3325,6 +3589,74 @@ button {
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.82);
   white-space: pre-wrap;
+}
+
+.quest-progress-toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  z-index: 99990;
+  width: min(460px, calc(100vw - 36px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.quest-progress-toast {
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: rgba(8, 8, 8, 0.94);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  animation: quest-progress-toast-in 0.2s ease-out;
+}
+
+.quest-progress-toast-copy {
+  min-height: 46px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quest-progress-toast-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.quest-progress-toast-value {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(220, 220, 220, 0.92);
+}
+
+.quest-progress-toast-bar {
+  padding: 0 16px 12px;
+}
+
+@keyframes quest-progress-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .loot-receipt-list {
@@ -3860,12 +4192,12 @@ button {
 
 .interactable-emote-bubble {
   position: absolute;
-  left: -34px;
-  top: 54px;
+  left: 8px;
+  top: 64px;
   z-index: 8;
-  width: min(272px, calc(100% + 34px));
-  min-height: 118px;
-  padding: 28px 34px;
+  width: min(112px, calc(100% - 16px));
+  min-height: 46px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3876,10 +4208,10 @@ button {
   background-size: 100% 100%;
   background-repeat: no-repeat;
   color: rgba(255, 255, 255, 0.94);
-  font-size: clamp(18px, 2.4vw, 27px);
+  font-size: clamp(10px, 1.1vw, 13px);
   font-weight: 400;
   letter-spacing: 0.02em;
-  line-height: 1.18;
+  line-height: 1.12;
   text-align: center;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.82);
   animation: interactable-emote-fade 2.4s ease-out forwards;
@@ -4196,7 +4528,9 @@ button {
 
 .progress-bar-fill {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   border-radius: 3px;
   transition: width 0.2s ease;
 }

@@ -10,11 +10,14 @@ import {
   getSuccessChance,
 } from "../../state";
 import { getBundle } from "../../data/loader";
+import { getActiveQuestTargets } from "../../state/quests";
 
 const MAX_ROOM_DESCRIPTION_CHARS = 500;
 const LEAF_PARTICLE_TAGS = new Set(["bushes", "trees", "plants", "herbs"]);
 const FOOTSTEP_SOUND = "/Sound Files/FootstepsExploring.mp3";
 const FOOTSTEP_VOLUME = 0.2;
+const INTERACTABLE_REVEAL_STAGGER_MS = 420;
+const INTERACTABLE_REVEAL_DURATION_MS = 950;
 
 function truncateRoomDescription(text: string): string {
   if (text.length <= MAX_ROOM_DESCRIPTION_CHARS) {
@@ -28,6 +31,16 @@ export function WorldColumn() {
   const bundle = getBundle();
 
   const roomName = useMemo(() => selectRoomName(state), [state.currentRoomId]);
+  const questTargets = useMemo(
+    () => getActiveQuestTargets(state),
+    [
+      state.currentRoomId,
+      state.playerStorage,
+      state.inventory,
+      state.skills,
+      state.activeEffects,
+    ]
+  );
 
   const objectImpactMap = useMemo(() => selectObjectImpactMap(state), [state.floatTexts]);
   const attackingObjectIds = useMemo(
@@ -267,6 +280,7 @@ export function WorldColumn() {
                       isExtinguishing
                       shouldReveal={false}
                       revealDelay={0}
+                      revealDuration={INTERACTABLE_REVEAL_DURATION_MS}
                       onClick={() => {}}
                     />
                   );
@@ -279,9 +293,21 @@ export function WorldColumn() {
                 const justHit =
                   state.lastAction?.objectId === object.id &&
                   state.now - state.lastAction.at <= 220;
-                const revealDelayMs = index * 500;
-                const revealDurationMs = 450;
-                const shouldReveal = state.now - state.objectBatchStartedAt <= revealDelayMs + revealDurationMs;
+                const isEventSpawnReveal = object.revealStartedAt !== undefined;
+                const isRoomSpawnReveal = object.sourceSpawnEntryId !== undefined;
+                const revealOrderIndex = renderedObjects
+                  .slice(0, index)
+                  .filter((candidate) =>
+                    candidate.kind === "object" && candidate.object.sourceSpawnEntryId !== undefined
+                  ).length;
+                const revealStartedAt = isEventSpawnReveal ? object.revealStartedAt! : state.objectBatchStartedAt;
+                const revealDelayMs = isEventSpawnReveal
+                  ? (object.revealDelayMs ?? 0)
+                  : revealOrderIndex * INTERACTABLE_REVEAL_STAGGER_MS;
+                const revealDurationMs = object.revealDurationMs ?? INTERACTABLE_REVEAL_DURATION_MS;
+                const shouldReveal =
+                  (isEventSpawnReveal || isRoomSpawnReveal) &&
+                  state.now - revealStartedAt <= revealDelayMs + revealDurationMs;
                 const latestImpact = objectImpactMap.get(object.id)?.[0];
                 const isDamageImpact = Boolean(latestImpact?.text.trim().startsWith("-"));
                 const latestEmote = objectEmoteMap.get(object.id);
@@ -346,6 +372,8 @@ export function WorldColumn() {
                     isExtinguishing={false}
                     shouldReveal={shouldReveal}
                     revealDelay={revealDelayMs}
+                    revealDuration={revealDurationMs}
+                    hasQuestBang={questTargets.interactableIds.has(object.interactableId)}
                     onClick={() => dispatch({ type: "SELECT_OBJECT", objectId: object.id })}
                   />
                 );

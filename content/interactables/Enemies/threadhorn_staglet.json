@@ -31,6 +31,7 @@
   "image": "/Interactable Images/ThreadhornStaglet.png",
   "formRules": [],
   "sounds": {
-    "onDestroy": "/Sound Files/Skills/Interactable Sounds/DeathStag.mp3"
+    "onDestroy": "/Sound Files/Skills/Interactable Sounds/DeathStag.mp3",
+    "onDestroyVolume": 0.3
   }
 }

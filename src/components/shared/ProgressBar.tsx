@@ -15,7 +15,8 @@ export function ProgressBar({
   label,
   showValues = true,
 }: ProgressBarProps) {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  const safeMax = Math.max(1, max);
+  const pct = Math.max(0, Math.min(100, (value / safeMax) * 100));
   return (
     <div className="progress-bar" style={{ height }}>
       <div className="progress-bar-fill" style={{ width: `${pct}%`, background: color }} />

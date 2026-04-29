@@ -25,25 +25,29 @@ function QuestReceiptOverlay({
   cues: QuestReceiptCue[];
   now: number;
 }) {
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const [pos, setPos] = useState({ left: 0, width: 0 });
 
   useEffect(() => {
     function update() {
       const el = anchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setPos({ top: rect.bottom + 8, left: rect.left, width: rect.width });
+      setPos({ left: rect.left, width: rect.width });
     }
     update();
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
   }, [anchorRef]);
 
   return (
     <div
       className="quest-receipt-dropdown"
       aria-live="polite"
-      style={{ top: pos.top, left: pos.left, width: pos.width }}
+      style={{ bottom: 16, left: pos.left, width: pos.width }}
     >
       {cues.map((cue) => (
         <div key={cue.id} className="loot-receipt-popup quest-receipt-popup">

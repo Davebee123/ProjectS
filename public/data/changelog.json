@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-20T13:45:32.289Z",
+  "generatedAt": "2026-04-26T15:07:31.438Z",
   "releases": [
     {
       "version": "CURRENT",
@@ -144,6 +144,11 @@
         {
           "category": "new",
           "text": "Added quest: Find Your Backpack.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added quest: Head to the Farmstead.",
           "source": "auto"
         },
         {

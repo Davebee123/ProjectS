@@ -1,0 +1,39 @@
+{
+  "id": "head_to_farmstead",
+  "name": "Head to the Farmstead",
+  "description": "Rylor wants to regroup at the Lyorin Farmstead. Travel there and check in with him.",
+  "category": "main_story",
+  "level": 1,
+  "unlockCondition": "player.hasQuest(\"head_to_farmstead\")",
+  "objectives": [
+    {
+      "id": "head_to_farmstead_objective_1",
+      "title": "Travel to Lyorin Farmstead",
+      "description": "Head east to the Lyorin Farmstead.",
+      "completeCondition": "room.id == \"room_4_4\"",
+      "progress": {
+        "kind": "freeform",
+        "text": "Travel to the Farmstead"
+      },
+      "highlightTargets": {
+        "roomIds": [
+          "room_4_4"
+        ]
+      }
+    },
+    {
+      "id": "head_to_farmstead_objective_2",
+      "title": "Talk to Rylor",
+      "description": "Speak with Rylor at the Farmstead.",
+      "progress": {
+        "kind": "freeform",
+        "text": "Speak with Rylor"
+      },
+      "highlightTargets": {
+        "interactableIds": [
+          "rylor"
+        ]
+      }
+    }
+  ]
+}

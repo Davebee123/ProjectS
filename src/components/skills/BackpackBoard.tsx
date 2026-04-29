@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useGame } from "../../GameContext";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../../data/loader";
 import { resolveEquipmentItem } from "../../data/bridge";
 import { getBackpackSlotCapacity, type EquipmentSlot } from "../../state";
+import { buildConsumableDisplayLines, type ConsumableDisplayLine } from "../items/consumableDisplay";
 
 const CATEGORY_ORDER: InventoryCategory[] = [
   "weapons",
@@ -56,6 +57,7 @@ interface ResolvedBackpackItem {
     label: string;
     value: string;
   }>;
+  consumableLines: ConsumableDisplayLine[];
   additionalEffects: string[];
   isNew: boolean;
 }
@@ -63,6 +65,7 @@ interface ResolvedBackpackItem {
 interface ActiveBackpackTooltip {
   item: ResolvedBackpackItem;
   anchorEl: HTMLElement;
+  pinned: boolean;
 }
 
 const BACKPACK_SEEN_STORAGE_KEY = "ifrpg.backpack.seen.v1";
@@ -282,12 +285,14 @@ function createInitialSeenState(
 
 export function BackpackBoard() {
   const { state, dispatch } = useGame();
+  const bundle = getBundle();
   const backpackSlotCapacity = getBackpackSlotCapacity(state);
   const [filterCategory, setFilterCategory] = useState<BackpackFilter>("all");
   const [seenState, setSeenState] = useState<SeenBackpackState>(() =>
     loadSeenBackpackState(createInitialSeenState(state.inventory, state.inventoryEquipment))
   );
   const [activeTooltip, setActiveTooltip] = useState<ActiveBackpackTooltip | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setSeenState((prev) => {
@@ -325,6 +330,30 @@ export function BackpackBoard() {
     };
   }, [activeTooltip]);
 
+  useEffect(() => {
+    if (!activeTooltip?.pinned) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (activeTooltip.anchorEl.contains(target) || tooltipRef.current?.contains(target)) {
+        return;
+      }
+      setActiveTooltip(null);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveTooltip(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeTooltip]);
+
   const allItems = useMemo(() => {
     const bundle = getBundle();
     const defs = new Map(getItemDefs().map((item) => [item.id, item]));
@@ -351,6 +380,7 @@ export function BackpackBoard() {
         equippedRuneSlotIndex: -1,
         rarityClass: normalizeRarityClass(def?.rarity ?? "common"),
         effectLines: buildEffectLines(buildLegacyModifiers(def), statLabels, skillNames),
+        consumableLines: buildConsumableDisplayLines(def, bundle),
         additionalEffects: def?.additionalEffectsText ? [def.additionalEffectsText] : [],
         isNew: (seenState.stackables[item.id] ?? 0) < item.qty,
       });
@@ -399,6 +429,7 @@ export function BackpackBoard() {
           equippedRuneSlotIndex: -1,
           rarityClass: normalizeRarityClass(resolved.quality),
           effectLines: buildEffectLines(resolved.modifiers, statLabels, skillNames),
+          consumableLines: [],
           additionalEffects: resolved.additionalEffectsText ? [resolved.additionalEffectsText] : [],
           isNew: !seenState.equipment[item.instanceId],
         });
@@ -470,6 +501,25 @@ export function BackpackBoard() {
     }
   };
 
+  const isQuickSlotConsumable = (item: ResolvedBackpackItem) =>
+    item.category === "consumables" && item.entryType === "stackable";
+
+  const bindConsumableToQuickSlot = (item: ResolvedBackpackItem, requestedSlot?: number) => {
+    if (!isQuickSlotConsumable(item)) return false;
+    const slot =
+      requestedSlot !== undefined
+        ? requestedSlot
+        : state.quickSlots.findIndex((current) => current === null);
+    const targetSlot = slot >= 0 ? slot : 0;
+    dispatch({
+      type: "BIND_QUICK_SLOT",
+      slot: targetSlot as 0 | 1 | 2 | 3,
+      itemId: item.id,
+    });
+    setActiveTooltip(null);
+    return true;
+  };
+
   const gridItems = Array.from({ length: backpackSlotCapacity }, (_, index) => displayedItems[index] ?? null);
 
   return (
@@ -498,31 +548,48 @@ export function BackpackBoard() {
           return item ? (
             <article
               key={item.id}
-              className={`backpack-slot-card backpack-rarity-${item.rarityClass}${item.equipped ? " is-equipped" : ""}${item.isNew ? " is-new" : ""}`}
+              className={`backpack-slot-card backpack-rarity-${item.rarityClass}${isQuickSlotConsumable(item) ? " is-consumable" : ""}${item.equipped ? " is-equipped" : ""}${item.isNew ? " is-new" : ""}`}
               role="button"
               tabIndex={0}
               onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={(e) => {
                 markItemSeen(item);
-                setActiveTooltip({ item, anchorEl: e.currentTarget });
+                setActiveTooltip({ item, anchorEl: e.currentTarget, pinned: false });
               }}
-              onMouseLeave={() => setActiveTooltip((prev) => (prev?.item.id === item.id ? null : prev))}
+              onMouseLeave={() =>
+                setActiveTooltip((prev) => (prev?.item.id === item.id && !prev.pinned ? null : prev))
+              }
               onFocus={(e) => {
                 markItemSeen(item);
-                setActiveTooltip({ item, anchorEl: e.currentTarget });
+                setActiveTooltip({ item, anchorEl: e.currentTarget, pinned: false });
               }}
-              onBlur={() => setActiveTooltip((prev) => (prev?.item.id === item.id ? null : prev))}
-              onDoubleClick={() => activateItem(item)}
+              onBlur={() =>
+                setActiveTooltip((prev) => (prev?.item.id === item.id && !prev.pinned ? null : prev))
+              }
+              onClick={(e) => {
+                markItemSeen(item);
+                setActiveTooltip({ item, anchorEl: e.currentTarget, pinned: true });
+              }}
+              onDoubleClick={() => {
+                if (!bindConsumableToQuickSlot(item)) {
+                  activateItem(item);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  activateItem(item);
+                  if (!bindConsumableToQuickSlot(item)) {
+                    activateItem(item);
+                  }
                 }
               }}
             >
               <div className="backpack-slot-image">
                 {item.image ? <img src={item.image} alt={item.name} /> : null}
               </div>
+              {item.entryType === "stackable" && item.qty > 0 ? (
+                <span className="backpack-slot-count">x{item.qty}</span>
+              ) : null}
             </article>
           ) : (
             <div key={`empty_slot_${index}`} className="backpack-slot-card is-empty" aria-hidden="true" />
@@ -542,6 +609,7 @@ export function BackpackBoard() {
 
               return (
                 <div
+                  ref={tooltipRef}
                   className={`backpack-floating-tooltip backpack-rarity-${item.rarityClass}`}
                   role="tooltip"
                   style={{ top, left: clampedLeft, width: tooltipWidth }}
@@ -574,6 +642,17 @@ export function BackpackBoard() {
                     </div>
                   ) : null}
 
+                  {item.consumableLines.length > 0 ? (
+                    <div className="backpack-tooltip-effects">
+                      {item.consumableLines.map((line) => (
+                        <div key={`${item.id}_consume_${line.label}_${line.value}`} className="backpack-tooltip-effect-row">
+                          <span className="backpack-tooltip-effect-label">{line.label}</span>
+                          <span className="backpack-tooltip-effect-value">{line.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
                   {item.additionalEffects.length > 0 ? (
                     <div className="backpack-tooltip-section">
                       <p className="backpack-tooltip-section-label">Additional Effects</p>
@@ -582,6 +661,38 @@ export function BackpackBoard() {
                           {text}
                         </p>
                       ))}
+                    </div>
+                  ) : null}
+
+                  {item.category === "consumables" && item.entryType === "stackable" && activeTooltip.pinned ? (
+                    <div className="backpack-tooltip-section">
+                      <p className="backpack-tooltip-section-label">Bind to Quick Slot</p>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <select
+                          className="backpack-filter-control backpack-quick-slot-select"
+                          value=""
+                          onChange={(e) => {
+                            const slot = Number(e.target.value);
+                            if (!Number.isNaN(slot) && slot >= 0 && slot <= 3) {
+                              bindConsumableToQuickSlot(item, slot);
+                            }
+                          }}
+                        >
+                          <option value="">Choose slot…</option>
+                          {[0, 1, 2, 3].map((slotIdx) => {
+                            const current = state.quickSlots[slotIdx];
+                            const currentDef = current
+                              ? bundle?.items.find((i) => i.id === current)
+                              : undefined;
+                            return (
+                              <option key={slotIdx} value={slotIdx}>
+                                Slot {slotIdx + 1}
+                                {currentDef ? ` — replaces ${currentDef.name}` : " (empty)"}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
                     </div>
                   ) : null}
                 </div>

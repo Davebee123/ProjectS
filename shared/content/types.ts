@@ -260,6 +260,13 @@ export interface ItemTemplate {
   eventHooks: ItemEventHook[];
   placeable?: boolean;
   placementEffects?: PlacementEffect[];
+  /** Cooldown in milliseconds for Quick Slot use. Applies after a successful
+   *  USE_QUICK_SLOT (triggering on_use event hooks). Default 0 = no cooldown. */
+  quickSlotCooldownMs?: number;
+  /** One-shot sound played after a successful Quick Slot consume. */
+  consumeSound?: string;
+  /** Volume for consumeSound (0-1, default 1). */
+  consumeSoundVolume?: number;
 }
 
 export type ItemEventType =
@@ -270,7 +277,8 @@ export type ItemEventType =
   | "on_interact"
   | "on_explore"
   | "on_damage_taken"
-  | "on_tick";
+  | "on_tick"
+  | "on_use";
 
 export interface ItemEventHook {
   id: string;
@@ -552,6 +560,12 @@ export interface InteractableTemplate {
   abilities: InteractableAbility[];
   onInteractEffects: EventAction[];
   onDestroyEffects: EventAction[];
+  /**
+   * Quest IDs this interactable can offer (grant) to the player. If any listed
+   * quest is not currently granted and not completed, the UI shows a "!" badge
+   * on this interactable as a hint it has something new for the player.
+   */
+  offersQuestIds?: string[];
   image?: string;
   imagePositionX?: number;
   imagePositionY?: number;
@@ -803,6 +817,16 @@ export interface QuestObjective {
   unlockCondition?: string;
   completeCondition?: string;
   progress: QuestProgress;
+  /**
+   * UI highlight targets: when this objective is the active step of a visible
+   * quest, elements matching these IDs receive a "!" indicator in-game.
+   */
+  highlightTargets?: QuestHighlightTargets;
+}
+
+export interface QuestHighlightTargets {
+  interactableIds?: string[];
+  roomIds?: string[];
 }
 
 export type QuestProgress =

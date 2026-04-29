@@ -20,7 +20,7 @@ export function PlayerColumn() {
         </div>
         <div className="equip-runes-right">
           <div className="section-header-bar">
-            <p className="section-label">Fey Runes</p>
+            <p className="section-label">Quick Slots</p>
           </div>
           <div className="section-divider-body">
             <FeyRunes />

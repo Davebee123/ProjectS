@@ -169,6 +169,9 @@ export interface WorldObject {
   abilityCooldowns: number[];
   initialAbilityDelayMs?: number;
   nextAbilityIndex: number;
+  revealStartedAt?: number;
+  revealDelayMs?: number;
+  revealDurationMs?: number;
   activeEffects: Array<{
     effectId: string;
     stacks: number;
@@ -242,6 +245,9 @@ export function createWorldObjectFromInteractableDef(
     drops?: WorldObjectDrop[];
     activeEffects?: WorldObject["activeEffects"];
     now?: number;
+    revealStartedAt?: number;
+    revealDelayMs?: number;
+    revealDurationMs?: number;
   }
 ): WorldObject {
   const maxIntegrity = Math.max(1, def.effectiveHealth.min);
@@ -279,6 +285,9 @@ export function createWorldObjectFromInteractableDef(
     abilityCooldowns: (def.abilities ?? []).map(() => initialAbilityReadyAt),
     initialAbilityDelayMs: def.initialAbilityDelayMs,
     nextAbilityIndex: 0,
+    revealStartedAt: options?.revealStartedAt,
+    revealDelayMs: options?.revealDelayMs,
+    revealDurationMs: options?.revealDurationMs,
     activeEffects: options?.activeEffects ?? [],
   };
 }

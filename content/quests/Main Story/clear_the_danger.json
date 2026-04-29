@@ -11,7 +11,7 @@
       "description": "Rylor wants you to clear the area of danger to ensure the safety of Lyoris.",
       "progress": {
         "kind": "structured",
-        "label": "Progress",
+        "label": "Fauna Killed",
         "source": {
           "type": "interactable_defeat_count",
           "interactableId": "threadhorn_staglet"

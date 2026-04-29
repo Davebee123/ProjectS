@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useGame } from "../../GameContext";
 import type { QuestCategory } from "../../data/loader";
-import { getResolvedQuestsByCategory, getCompletedQuests } from "../../state/quests";
+import { getResolvedQuestsByCategory, getCompletedQuests, getActiveQuestTargets } from "../../state/quests";
+import { ProgressBar } from "../shared/ProgressBar";
 
 const CATEGORY_LABELS: Record<QuestCategory, string> = {
   main_story: "Main Story",
@@ -24,6 +25,7 @@ export function QuestBoard() {
 
   const resolvedByCategory = useMemo(() => getResolvedQuestsByCategory(state), [state]);
   const completedQuests = useMemo(() => getCompletedQuests(state), [state]);
+  const activeQuestTargets = useMemo(() => getActiveQuestTargets(state), [state]);
 
   return (
     <div className="quest-board">
@@ -45,7 +47,12 @@ export function QuestBoard() {
                 {entries.length > 0 ? entries.map(({ quest, activeObjective }) => (
                   <article key={quest.id} className="quest-card">
                     <div className="quest-card-top">
-                      <h3 className="quest-card-title">{quest.name}</h3>
+                      <h3 className="quest-card-title">
+                        {activeQuestTargets.questIds.has(quest.id) ? (
+                          <span className="quest-bang quest-bang--inline" aria-label="Active quest step">!</span>
+                        ) : null}
+                        {quest.name}
+                      </h3>
                       <div className="quest-card-level">
                         <span className="quest-card-level-label">Lvl</span>
                         <span className="quest-card-level-value">{quest.level}</span>
@@ -60,9 +67,25 @@ export function QuestBoard() {
                       </p>
                     </div>
                     <div className="quest-card-bottom">
-                      <p className="quest-card-progress">
-                        {activeObjective?.progressText ?? "No progress details yet."}
-                      </p>
+                      {activeObjective?.progressValue !== undefined && activeObjective.progressMax !== undefined ? (
+                        <div className="quest-card-progress-block">
+                          <div className="quest-card-progress-row">
+                            <span>{formatProgressHeader(activeObjective.progressLabel)}</span>
+                            <span>{activeObjective.progressValue}/{activeObjective.progressMax}</span>
+                          </div>
+                          <ProgressBar
+                            value={activeObjective.progressValue}
+                            max={activeObjective.progressMax}
+                            color="rgba(150, 150, 150, 0.92)"
+                            height={8}
+                            showValues={false}
+                          />
+                        </div>
+                      ) : (
+                        <p className="quest-card-progress">
+                          {activeObjective?.progressText ?? "No progress details yet."}
+                        </p>
+                      )}
                     </div>
                   </article>
                 )) : (
@@ -109,4 +132,9 @@ export function QuestBoard() {
       </section>
     </div>
   );
+}
+
+function formatProgressHeader(label: string | undefined): string {
+  const trimmed = label?.trim() || "Progress";
+  return trimmed.endsWith(":") ? trimmed : `${trimmed}:`;
 }

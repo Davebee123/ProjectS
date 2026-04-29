@@ -184,6 +184,17 @@ export interface QuestReceiptCue {
   expiresAt: number;
 }
 
+export interface QuestProgressCue {
+  id: string;
+  questId: string;
+  objectiveId: string;
+  title: string;
+  currentValue: number;
+  requiredValue: number;
+  appearsAt: number;
+  expiresAt: number;
+}
+
 export interface DialogueState {
   objectId: string | null;
   dialogueId: string;
@@ -206,6 +217,8 @@ export interface GameState {
   exploreCount: number;
   currentRoomId: string;
   previousRoomId: string | null;
+  /** Per-room spawn counters: roomSpawnCounts[roomId][interactableId] = number of times spawned via explore. */
+  roomSpawnCounts: Record<string, Record<string, number>>;
   playerStorage: Record<string, boolean | number | string>;
   seenQuestIds: string[];
   announcedQuestIds: string[];
@@ -216,6 +229,12 @@ export interface GameState {
   inventoryEquipment: EquipmentItemInstance[];
   equipment: Record<EquipmentSlot, string | null>;
   feyRunes: [string | null, string | null, string | null, string | null, string | null, string | null];
+  /** Quick slot bindings: 4 slots, each holds an itemId (ItemTemplate id) of a
+   *  stackable consumable, or null. Click to consume one stack and fire the
+   *  item's on_use event hooks. */
+  quickSlots: [string | null, string | null, string | null, string | null];
+  /** Cooldown end-timestamps (ms since epoch) per quick slot index. */
+  quickSlotCooldowns: [number, number, number, number];
   // Vitals
   health: number;
   maxHealth: number;
@@ -264,6 +283,9 @@ export interface GameState {
   objectEmoteCues: ObjectEmoteCue[];
   lootReceiptCues: LootReceiptCue[];
   questReceiptCues: QuestReceiptCue[];
+  questProgressCues: QuestProgressCue[];
+  /** Last seen structured progress value per objectiveId. Used to detect positive deltas and emit progress cues. */
+  questProgressSeen: Record<string, number>;
   objectBatchStartedAt: number;
   openWindow: WindowKey | null;
   placedObjects: PlacedObject[];
@@ -289,6 +311,9 @@ export type GameAction =
   | { type: "UNEQUIP_SLOT"; slot: EquipmentSlot }
   | { type: "SET_RUNE"; slot: 0 | 1 | 2 | 3 | 4 | 5; instanceId: string }
   | { type: "REMOVE_RUNE"; slot: 0 | 1 | 2 | 3 | 4 | 5 }
+  | { type: "BIND_QUICK_SLOT"; slot: 0 | 1 | 2 | 3; itemId: string }
+  | { type: "CLEAR_QUICK_SLOT"; slot: 0 | 1 | 2 | 3 }
+  | { type: "USE_QUICK_SLOT"; slot: 0 | 1 | 2 | 3 }
   | { type: "CRAFT_ITEM"; recipeId: string }
   | { type: "PLACE_ITEM"; itemId: string }
   | { type: "REMOVE_PLACED_ITEM"; instanceId: string }
