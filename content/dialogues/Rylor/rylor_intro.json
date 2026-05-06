@@ -6,14 +6,14 @@
   "nodes": [
     {
       "id": "rylor_intro_start",
-      "text": "Who knew cutting dead plants could work up such an appetite? [narration] He lets out an exacerbated sigh as he picks up his backpack [/narration].",
+      "text": "Who knew cutting dead plants could work up such an appetite? [narration]He lets out an exacerbated sigh as he picks up his backpack. [/narration]\n\n[narration]He holds up his arm, revealing his bioboard. [/narration] Agri-Log #423: GeneMaize yield was 12% under expected yield. Harvest conditions were unsatisfactory. Hostile Fauna Index was 2.1 per harvest column. ",
       "options": [],
       "nextNodeId": "rylor_intro_node_2",
       "continueLabel": "Continue"
     },
     {
       "id": "rylor_intro_node_2",
-      "text": "The sky is tired. We should head back before it gets too dangerous out here. [narration] He looks around, and then looks at you, confused. [/narration]. Where did you leave your backpack?",
+      "text": "[narration]He pronates his forearm twice and you hear a satisfactory chime. [/narration] The sky is tired. We should head back before it gets too dangerous out here. [narration] He looks around, and then looks at you, confused. [/narration]. Where did you leave your backpack?",
       "options": [
         {
           "id": "rylor_intro_node_2_option_1",
@@ -27,11 +27,11 @@
     },
     {
       "id": "rylor_intro_node_3",
-      "text": "Ha! And I thought I was delirious. Well, we don't want you returning to Virelios without any haul, so let's try to find it.\n\nHit the [color=#FFA74E] Explore [/color] button on the top right of your screen to navigate around this area. I'm sure it will come up sooner rather than later.",
+      "text": "[narration]Rylor pretends to speak into his Bioboard:[/narration] \"Agri-farmer accomplice shows signs of blight zoonotic mutation. First symptom, short term. memory loss.\" [narration]He keep his head pointed at the Bioboard, but shifts his eyes up at you with a silly smirk[/narration].  Well, we don't want you returning to Virelios without any haul, so let's try to find it.\n\nHit the [color=#FFA74E] Explore [/color] button on the top right of your screen to navigate around this area. I'm sure it will come up sooner rather than later.",
       "options": [
         {
           "id": "rylor_intro_node_3_option_1",
-          "text": "Will do!",
+          "text": "Let's go.",
           "closeDialogue": true,
           "effects": [
             {

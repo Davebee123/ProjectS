@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { PageShell } from "../layout/PageShell";
 import { FilePathInput } from "../shared/FilePathInput";
+import { VolumeSlider } from "../shared/VolumeSlider";
 import { useWeatherStore } from "../../stores/weatherStore";
 
 export function WeatherEditPage() {
@@ -135,20 +136,12 @@ export function WeatherEditPage() {
           />
 
           <label className="field-label">Volume</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={weather.ambientSoundVolume ?? 1}
-              onChange={(e) => patch({ ambientSoundVolume: Number(e.target.value) })}
-              style={{ maxWidth: 160 }}
-            />
-            <span className="field-hint">
-              {((weather.ambientSoundVolume ?? 1) * 100).toFixed(0)}%
-            </span>
-          </div>
+          <VolumeSlider
+            label="Ambient Volume"
+            value={weather.ambientSoundVolume ?? 1}
+            onChange={(value) => patch({ ambientSoundVolume: value })}
+            disabled={!weather.ambientSound}
+          />
 
           <label className="field-label">Loop</label>
           <label style={{ display: "flex", alignItems: "center", gap: 6 }}>

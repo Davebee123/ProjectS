@@ -25,6 +25,10 @@ export function DialoguePanel({ inline = false }: DialoguePanelProps) {
 
   const speakerName = object?.name || session.speakerName || dialogue.name;
   const portraitImage = object ? getInteractableDisplayImageSrc(object) : session.portraitImage;
+  const portraitObjectPosition = object
+    ? getInteractableImageObjectPosition(object.imagePositionX, object.imagePositionY)
+    : getInteractableImageObjectPosition(session.portraitImagePositionX, session.portraitImagePositionY);
+  const portraitObjectFit = object ? "cover" : session.portraitImageFit ?? "cover";
   const meterLabel = object?.meterLabel || session.meterLabel;
   const integrity = object ? Math.ceil(object.integrity) : session.integrity;
   const maxIntegrity = object?.maxIntegrity ?? session.maxIntegrity;
@@ -47,10 +51,8 @@ export function DialoguePanel({ inline = false }: DialoguePanelProps) {
               src={portraitImage}
               alt={speakerName}
               style={{
-                objectPosition: getInteractableImageObjectPosition(
-                  object?.imagePositionX,
-                  object?.imagePositionY
-                ),
+                objectPosition: portraitObjectPosition,
+                objectFit: portraitObjectFit,
               }}
             />
           ) : (

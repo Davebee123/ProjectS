@@ -12,7 +12,8 @@ function buildEvenlyDistributedTickMoments(durationMs: number, tickCount: number
 
 export function getSkillTickMoments(
   skill: Pick<SkillState, "usageProfile" | "effects">,
-  durationMs: number
+  durationMs: number,
+  options?: { referenceDurationMs?: number }
 ): number[] {
   if (durationMs <= 0) {
     return [];
@@ -20,12 +21,20 @@ export function getSkillTickMoments(
 
   const explicitIntervalMs = skill.usageProfile?.castTickIntervalMs;
   if (explicitIntervalMs && explicitIntervalMs > 0) {
+    const referenceDurationMs = Math.max(durationMs, options?.referenceDurationMs ?? durationMs);
     const moments: number[] = [];
-    for (let elapsed = explicitIntervalMs; elapsed < durationMs; elapsed += explicitIntervalMs) {
+    for (let elapsed = explicitIntervalMs; elapsed < referenceDurationMs; elapsed += explicitIntervalMs) {
       moments.push(elapsed);
     }
-    moments.push(durationMs);
-    return [...new Set(moments.map((moment) => Math.max(1, Math.min(durationMs, Math.round(moment)))))];
+    moments.push(referenceDurationMs);
+    const scale = durationMs / referenceDurationMs;
+    return [
+      ...new Set(
+        moments.map((moment) =>
+          Math.max(1, Math.min(durationMs, Math.round(moment * scale)))
+        )
+      ),
+    ];
   }
 
   const fallbackTickCount = Math.max(
@@ -40,13 +49,14 @@ export function getSkillTickMoments(
 
 export function getSkillTickMarkerPercents(
   skill: Pick<SkillState, "usageProfile" | "effects">,
-  durationMs: number
+  durationMs: number,
+  options?: { referenceDurationMs?: number }
 ): number[] {
   if (durationMs <= 0) {
     return [];
   }
 
-  return getSkillTickMoments(skill, durationMs).map((moment) =>
+  return getSkillTickMoments(skill, durationMs, options).map((moment) =>
     Math.max(0, Math.min(100, (moment / durationMs) * 100))
   );
 }

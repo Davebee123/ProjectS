@@ -36,6 +36,7 @@ export interface SkillState {
   effects?: SkillDef["effects"];
   statusInteractions?: SkillDef["statusInteractions"];
   tags: string[];
+  playerTargetTags?: string[];
   abilityTags: string[];
   linkedPassiveId?: string;
   level: number;
@@ -50,6 +51,13 @@ export interface SkillState {
   barColor: string;
   accentColor: string;
   description: string;
+  castSound?: string;
+  castSoundVolume?: number;
+  castSoundOnComplete?: boolean;
+  hitSound?: string;
+  hitSoundVolume?: number;
+  tickSound?: string;
+  tickSoundVolume?: number;
   perkMilestones: SkillDef["perkMilestones"];
   unlockCondition?: string;
   xpScaling: number;
@@ -316,6 +324,7 @@ export function skillDefsToStates(defs: SkillDef[]): SkillState[] {
     effects: d.effects ?? [],
     statusInteractions: d.statusInteractions ?? [],
     tags: d.activityTags,
+    playerTargetTags: d.playerTargetTags,
     abilityTags: d.abilityTags,
     linkedPassiveId: d.linkedPassiveId,
     level: 1,
@@ -330,6 +339,13 @@ export function skillDefsToStates(defs: SkillDef[]): SkillState[] {
     barColor: d.barColor,
     accentColor: d.accentColor,
     description: d.description,
+    castSound: d.castSound,
+    castSoundVolume: d.castSoundVolume,
+    castSoundOnComplete: d.castSoundOnComplete,
+    hitSound: d.hitSound,
+    hitSoundVolume: d.hitSoundVolume,
+    tickSound: d.tickSound,
+    tickSoundVolume: d.tickSoundVolume,
     perkMilestones: [...(d.perkMilestones ?? [])].sort((a, b) => a.level - b.level),
     unlockCondition: d.unlockCondition,
     xpScaling: d.xpScaling,

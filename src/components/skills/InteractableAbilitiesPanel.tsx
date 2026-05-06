@@ -1,11 +1,14 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "../../GameContext";
 import { SkillBar } from "./SkillBar";
 import { selectSkillFloatMap } from "../../state";
 import { getSkillTickMarkerPercents } from "../../state/skillTicks";
+import { canPlayerUseSkillOnObject } from "../../state/skillTargeting";
 
 export function InteractableAbilitiesPanel() {
   const { state, dispatch } = useGame();
+  const [tickAnimationCue, setTickAnimationCue] = useState<{ skillId: string; at: number } | null>(null);
+  const previousTickStateRef = useRef<{ skillId: string; resolvedTickCount: number } | null>(null);
 
   const selectedObject = useMemo(
     () => state.objects.find((object) => object.id === state.selectedObjectId) ?? null,
@@ -23,6 +26,28 @@ export function InteractableAbilitiesPanel() {
     [state.unlockCues, state.now]
   );
 
+  useEffect(() => {
+    const action = state.action;
+    if (!action) {
+      previousTickStateRef.current = null;
+      return;
+    }
+
+    const previous = previousTickStateRef.current;
+    if (
+      previous &&
+      previous.skillId === action.skillId &&
+      action.resolvedTickCount > previous.resolvedTickCount
+    ) {
+      setTickAnimationCue({ skillId: action.skillId, at: state.now });
+    }
+
+    previousTickStateRef.current = {
+      skillId: action.skillId,
+      resolvedTickCount: action.resolvedTickCount,
+    };
+  }, [state.action, state.now]);
+
   const relevantSkills = useMemo(() => {
     if (!selectedObject) {
       return [];
@@ -33,20 +58,11 @@ export function InteractableAbilitiesPanel() {
         return false;
       }
 
-      const isSelfTargetCombatSkill =
-        skill.system === "combat" &&
-        skill.usageProfile?.usageContext === "combat" &&
-        skill.usageProfile?.targetPattern === "self";
-
-      if (!isSelfTargetCombatSkill && !skill.tags.includes(selectedObject.tag)) {
+      if (!canPlayerUseSkillOnObject(skill, selectedObject)) {
         return false;
       }
 
-      if (selectedObject.allowedAbilityTags.length === 0) {
-        return true;
-      }
-
-      return selectedObject.allowedAbilityTags.some((tag) => skill.abilityTags.includes(tag));
+      return true;
     });
   }, [selectedObject, state.skills]);
 
@@ -77,6 +93,9 @@ export function InteractableAbilitiesPanel() {
                 : getSkillTickMarkerPercents(skill, skill.baseDurationMs);
             const shortDetails = `${castSeconds.toFixed(1)}s | \u26A1${skill.baseEnergyCost}${tickMarkersPct.length > 0 ? ` | ${tickMarkersPct.length} Ticks` : ""}`;
             const resolvedTickCount = activeAction ? activeAction.resolvedTickCount : 0;
+            const hasRecentTickAnimationCue =
+              tickAnimationCue?.skillId === skill.id &&
+              state.now - tickAnimationCue.at <= 220;
 
             return (
               <div key={skill.id} className="skill-bar-group">
@@ -94,6 +113,7 @@ export function InteractableAbilitiesPanel() {
                   auto={isAuto}
                   bonusReady={isBonusReady}
                   castComplete={
+                    hasRecentTickAnimationCue ||
                     state.lastAction?.skillId === skill.id &&
                     state.now - state.lastAction.at <= 300
                   }

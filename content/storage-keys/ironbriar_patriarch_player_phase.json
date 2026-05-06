@@ -1,0 +1,5 @@
+{
+  "id": "ironbriar_patriarch_player_phase",
+  "label": "Ironbriar Patriarch Player Phase",
+  "description": "Set once the Rylor death cutscene completes so the Patriarch can switch into its player-fighting phase."
+}

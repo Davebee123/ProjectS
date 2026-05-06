@@ -8,6 +8,30 @@
   "stats": {
     "backpackSlots": 10
   },
-  "eventHooks": [],
+  "eventHooks": [
+    {
+      "id": "hook_1777732051786_0",
+      "event": "on_equip",
+      "actions": [
+        {
+          "type": "grant_item",
+          "itemId": "genemaize_t_01",
+          "quantity": 5
+        },
+        {
+          "type": "grant_item",
+          "itemId": "healing_salve",
+          "quantity": 5
+        },
+        {
+          "type": "set_storage",
+          "storageKeyId": "equippedagribackpackonce",
+          "value": "",
+          "storageOperation": "set"
+        }
+      ],
+      "condition": "NOT player.flag(\"equippedagribackpackonce\")"
+    }
+  ],
   "slot": "back"
 }

@@ -206,7 +206,7 @@ export function InteractableCard({
             <div
               key={`${object.id}_${effect.id}`}
               className="interactable-status-badge"
-              style={{ backgroundImage: "url(/status-effect-rectangle.png)" }}
+              style={{ backgroundImage: "url(/explore-button-new.png)" }}
               title={effect.name}
             >
               <div className="interactable-status-badge-shell">

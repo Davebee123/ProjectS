@@ -1,0 +1,23 @@
+{
+  "id": "flurry",
+  "name": "Flurry",
+  "description": "Decreases cast time of Forward Slash by 5% per stack.",
+  "removalType": "timed",
+  "durationMs": 5000,
+  "statModifiers": [
+    {
+      "stat": "speedMultiplier",
+      "operation": "add",
+      "value": -0.05,
+      "skillIds": [
+        "forward_slash"
+      ]
+    }
+  ],
+  "preventsSpellCasting": false,
+  "preventsWeaponAbilities": false,
+  "stackable": true,
+  "maxStacks": 3,
+  "color": "#64e141",
+  "eventHooks": []
+}

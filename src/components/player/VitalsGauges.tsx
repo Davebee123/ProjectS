@@ -20,17 +20,40 @@ interface ResolvedPlayerEffect {
   stacks: number;
   remainingMs?: number;
   progressPct?: number;
-  statModifiers: Array<{ stat: string; operation: "add" | "multiply"; value: number }>;
+  statModifiers: Array<{
+    stat: string;
+    operation: "add" | "multiply";
+    value: number;
+    skillIds?: string[];
+    abilityTags?: string[];
+  }>;
 }
 
 function PlayerStatusBadge({ effect }: { effect: ResolvedPlayerEffect }) {
   const [hovered, setHovered] = useState(false);
   const badgeRef = useRef<HTMLDivElement>(null);
+  const TOOLTIP_WIDTH = 240;
+  const VIEWPORT_PADDING = 12;
+  const ESTIMATED_TOOLTIP_HEIGHT = 190;
 
   const tooltipPos = useMemo(() => {
     if (!hovered || !badgeRef.current) return null;
     const rect = badgeRef.current.getBoundingClientRect();
-    return { top: rect.bottom + 6, left: rect.left + rect.width / 2 };
+    const centeredLeft = rect.left + rect.width / 2;
+    const clampedLeft = Math.max(
+      VIEWPORT_PADDING + TOOLTIP_WIDTH / 2,
+      Math.min(window.innerWidth - VIEWPORT_PADDING - TOOLTIP_WIDTH / 2, centeredLeft)
+    );
+    const showAbove = rect.bottom + 10 + ESTIMATED_TOOLTIP_HEIGHT > window.innerHeight - VIEWPORT_PADDING;
+    const rawTop = showAbove ? rect.top - 8 : rect.bottom + 8;
+    const clampedTop = showAbove
+      ? Math.max(VIEWPORT_PADDING + ESTIMATED_TOOLTIP_HEIGHT, rawTop)
+      : Math.min(window.innerHeight - VIEWPORT_PADDING - ESTIMATED_TOOLTIP_HEIGHT, rawTop);
+    return {
+      top: clampedTop,
+      left: clampedLeft,
+      placement: showAbove ? "above" : "below",
+    };
   }, [hovered]);
 
   return (
@@ -38,7 +61,7 @@ function PlayerStatusBadge({ effect }: { effect: ResolvedPlayerEffect }) {
       <div
         ref={badgeRef}
         className="player-status-badge"
-        style={{ backgroundImage: "url(/status-effect-rectangle.png)" }}
+        style={{ backgroundImage: "url(/explore-button-new.png)" }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -78,7 +101,12 @@ function PlayerStatusBadge({ effect }: { effect: ResolvedPlayerEffect }) {
         ? createPortal(
             <div
               className="player-status-tooltip"
-              style={{ top: tooltipPos.top, left: tooltipPos.left }}
+              data-placement={tooltipPos.placement}
+              style={{
+                top: tooltipPos.top,
+                left: tooltipPos.left,
+                transform: tooltipPos.placement === "above" ? "translate(-50%, -100%)" : "translateX(-50%)",
+              }}
             >
               <p className="player-status-tooltip-name" style={{ color: effect.color }}>
                 {effect.name}
@@ -105,6 +133,14 @@ function PlayerStatusBadge({ effect }: { effect: ResolvedPlayerEffect }) {
                     return (
                       <p key={i} className="player-status-tooltip-mod">
                         {humanizeStat(mod.stat)}: {perStack}{total}
+                        {mod.skillIds?.length || mod.abilityTags?.length
+                          ? ` (${[
+                              mod.skillIds?.length ? `skills: ${mod.skillIds.join(", ")}` : "",
+                              mod.abilityTags?.length ? `ability tags: ${mod.abilityTags.join(", ")}` : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" | ")})`
+                          : ""}
                       </p>
                     );
                   })}
@@ -156,43 +192,54 @@ export function VitalsGauges() {
   }, [state.activeEffects, state.now, bundle]);
 
   return (
-    <div className="vitals-section">
-      <div className="section-header-bar">
-        <p className="section-label">Vitals</p>
-      </div>
-      {playerEffects.length > 0 ? (
-        <div className="player-status-row">
-          <div className="player-status-strip">
-            {playerEffects.slice(0, 8).map((effect) => (
-              <PlayerStatusBadge key={effect.effectId} effect={effect} />
-            ))}
+    <>
+      <div className="status-effects-section">
+        <div className="section-header-bar">
+          <p className="section-label">Status Effects</p>
+        </div>
+        <div className="section-divider-body">
+          <div className="player-status-row">
+            <div className="player-status-strip">
+              {playerEffects.length > 0 ? (
+                playerEffects.slice(0, 12).map((effect) => (
+                  <PlayerStatusBadge key={effect.effectId} effect={effect} />
+                ))
+              ) : (
+                <p className="player-status-empty">No active status effects.</p>
+              )}
+            </div>
           </div>
         </div>
-      ) : null}
-      <div className="section-divider-body">
-        <div className="vitals-row">
-          <CircularGauge
-            value={state.health}
-            max={state.maxHealth}
-            color="var(--health-color, #e05050)"
-            label="Health"
-            impactText={state.playerHitCue ? { id: state.playerHitCue.id, text: state.playerHitCue.text } : undefined}
-            isHitShaking={state.playerHitShakeUntil > state.now}
-          />
-          <CircularGauge
-            value={state.mana}
-            max={state.maxMana}
-            color="var(--mana-color, #5090e0)"
-            label="Mana"
-          />
-          <CircularGauge
-            value={state.energy}
-            max={state.maxEnergy}
-            color="var(--energy-color, #e0a030)"
-            label="Energy"
-          />
+      </div>
+      <div className="vitals-section">
+        <div className="section-header-bar">
+          <p className="section-label">Vitals</p>
+        </div>
+        <div className="section-divider-body">
+          <div className="vitals-row">
+            <CircularGauge
+              value={state.health}
+              max={state.maxHealth}
+              color="var(--health-color, #e05050)"
+              label="Health"
+              impactText={state.playerHitCue ? { id: state.playerHitCue.id, text: state.playerHitCue.text } : undefined}
+              isHitShaking={state.playerHitShakeUntil > state.now}
+            />
+            <CircularGauge
+              value={state.mana}
+              max={state.maxMana}
+              color="var(--mana-color, #5090e0)"
+              label="Mana"
+            />
+            <CircularGauge
+              value={state.energy}
+              max={state.maxEnergy}
+              color="var(--energy-color, #e0a030)"
+              label="Energy"
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

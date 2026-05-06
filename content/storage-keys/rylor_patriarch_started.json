@@ -1,0 +1,7 @@
+{
+  "id": "rylor_patriarch_started",
+  "label": "RylorPatriarchStarted",
+  "type": "flag",
+  "defaultValue": false,
+  "description": "Tracks whether Rylor has entered the patriarch ambush sequence so he should remain in combat form."
+}

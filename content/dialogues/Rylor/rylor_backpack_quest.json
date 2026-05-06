@@ -6,22 +6,27 @@
   "nodes": [
     {
       "id": "rylor_backpack_quest_start",
-      "text": "You found it! And quick timing, too. Another hour longer of searching and I'm not sure we'd make it back in one piece! Let's start heading back to town.\n\nClick the square to the right of our current area on the minimap to travel to it. ",
+      "text": "You found it! And quick timing, too. Another hour longer of searching and I'm not sure we'd make it back in one piece! \n\nTo equip the backpack, go to the \"Backpack\" tab and double click your Agri-Farmer's Backpack. You'll notice you have a lot more space (along with some items you have collected from our haul).\n\nOnce you equip your backpack, click the square to the right of our current area on the minimap to travel to it. Let's start heading back to town. ",
       "options": [
         {
           "id": "rylor_backpack_quest_start_option_1",
           "text": "Lets head out!",
-          "closeDialogue": true
+          "closeDialogue": true,
+          "tags": [
+            "quest"
+          ],
+          "effects": [
+            {
+              "type": "grant_quest",
+              "questId": "head_to_farmstead"
+            }
+          ]
         }
       ],
       "onEnterEffects": [
         {
           "type": "complete_quest",
           "questId": "find_your_backpack"
-        },
-        {
-          "type": "grant_quest",
-          "questId": "head_to_farmstead"
         }
       ]
     }

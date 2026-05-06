@@ -27,11 +27,11 @@
   "fixedInteractables": [
     {
       "interactableId": "rylor",
-      "condition": "NOT player.hasQuest(\"clear_the_danger\") OR player.hasCompletedQuest(\"clear_the_danger\") OR player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5"
+      "condition": "NOT player.flag(\"rylor_patriarch_started\") AND (NOT player.hasQuest(\"clear_the_danger\") OR player.hasCompletedQuest(\"clear_the_danger\") OR player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5)"
     },
     {
       "interactableId": "rylor_combat",
-      "condition": "player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") < 5"
+      "condition": "(player.hasQuest(\"clear_the_danger\") AND NOT player.hasCompletedQuest(\"clear_the_danger\") AND player.counter(\"interactable_defeated:threadhorn_staglet\") < 5) OR player.flag(\"rylor_patriarch_started\")"
     }
   ],
   "specialConnections": [],

@@ -195,12 +195,34 @@ export interface QuestProgressCue {
   expiresAt: number;
 }
 
+export interface PassiveProgressCue {
+  id: string;
+  skillId: string;
+  skillName: string;
+  level: number;
+  previousLevel: number;
+  currentValue: number;
+  requiredValue: number;
+  previousValue: number;
+  previousRequiredValue: number;
+  xpGained: number;
+  leveledUp: boolean;
+  barColor: string;
+  accentColor: string;
+  appearsAt: number;
+  expiresAt: number;
+  revision: number;
+}
+
 export interface DialogueState {
   objectId: string | null;
   dialogueId: string;
   nodeId: string;
   speakerName?: string;
   portraitImage?: string;
+  portraitImagePositionX?: number;
+  portraitImagePositionY?: number;
+  portraitImageFit?: "cover" | "contain";
   meterLabel?: string;
   integrity?: number;
   maxIntegrity?: number;
@@ -244,6 +266,7 @@ export interface GameState {
   energy: number;
   maxEnergy: number;
   baseEnergyRegen: number;
+  isDefeated: boolean;
   // Weather
   weather: WeatherType;
   // Player progression
@@ -284,6 +307,7 @@ export interface GameState {
   lootReceiptCues: LootReceiptCue[];
   questReceiptCues: QuestReceiptCue[];
   questProgressCues: QuestProgressCue[];
+  passiveProgressCues: PassiveProgressCue[];
   /** Last seen structured progress value per objectiveId. Used to detect positive deltas and emit progress cues. */
   questProgressSeen: Record<string, number>;
   objectBatchStartedAt: number;
@@ -295,6 +319,7 @@ export interface GameState {
 }
 
 export type GameAction =
+  | { type: "LOAD_GAME"; state: GameState }
   | { type: "EXPLORE" }
   | { type: "ACKNOWLEDGE_VISIBLE_QUESTS" }
   | { type: "SELECT_OBJECT"; objectId: string }

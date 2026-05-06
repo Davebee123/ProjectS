@@ -1,0 +1,7 @@
+{
+  "id": "equippedagribackpackonce",
+  "label": "EquippedAgriBackpackOnce",
+  "type": "flag",
+  "defaultValue": false,
+  "description": "This is applied when the player equips the agri-backpack so that I can add the healing salve and maize only once. "
+}

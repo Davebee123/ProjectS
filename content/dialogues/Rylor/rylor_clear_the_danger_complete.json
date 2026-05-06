@@ -6,20 +6,56 @@
   "nodes": [
     {
       "id": "rylor_clear_the_danger_complete_start",
-      "text": "That should hold the Threadhorns back for now. The Farmstead can breathe again, at least for a little while.",
+      "text": "[narration]Rylor wipes the sweat off his forehead and you hear him panting softly. [/narration]That should hold the Threadhorns back for now.",
+      "options": [],
+      "continueLabel": "Continue",
+      "nextNodeId": "rylor_clear_the_danger_complete_node_2"
+    },
+    {
+      "id": "rylor_clear_the_danger_complete_node_2",
+      "text": "[narration]He raises his Bioboard up and you hear him amend his log[/narration] \"Note that the Hostile Fauna Index of two point fou--\"",
       "options": [
         {
-          "id": "rylor_clear_the_danger_complete_start_option_1",
-          "text": "Glad you're safe.",
-          "closeDialogue": true,
+          "id": "rylor_clear_the_danger_complete_node_2_option_1",
+          "text": "Continue",
           "effects": [
+            {
+              "type": "set_storage",
+              "storageKeyId": "ironbriar_patriarch_player_phase",
+              "storageOperation": "set",
+              "value": false
+            },
+            {
+              "type": "spawn_interactable",
+              "interactableId": "ironbriar_patriarch"
+            },
+            {
+              "type": "show_emote",
+              "target": "bearer",
+              "emoteText": "Agh!",
+              "emoteChance": 100,
+              "durationMs": 3000
+            },
             {
               "type": "complete_quest",
               "questId": "clear_the_danger"
+            },
+            {
+              "type": "set_storage",
+              "storageKeyId": "rylor_patriarch_started",
+              "storageOperation": "set",
+              "value": true
+            },
+            {
+              "type": "transform_interactable",
+              "target": "bearer",
+              "interactableId": "rylor_combat"
             }
-          ]
+          ],
+          "closeDialogue": true
         }
-      ]
+      ],
+      "onEnterEffects": []
     }
   ]
 }

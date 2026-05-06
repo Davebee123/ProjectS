@@ -1,0 +1,40 @@
+{
+  "id": "rylor_dies",
+  "name": "Rylor",
+  "description": "",
+  "startStepId": "rylor_dies_step_1",
+  "onCompleteEffects": [
+    {
+      "type": "set_storage",
+      "storageKeyId": "ironbriar_patriarch_player_phase",
+      "storageOperation": "set",
+      "value": true
+    }
+  ],
+  "steps": [
+    {
+      "id": "rylor_dies_step_1",
+      "kind": "text",
+      "text": "The Ironbriar fends off Rylor's defenses and impales him in the center of the chest. Rylor screams with pain and clutches the tusk of the boar. The boar retracts its tusk and Rylor falls to the ground.",
+      "nextStepId": "rylor_dies_step_3",
+      "soundEffect": "/Sound Files/RylorGettingImpaled.mp3",
+      "soundEffectVolume": 0.25
+    },
+    {
+      "id": "rylor_dies_step_2",
+      "kind": "dialogue",
+      "text": "New cutscene text.",
+      "dialogueId": "rylor_death",
+      "speakerName": "Rylor",
+      "portraitImage": "/Interactable Images/Rylor.png",
+      "portraitImagePositionY": 25,
+      "portraitImageFit": "cover"
+    },
+    {
+      "id": "rylor_dies_step_3",
+      "kind": "text",
+      "text": "A purple mist manifests around Rylor's Bioboard and, with his teeth clenched, he outstretches his arm and the mist quickly envelops the boar. The boar, mid charge, all of a sudden becomes slowed in time. It's legs appear suspended in the air, mid-stride-- its eyes still focused on Rylor.",
+      "nextStepId": "rylor_dies_step_2"
+    }
+  ]
+}

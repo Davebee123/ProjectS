@@ -1,0 +1,49 @@
+{
+  "id": "ironbriar_patriarch",
+  "name": "Ironbriar Patriarch",
+  "description": "A mechanical-hybrid boar that has been a product of the Court of Genesis.",
+  "activityTag": "enemy",
+  "abilityBehaviorMode": "priority",
+  "initialAbilityDelayMs": 3000,
+  "allowedAbilityTags": [
+    "one_hand_sword"
+  ],
+  "requiredLevel": 2,
+  "effectiveHealth": {
+    "min": 100,
+    "max": 120
+  },
+  "barColor": "#A72727",
+  "accentColor": "#A72727",
+  "meterLabel": "HP",
+  "lootTable": [],
+  "xpRewards": [],
+  "formRules": [
+    {
+      "id": "ironbriar_patriarch_enters_player_phase",
+      "condition": "player.flag(\"ironbriar_patriarch_player_phase\")",
+      "interactableId": "ironbriar_patriarch_battle"
+    }
+  ],
+  "abilities": [
+    {
+      "name": "Boar Charge",
+      "castTimeMs": 3000,
+      "cooldownMs": 6000,
+      "damage": 50,
+      "resistChancePerLevel": 5,
+      "targetMode": "specific_interactable",
+      "targetInteractableId": "rylor_combat"
+    }
+  ],
+  "onInteractEffects": [],
+  "onDestroyEffects": [],
+  "imagePositionX": 50,
+  "imagePositionY": 50,
+  "image": "/Interactable Images/Ironbriar Patriarch.png",
+  "sounds": {
+    "onAbilityCast": "/Sound Files/Ironbriar Patriarch.mp3",
+    "onAbilityCastVolume": 0.25,
+    "onDestroy": "/Sound Files/Ironbriar Patriarch_hit.mp3"
+  }
+}

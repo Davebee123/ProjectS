@@ -1,0 +1,10 @@
+{
+  "id": "rylor_s_broken_wing",
+  "name": "Rylor's Broken Wing",
+  "description": "A piece of Rylor's wing that fell off before he died.",
+  "rarity": "common",
+  "inventoryCategory": "quest_items",
+  "stackable": true,
+  "stats": {},
+  "eventHooks": []
+}

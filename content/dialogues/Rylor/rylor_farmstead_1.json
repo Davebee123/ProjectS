@@ -6,14 +6,25 @@
   "nodes": [
     {
       "id": "rylor_farmstead_1_start",
-      "text": "[narration] Rylor smells the air. His Bioboard whirrs with anticipatory energy [/narration] The air stirs with unrest. I fear we are in the company of hostile fauna. [narration] Rylor readies his sword [narration].",
-      "options": [],
+      "text": "[narration] Rylor adjusts his backpack. He has collected a lot of GeneMaize_T.01 and struggles to walk with all the added weight.[/narration] How do you figure? You know, this blight and all. We used to have caravans of this stuff. ",
+      "options": [
+        {
+          "id": "rylor_farmstead_1_start_option_1",
+          "text": "The blight is unrelenting, but we must carry on.",
+          "nextNodeId": "rylor_farmstead_1_node_4"
+        },
+        {
+          "id": "rylor_farmstead_1_start_option_2",
+          "text": "It feels hopeless, and I worry about Lyoris and its people.",
+          "nextNodeId": "rylor_farmstead_1_node_6"
+        }
+      ],
       "continueLabel": "Continue",
       "nextNodeId": "rylor_farmstead_1_node_2"
     },
     {
       "id": "rylor_farmstead_1_node_2",
-      "text": "[narration] He smiles at you and one of his eyebrows juts[/narration].  You know how to use your sword, right? Just start swinging!",
+      "text": "[narration]He smiles at you and one of his eyebrows juts[/narration]. You know how to use your sword, right? Just start swinging!",
       "options": [
         {
           "id": "rylor_farmstead_1_node_2_option_1",
@@ -40,6 +51,31 @@
           ]
         }
       ]
+    },
+    {
+      "id": "rylor_farmstead_1_node_3",
+      "text": "[narration]Rylor smells the air. His Bioboard whirrs with anticipatory energy [/narration] The air stirs with unrest. I fear we are in the company of hostile fauna. [narration] Rylor readies his sword [narration].",
+      "options": [],
+      "nextNodeId": "rylor_farmstead_1_node_2"
+    },
+    {
+      "id": "rylor_farmstead_1_node_4",
+      "text": "Yeah, I agree. Our yields feels like they are shrinking with each passing harvest. Remember, we aren't the only ones who need to survive out here. [narration]He looks around the Farmstead with a watchful eye. [/narration]",
+      "options": [],
+      "nextNodeId": "rylor_farmstead_1_node_5",
+      "continueLabel": "Continue"
+    },
+    {
+      "id": "rylor_farmstead_1_node_5",
+      "text": "Sometimes I just wish I could retire to Aelderis, start a family, and eat as much Libroberry Pie as I can. It's a simple life, really. [narration]Rylor daydreams for a second, then shakes himself back to reality with a somber expression on his face [/narration].\n\nLive by the Courts and die by the Courts, I guess.",
+      "options": [],
+      "nextNodeId": "rylor_farmstead_1_node_3"
+    },
+    {
+      "id": "rylor_farmstead_1_node_6",
+      "text": "Don't discount hope too quickly. It's one of the strongest Magicks we possess. [narration]He glances at his hand and gesticulates it a bit.[/narration].\n\nVirelios will have a plan for us. He always does. There's a reason why he is in the appointed position he is in.",
+      "options": [],
+      "nextNodeId": "rylor_farmstead_1_node_5"
     }
   ]
 }

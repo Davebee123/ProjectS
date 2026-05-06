@@ -48,5 +48,11 @@
   },
   "image": "/Interactable Images/Rylor.png",
   "imagePositionY": 25,
-  "formRules": []
+  "formRules": [
+    {
+      "id": "rylor_enters_patriarch_combat",
+      "condition": "room.id == \"room_4_4\" AND player.flag(\"rylor_patriarch_started\")",
+      "interactableId": "rylor_combat"
+    }
+  ]
 }

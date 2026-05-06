@@ -12,6 +12,7 @@ import { ConditionEditor } from "../shared/ConditionEditor";
 import { EditorUsagePanel } from "../shared/EditorUsagePanel";
 import { FilePathInput } from "../shared/FilePathInput";
 import { ReferencePicker } from "../shared/ReferencePicker";
+import { VolumeSlider } from "../shared/VolumeSlider";
 import { createUniqueId } from "../../utils/ids";
 import { CollapsibleEditorSection } from "../shared/CollapsibleEditorSection";
 import type { PerkMilestoneEffect } from "../../schema/types";
@@ -122,6 +123,10 @@ export function SkillEditPage() {
   const statusInteractions = skill.statusInteractions ?? [];
   const perkMilestones = skill.perkMilestones ?? [];
   const visibleActivityTagCount = skill.activityTags.filter((tagId) =>
+    activityTags.some((tag) => tag.id === tagId)
+  ).length;
+  const hasPlayerTargetOverride = skill.playerTargetTags !== undefined;
+  const visiblePlayerTargetTagCount = (skill.playerTargetTags ?? []).filter((tagId) =>
     activityTags.some((tag) => tag.id === tagId)
   ).length;
   const visibleAbilityTagCount = skill.abilityTags.filter((tagId) =>
@@ -407,7 +412,7 @@ export function SkillEditPage() {
 
       <CollapsibleEditorSection
         title="Tags"
-        summary={`${visibleActivityTagCount} activity • ${visibleAbilityTagCount} ability`}
+        summary={`${visibleActivityTagCount} activity • ${visibleAbilityTagCount} ability • player ${hasPlayerTargetOverride ? visiblePlayerTargetTagCount : "default"}`}
         defaultOpen={false}
       >
         <TagPicker
@@ -423,6 +428,34 @@ export function SkillEditPage() {
           selected={skill.abilityTags}
           onChange={(tags) => updateSkill(skill.id, { abilityTags: tags })}
         />
+        {skill.kind === "active" ? (
+          <>
+            <div style={{ height: 12 }} />
+            <label className="checkbox" style={{ marginBottom: 8 }}>
+              <input
+                type="checkbox"
+                checked={hasPlayerTargetOverride}
+                onChange={(e) =>
+                  updateSkill(skill.id, {
+                    playerTargetTags: e.target.checked ? [] : undefined,
+                  })
+                }
+              />
+              Override player-selected target tags
+            </label>
+            <p className="section-desc" style={{ marginBottom: hasPlayerTargetOverride ? 12 : 0 }}>
+              When disabled, player targeting uses Activity Tags. Interactable AI always uses Activity Tags.
+            </p>
+            {hasPlayerTargetOverride ? (
+              <TagPicker
+                label="Player Target Tags"
+                tags={activityTags}
+                selected={skill.playerTargetTags ?? []}
+                onChange={(tags) => updateSkill(skill.id, { playerTargetTags: tags })}
+              />
+            ) : null}
+          </>
+        ) : null}
       </CollapsibleEditorSection>
 
       {skill.kind === "active" && (
@@ -1426,7 +1459,11 @@ export function SkillEditPage() {
 
       <CollapsibleEditorSection
         title="Sound Effects"
-        summary={`${skill.castSound ? "cast" : ""}${skill.castSound && skill.hitSound ? " • " : ""}${skill.hitSound ? "hit" : ""}${!skill.castSound && !skill.hitSound ? "none" : ""}`}
+        summary={`${[
+          skill.castSound ? "cast" : "",
+          skill.tickSound ? "tick" : "",
+          skill.hitSound ? "hit" : "",
+        ].filter(Boolean).join(" • ") || "none"}`}
         defaultOpen={false}
       >
         <p className="section-desc">
@@ -1441,23 +1478,28 @@ export function SkillEditPage() {
               accept="audio/*"
               pathPrefix="Sound Files"
             />
-            <label className="field">
-              <span className="field-label">Cast Volume</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={skill.castSoundVolume ?? 1}
-                  onChange={(e) => updateSkill(skill.id, { castSoundVolume: parseFloat(e.target.value) })}
-                  style={{ flex: 1 }}
-                />
-                <span style={{ minWidth: 36, textAlign: "right", fontSize: "0.85rem", color: "var(--text-soft)" }}>
-                  {Math.round((skill.castSoundVolume ?? 1) * 100)}%
-                </span>
-              </div>
-            </label>
+            <VolumeSlider
+              label="Cast Volume"
+              value={skill.castSoundVolume ?? 1}
+              disabled={!skill.castSound}
+              onChange={(value) => updateSkill(skill.id, { castSoundVolume: value })}
+            />
+        </div>
+        <div className="form-row">
+            <FilePathInput
+              label="Tick Sound"
+              value={skill.tickSound || ""}
+              onChange={(v) => updateSkill(skill.id, { tickSound: v || undefined })}
+              placeholder="Sound Files/tick.ogg"
+              accept="audio/*"
+              pathPrefix="Sound Files"
+            />
+            <VolumeSlider
+              label="Tick Volume"
+              value={skill.tickSoundVolume ?? 1}
+              disabled={!skill.tickSound}
+              onChange={(value) => updateSkill(skill.id, { tickSoundVolume: value })}
+            />
         </div>
         <div className="form-row">
             <FilePathInput
@@ -1468,23 +1510,12 @@ export function SkillEditPage() {
               accept="audio/*"
               pathPrefix="Sound Files"
             />
-            <label className="field">
-              <span className="field-label">Hit Volume</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={skill.hitSoundVolume ?? 1}
-                  onChange={(e) => updateSkill(skill.id, { hitSoundVolume: parseFloat(e.target.value) })}
-                  style={{ flex: 1 }}
-                />
-                <span style={{ minWidth: 36, textAlign: "right", fontSize: "0.85rem", color: "var(--text-soft)" }}>
-                  {Math.round((skill.hitSoundVolume ?? 1) * 100)}%
-                </span>
-              </div>
-            </label>
+            <VolumeSlider
+              label="Hit Volume"
+              value={skill.hitSoundVolume ?? 1}
+              disabled={!skill.hitSound}
+              onChange={(value) => updateSkill(skill.id, { hitSoundVolume: value })}
+            />
         </div>
         <div className="form-row">
           <label className="field">

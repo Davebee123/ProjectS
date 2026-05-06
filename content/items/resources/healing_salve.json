@@ -1,0 +1,24 @@
+{
+  "id": "healing_salve",
+  "name": "Healing Salve",
+  "description": "A cream infused with genesis magic to heal your wounds.",
+  "rarity": "common",
+  "inventoryCategory": "consumables",
+  "stackable": true,
+  "stats": {},
+  "eventHooks": [
+    {
+      "id": "on_use_1777731875477_0",
+      "event": "on_use",
+      "actions": [
+        {
+          "type": "heal",
+          "value": 25
+        }
+      ]
+    }
+  ],
+  "quickSlotCooldownMs": 10000,
+  "consumeSound": "/Sound Files/590975__eminyildirim__heal-magic-buff.mp3",
+  "consumeSoundVolume": 0.2
+}

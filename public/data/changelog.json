@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-26T15:07:31.438Z",
+  "generatedAt": "2026-05-06T01:25:55.362Z",
   "releases": [
     {
       "version": "CURRENT",
@@ -8,7 +8,17 @@
       "entries": [
         {
           "category": "new",
+          "text": "Added ability: Boar Charge.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
           "text": "Added ability: Charge.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added ability: Flurry.",
           "source": "auto"
         },
         {
@@ -29,11 +39,6 @@
         {
           "category": "new",
           "text": "Added passive skill: One-Hand Swords.",
-          "source": "auto"
-        },
-        {
-          "category": "new",
-          "text": "Added ability: Parry.",
           "source": "auto"
         },
         {
@@ -69,6 +74,16 @@
         {
           "category": "new",
           "text": "Added interactable: Faeberry Bush.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added interactable: Ironbriar Patriarch.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added interactable: Ironbriar Patriarch.",
           "source": "auto"
         },
         {
@@ -109,6 +124,21 @@
         {
           "category": "new",
           "text": "Added item: Fae Berry.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added item: GeneMaize_T.01.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added item: Healing Salve.",
+          "source": "auto"
+        },
+        {
+          "category": "new",
+          "text": "Added item: Rylor's Broken Wing.",
           "source": "auto"
         },
         {

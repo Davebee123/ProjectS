@@ -13,6 +13,7 @@ import { CollapsibleEditorSection } from "../shared/CollapsibleEditorSection";
 import { ConditionEditor } from "../shared/ConditionEditor";
 import { FilePathInput } from "../shared/FilePathInput";
 import { ReferencePicker } from "../shared/ReferencePicker";
+import { VolumeSlider } from "../shared/VolumeSlider";
 import { createDefaultDialogue, useDialogueStore } from "../../stores/dialogueStore";
 import { EventActionListEditor } from "../shared/EventActionListEditor";
 import { toPublicAssetPath } from "../../utils/assets";
@@ -765,40 +766,6 @@ export function InteractableEditPage() {
         </section>
       </CollapsibleEditorSection>
     </PageShell>
-  );
-}
-
-function VolumeSlider({
-  label,
-  value,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  disabled?: boolean;
-}) {
-  const clamped = Math.max(0, Math.min(1, value));
-  return (
-    <div className="form-field" style={{ opacity: disabled ? 0.5 : 1 }}>
-      <label className="field-label" style={{ display: "flex", justifyContent: "space-between" }}>
-        <span>{label}</span>
-        <span style={{ opacity: 0.7, fontVariantNumeric: "tabular-nums" }}>
-          {Math.round(clamped * 100)}%
-        </span>
-      </label>
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.05}
-        value={clamped}
-        disabled={disabled}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: "100%" }}
-      />
-    </div>
   );
 }
 

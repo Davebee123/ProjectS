@@ -4,7 +4,20 @@ import { playAmbient, playMusic, playManaged, stopManaged, playWeatherAmbient, s
 import { getWeatherDef } from "./data/loader";
 import { comboDefsToRules } from "./data/bridge";
 import type { ChangelogData } from "./data/changelog";
-import { reducer, setCombos, createInitialState } from "./state";
+import {
+  reducer,
+  setCombos,
+  createInitialState,
+  canManualSave,
+  createManualSave,
+  deleteManualSave,
+  getAllSaveSummaries,
+  getLatestSaveSummary,
+  loadLatestSave,
+  loadSaveById,
+  saveAutosave,
+  type SaveSummary,
+} from "./state";
 import { GameContext } from "./GameContext";
 import { ThreeColumnLayout } from "./components/layout/ThreeColumnLayout";
 import { PlayerColumn } from "./components/player/PlayerColumn";
@@ -18,6 +31,19 @@ import { QuestProgressToasts } from "./components/quests/QuestProgressToasts";
 function GameApp({ changelog }: { changelog: ChangelogData | null }) {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
   const didStartIntroCutscene = useRef(false);
+  const previousRoomIdRef = useRef(state.currentRoomId);
+  const [latestSaveSummary, setLatestSaveSummary] = useState<SaveSummary | null>(() => getLatestSaveSummary());
+  const [saveSummaries, setSaveSummaries] = useState<SaveSummary[]>(() => getAllSaveSummaries());
+  const [isLoadingSave, setIsLoadingSave] = useState(false);
+  const loadSaveTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (loadSaveTimerRef.current !== null) {
+        window.clearTimeout(loadSaveTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -130,14 +156,116 @@ function GameApp({ changelog }: { changelog: ChangelogData | null }) {
     dispatch({ type: "START_CUTSCENE", cutsceneId: startingCutsceneId });
   }, []);
 
+  const syncSaveSummaries = () => {
+    setSaveSummaries(getAllSaveSummaries());
+    setLatestSaveSummary(getLatestSaveSummary());
+  };
+
+  const beginLoadSave = (saveId: string | null, fallbackLatest = false) => {
+    const loadedState = saveId ? loadSaveById(saveId) : fallbackLatest ? loadLatestSave() : null;
+    const nextLatestSummary = getLatestSaveSummary();
+    if (!loadedState) {
+      return;
+    }
+    setIsLoadingSave(true);
+    didStartIntroCutscene.current = true;
+    previousRoomIdRef.current = loadedState.currentRoomId;
+    if (loadSaveTimerRef.current !== null) {
+      window.clearTimeout(loadSaveTimerRef.current);
+    }
+    loadSaveTimerRef.current = window.setTimeout(() => {
+      setLatestSaveSummary(nextLatestSummary);
+      setSaveSummaries(getAllSaveSummaries());
+      dispatch({ type: "LOAD_GAME", state: loadedState });
+      window.setTimeout(() => setIsLoadingSave(false), 180);
+      loadSaveTimerRef.current = null;
+    }, 220);
+  };
+
+  const handleCreateManualSave = (name: string) => {
+    if (!canManualSave(state)) {
+      return;
+    }
+    createManualSave(state, name);
+    syncSaveSummaries();
+  };
+
+  const handleDeleteManualSave = (id: string) => {
+    deleteManualSave(id);
+    syncSaveSummaries();
+  };
+
+  const handleLoadSave = (id: string) => {
+    beginLoadSave(id);
+  };
+
+  const handleLoadLatestSave = () => {
+    beginLoadSave(getLatestSaveSummary()?.id ?? null, true);
+  };
+
+  useEffect(() => {
+    const previousRoomId = previousRoomIdRef.current;
+    const completedTravel =
+      previousRoomId !== state.currentRoomId &&
+      state.previousRoomId === previousRoomId &&
+      !state.travelAction &&
+      state.health > 0;
+
+    if (completedTravel) {
+      saveAutosave(state);
+      syncSaveSummaries();
+    }
+
+    previousRoomIdRef.current = state.currentRoomId;
+  }, [state]);
+
   return (
-    <GameContext.Provider value={{ state, dispatch, changelog }}>
+    <GameContext.Provider
+      value={{
+        state,
+        dispatch,
+        changelog,
+        canManualSave: canManualSave(state),
+        latestSaveSummary,
+        saveSummaries,
+        onCreateManualSave: handleCreateManualSave,
+        onDeleteManualSave: handleDeleteManualSave,
+        onLoadSave: handleLoadSave,
+        onLoadLatestSave: handleLoadLatestSave,
+      }}
+    >
       <div className="app-shell">
         <ThreeColumnLayout
           left={<PlayerColumn />}
           center={<SkillsColumn />}
           right={<WorldColumn />}
         />
+        {state.isDefeated ? (
+          <div className="defeat-overlay">
+            <div className="defeat-overlay-panel">
+              <p className="defeat-overlay-title">You Died</p>
+              <p className="defeat-overlay-text">
+                Load a previous save to continue your journey.
+              </p>
+              <button
+                type="button"
+                className="defeat-overlay-button"
+                onClick={handleLoadLatestSave}
+                disabled={!latestSaveSummary}
+              >
+                {latestSaveSummary ? "Load Previous Save" : "No Save Available"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {isLoadingSave ? (
+          <div className="save-loading-overlay">
+            <div className="save-loading-panel">
+              <p className="save-loading-title">Loading Save</p>
+              <p className="save-loading-text">Restoring your journey...</p>
+            </div>
+          </div>
+        ) : null}
         <div className="screen-noise-overlay" aria-hidden="true" />
         <QuestProgressToasts />
         <CutsceneOverlay />

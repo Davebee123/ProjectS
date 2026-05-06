@@ -226,10 +226,22 @@ export function MinimapPanel() {
                 onMouseEnter={(e) => {
                   if (!cell.roomId) return;
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  const TOOLTIP_WIDTH = 260;
+                  const TOOLTIP_HEIGHT = 220;
+                  const VIEWPORT_PADDING = 12;
+                  const centeredLeft = rect.left + rect.width / 2;
+                  const left = Math.max(
+                    VIEWPORT_PADDING + TOOLTIP_WIDTH / 2,
+                    Math.min(window.innerWidth - VIEWPORT_PADDING - TOOLTIP_WIDTH / 2, centeredLeft)
+                  );
+                  const showAbove = rect.bottom + 10 + TOOLTIP_HEIGHT > window.innerHeight - VIEWPORT_PADDING;
+                  const top = showAbove
+                    ? Math.max(VIEWPORT_PADDING + TOOLTIP_HEIGHT, rect.top - 8)
+                    : Math.min(window.innerHeight - VIEWPORT_PADDING - TOOLTIP_HEIGHT, rect.bottom + 8);
                   setHoverTip({
                     roomId: cell.roomId,
-                    top: rect.bottom + 6,
-                    left: rect.left + rect.width / 2,
+                    top,
+                    left,
                   });
                 }}
                 onMouseLeave={() => setHoverTip(null)}
@@ -249,7 +261,7 @@ export function MinimapPanel() {
                 position: "fixed",
                 top: hoverTip.top,
                 left: hoverTip.left,
-                transform: "translateX(-50%)",
+                transform: hoverTip.top > window.innerHeight / 2 ? "translate(-50%, -100%)" : "translateX(-50%)",
                 zIndex: 1500,
                 pointerEvents: "none",
               }}

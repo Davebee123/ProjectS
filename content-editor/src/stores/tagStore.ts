@@ -27,6 +27,9 @@ function cleanupActivityTagReferences(removedId: string): void {
     skills: state.skills.map((skill) => ({
       ...skill,
       activityTags: removeTagId(skill.activityTags, removedId),
+      playerTargetTags: skill.playerTargetTags
+        ? removeTagId(skill.playerTargetTags, removedId)
+        : undefined,
     })),
   }));
   useInteractableStore.setState((state) => ({

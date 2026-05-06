@@ -1,0 +1,68 @@
+{
+  "id": "rylor_death",
+  "name": "Rylor Death",
+  "description": "",
+  "startNodeId": "rylor_death_start",
+  "nodes": [
+    {
+      "id": "rylor_death_start",
+      "text": "[narration]Rylor falls to the ground and clutches his chest. Blood oozes from the wound. He strains as he holds his head up.[/narration]. \n\nBio..board. Agh... Download...No time left.",
+      "options": [],
+      "continueLabel": "Continue",
+      "nextNodeId": "rylor_death_node_2"
+    },
+    {
+      "id": "rylor_death_node_2",
+      "text": "[narration]You run over to Rylor and examine his Bioboard. You hold up yours next to his and notice the whirring of both your machines. Three mists begin to manifest in small, spherical shapes above both bioboards. \n\nYour Bioboard detects these signatures and you hear a male voice in your head.\n\n[/narration]",
+      "options": [],
+      "continueLabel": "Continue",
+      "nextNodeId": "rylor_death_node_3"
+    },
+    {
+      "id": "rylor_death_node_3",
+      "text": "Host death imminent. Bioboard Ability transmission in progress. Please make your selection:\n\n1) Blood Boil\n2) Telekinetic Slam\n3) Temporal Lash",
+      "options": [
+        {
+          "id": "rylor_death_node_3_option_1",
+          "text": "Download Ability: Blood Boil",
+          "nextNodeId": "rylor_death_node_4"
+        },
+        {
+          "id": "rylor_death_node_3_option_2",
+          "text": "Download Ability: Telekinetic Slam",
+          "nextNodeId": "rylor_death_node_4"
+        },
+        {
+          "id": "rylor_death_node_3_option_3",
+          "text": "Download Ability: Temporal Lash",
+          "nextNodeId": "rylor_death_node_4"
+        }
+      ],
+      "nextNodeId": "rylor_death_node_2"
+    },
+    {
+      "id": "rylor_death_node_4",
+      "text": "[narration]The mist travels from Rylor's bioboard to your bioboard. You all of a sudden feel magical energy course through your body. The energy then focuses at the fingertips of your gauntlet.[/narration]",
+      "options": [],
+      "continueLabel": "Continue",
+      "nextNodeId": "rylor_death_node_5"
+    },
+    {
+      "id": "rylor_death_node_5",
+      "text": "[narration]Rylor forces a smile[/narration].\n\nHostile index...should've...four-point-tw.... Cough[/narration]\n\nLive...Courts...Die...",
+      "options": [],
+      "nextNodeId": "rylor_death_node_6"
+    },
+    {
+      "id": "rylor_death_node_6",
+      "text": "[narration] His eyes go blank and his Bioboard shuts down. The only sound you hear is the time dilation of the boar returning to normal.[/narration]",
+      "options": [
+        {
+          "id": "rylor_death_node_6_option_1",
+          "text": "Leave Rylor",
+          "closeDialogue": true
+        }
+      ]
+    }
+  ]
+}

@@ -19,6 +19,7 @@ export function CutsceneOverlay() {
   const [phase, setPhase] = useState<CutsceneOverlayPhase>("hidden");
   const advanceTimeoutRef = useRef<number | null>(null);
   const contentRevealTimeoutRef = useRef<number | null>(null);
+  const previousCutsceneRef = useRef<{ cutsceneId: string; stepId: string } | null>(null);
 
   const cutscene = state.activeCutscene ? getCutsceneDef(state.activeCutscene.cutsceneId) : undefined;
   const step = useMemo(
@@ -29,20 +30,45 @@ export function CutsceneOverlay() {
   useEffect(() => {
     if (!state.activeCutscene || !cutscene || !step || step.kind !== "text" || state.activeDialogue) {
       setPhase("hidden");
+      previousCutsceneRef.current = null;
+      return;
+    }
+
+    const previous = previousCutsceneRef.current;
+    const isSameCutsceneNextStep =
+      previous?.cutsceneId === state.activeCutscene.cutsceneId &&
+      previous?.stepId !== step.id;
+
+    if (contentRevealTimeoutRef.current !== null) {
+      window.clearTimeout(contentRevealTimeoutRef.current);
+      contentRevealTimeoutRef.current = null;
+    }
+
+    if (isSameCutsceneNextStep) {
+      setPhase("background");
+      contentRevealTimeoutRef.current = window.setTimeout(() => {
+        contentRevealTimeoutRef.current = null;
+        setPhase("content");
+      }, CUTSCENE_CONTENT_FADE_MS);
+      previousCutsceneRef.current = {
+        cutsceneId: state.activeCutscene.cutsceneId,
+        stepId: step.id,
+      };
       return;
     }
 
     setPhase("hidden");
     const frame = window.requestAnimationFrame(() => {
       setPhase("background");
-      if (contentRevealTimeoutRef.current !== null) {
-        window.clearTimeout(contentRevealTimeoutRef.current);
-      }
       contentRevealTimeoutRef.current = window.setTimeout(() => {
         contentRevealTimeoutRef.current = null;
         setPhase("content");
       }, CUTSCENE_BACKGROUND_FADE_MS);
     });
+    previousCutsceneRef.current = {
+      cutsceneId: state.activeCutscene.cutsceneId,
+      stepId: step.id,
+    };
     return () => {
       window.cancelAnimationFrame(frame);
       if (contentRevealTimeoutRef.current !== null) {
@@ -81,7 +107,7 @@ export function CutsceneOverlay() {
     if (phase !== "content") {
       return;
     }
-    setPhase("exiting");
+    setPhase(step.nextStepId ? "background" : "exiting");
     if (advanceTimeoutRef.current !== null) {
       window.clearTimeout(advanceTimeoutRef.current);
     }

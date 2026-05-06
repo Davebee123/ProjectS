@@ -19,6 +19,7 @@
   "barColor": "#9e9e9e",
   "accentColor": "#c9c9c9",
   "description": "An advancing strike with your sword",
+  "linkedPassiveId": "one_hand_swords",
   "perkMilestones": [],
   "hitSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_ForwardSlash.wav",
   "usageProfile": {

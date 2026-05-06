@@ -47,6 +47,7 @@ import {
 } from "./utils";
 import { isRoomReachable } from "./worldNavigation";
 import { getSkillTickMoments } from "./skillTicks";
+import { canPlayerUseSkillOnObject } from "./skillTargeting";
 import { TRAVEL_DURATION_MS, TRAVEL_ENERGY_COST } from "./travel";
 import { getVisibleQuestIds } from "./quests";
 
@@ -187,6 +188,37 @@ function getPlayerSkillBlockedMessage(state: GameState, skill: SkillState): stri
     return `${skill.name} cannot be used while weapon abilities are prevented.`;
   }
   return null;
+}
+
+function pushPassiveProgressCue(
+  cues: GameState["passiveProgressCues"],
+  skill: SkillState,
+  xpGained: number,
+  now: number,
+  levelUps = 0
+): GameState["passiveProgressCues"] {
+  const activeCues = cues.filter((cue) => cue.expiresAt > now);
+  const existingCue = activeCues.find((cue) => cue.skillId === skill.id);
+  const nextCue = {
+    id: existingCue?.id ?? `passive_progress_${skill.id}_${now}`,
+    skillId: skill.id,
+    skillName: skill.name,
+    level: skill.level,
+    previousLevel: existingCue?.level ?? Math.max(1, skill.level - levelUps),
+    currentValue: Math.floor(skill.xp),
+    requiredValue: Math.max(1, Math.floor(skill.xpToNext)),
+    previousValue: existingCue?.currentValue ?? Math.floor(skill.xp),
+    previousRequiredValue:
+      existingCue?.requiredValue ?? Math.max(1, Math.floor(skill.xpToNext)),
+    xpGained: (existingCue?.xpGained ?? 0) + xpGained,
+    leveledUp: levelUps > 0,
+    barColor: skill.barColor,
+    accentColor: skill.accentColor,
+    appearsAt: existingCue?.appearsAt ?? now,
+    expiresAt: now + 3200,
+    revision: (existingCue?.revision ?? 0) + 1,
+  };
+  return [...activeCues.filter((cue) => cue.skillId !== skill.id), nextCue].slice(-4);
 }
 
 export function getRelevantPassiveLevel(skills: SkillState[], tag: string): number {
@@ -469,7 +501,12 @@ function applyInteractableFormRules(state: GameState): GameState {
       return object;
     }
 
-    const integrityRatio = object.maxIntegrity > 0 ? object.integrity / object.maxIntegrity : 1;
+    const integrityRatio =
+      matchingRule.preserveIntegrity === false
+        ? 1
+        : object.maxIntegrity > 0
+          ? object.integrity / object.maxIntegrity
+          : 1;
     const transformed = createWorldObjectFromInteractableDef(bundle, nextDef, {
       id: object.id,
       integrityRatio,
@@ -550,7 +587,28 @@ function getResolvedMainHandWeapon(state: GameState) {
   return resolved?.slot === "mainHand" ? resolved : null;
 }
 
-export function getEquipmentStats(state: GameState, targetTag?: string): {
+function statusModifierAppliesToSkill(
+  modifier: { skillIds?: string[]; abilityTags?: string[] },
+  skill?: Pick<SkillState, "id" | "abilityTags">
+): boolean {
+  const hasSkillFilter = (modifier.skillIds?.length ?? 0) > 0;
+  const hasAbilityTagFilter = (modifier.abilityTags?.length ?? 0) > 0;
+  if (!hasSkillFilter && !hasAbilityTagFilter) {
+    return true;
+  }
+  if (!skill) {
+    return false;
+  }
+  if (hasSkillFilter && modifier.skillIds?.includes(skill.id)) {
+    return true;
+  }
+  if (hasAbilityTagFilter && modifier.abilityTags?.some((tag) => skill.abilityTags.includes(tag))) {
+    return true;
+  }
+  return false;
+}
+
+export function getEquipmentStats(state: GameState, targetTag?: string, skill?: SkillState): {
   attack: number;
   activityPowerMultiplier: number;
   backpackSlotBonus: number;
@@ -628,6 +686,7 @@ export function getEquipmentStats(state: GameState, targetTag?: string): {
       const def = bundle.statusEffects?.find((s) => s.id === active.effectId);
       if (!def) continue;
       for (const mod of def.statModifiers) {
+        if (!statusModifierAppliesToSkill(mod, skill)) continue;
         const multiplier = active.stacks;
         switch (mod.stat) {
           case "attack":
@@ -760,6 +819,13 @@ export function getActivityProgressValue(
   return Math.max(1, Math.round(((scaled + milestones.powerBonus) * milestones.powerMultiplier + gear.attack) * gear.activityPowerMultiplier));
 }
 
+function playSkillTickSound(skill: Pick<SkillState, "tickSound" | "tickSoundVolume"> | null | undefined): void {
+  if (!skill?.tickSound) {
+    return;
+  }
+  playSound(skill.tickSound, skill.tickSoundVolume ?? 1);
+}
+
 // ── Cast metrics ──
 
 function getCastMetrics(
@@ -768,7 +834,7 @@ function getCastMetrics(
   target: WorldObject,
   now: number
 ): CastMetrics {
-  const gear = getEquipmentStats(state, target.tag);
+  const gear = getEquipmentStats(state, target.tag, skill);
   const combo =
     skill.id === "downward_chop" && state.downwardBonusReady
       ? findCombo(state.lastAction, skill.id, target.tag, now)
@@ -822,7 +888,9 @@ function getCastMetrics(
       statusEnergyBonus
     )
   );
-  const tickMomentsMs = getSkillTickMoments(skill, durationMs);
+  const tickMomentsMs = getSkillTickMoments(skill, durationMs, {
+    referenceDurationMs: effectiveBaseDuration,
+  });
 
   return { durationMs, energyCost, tickMomentsMs, combo };
 }
@@ -871,20 +939,7 @@ function makeActionPlan(state: GameState, skillId: string, now: number): ActionP
 }
 
 function canSkillBeUsedOnSelectedObject(skill: SkillState, target: WorldObject): boolean {
-  const isSelfTargetCombatSkill =
-    skill.system === "combat" &&
-    skill.usageProfile?.usageContext === "combat" &&
-    skill.usageProfile?.targetPattern === "self";
-
-  if (!isSelfTargetCombatSkill && !skill.tags.includes(target.tag)) {
-    return false;
-  }
-
-  if (target.allowedAbilityTags.length > 0 && !target.allowedAbilityTags.some((tag) => skill.abilityTags.includes(tag))) {
-    return false;
-  }
-
-  return true;
+  return canPlayerUseSkillOnObject(skill, target);
 }
 
 function isHostileCastingBlocked(state: GameState): boolean {
@@ -1745,6 +1800,8 @@ function resolveDueHostileActionTicks(state: GameState): GameState {
       continue;
     }
 
+    playSkillTickSound(linkedSkill);
+
     let tickDamageDealt = 0;
     if (targetObject) {
       const previousIntegrity = targetObject.integrity;
@@ -1897,10 +1954,7 @@ function resolveDueHostileActionTicks(state: GameState): GameState {
       }
 
       if (previousHealth > 0 && nextState.health <= 0) {
-        let defeatState: GameState = {
-          ...nextState,
-          log: appendLog(nextState.log, "You were defeated."),
-        };
+        let defeatState = enterDefeatState(nextState);
         const hookBundle = getBundle();
         if (hookBundle) {
           defeatState = applyHookResultState(
@@ -2306,19 +2360,21 @@ function resolveCompletedHostileAction(state: GameState): GameState {
   );
 
   if (healthBeforeCompletion > 0 && nextState.health <= 0) {
-    nextLog = appendLog(nextLog, "You were defeated.");
     const hookBundle = getBundle();
     if (hookBundle) {
       nextState = applyHookResultState(
-        { ...nextState, log: nextLog },
+        enterDefeatState({ ...nextState, log: nextLog }),
         executeStatusEffectHooks(
           { kind: "object", objectId: sourceObject.id },
           "on_kill",
-          { ...nextState, log: nextLog },
+          enterDefeatState({ ...nextState, log: nextLog }),
           hookBundle,
           { kind: "player" }
         )
       );
+      nextLog = nextState.log;
+    } else {
+      nextState = enterDefeatState({ ...nextState, log: nextLog });
       nextLog = nextState.log;
     }
   }
@@ -2369,6 +2425,8 @@ function resolveDueFriendlyActionTicks(state: GameState): GameState {
       nextState = { ...nextState, friendlyAction: nextFriendlyAction };
       continue;
     }
+
+    playSkillTickSound(linkedSkill);
 
     const previousIntegrity = targetObject.integrity;
     const effectResult = executeTriggeredFriendlySkillEffects(
@@ -3209,6 +3267,8 @@ function resolveDueActionTicks(state: GameState): GameState {
       continue;
     }
 
+    playSkillTickSound(usedSkill);
+
     const effectResult = executeTriggeredSkillEffects(nextState, usedSkill, targetObject, "on_tick");
     nextState = effectResult.state;
 
@@ -3435,6 +3495,7 @@ function resolveCompletedAction(state: GameState): GameState {
   let nextUnlockCues = state.unlockCues;
   let nextDestroyedObjectCues = state.destroyedObjectCues;
   let nextLootReceiptCues = state.lootReceiptCues;
+  let nextPassiveProgressCues = state.passiveProgressCues;
   let nextObjectEmoteCues = effectExecutionState?.objectEmoteCues ?? state.objectEmoteCues;
   let nextPlayerStorage = state.playerStorage;
 
@@ -3503,7 +3564,8 @@ function resolveCompletedAction(state: GameState): GameState {
         const passiveXpGain = 3;
         const passiveXp = awardSkillXp(updatedSkills, usedSkill.linkedPassiveId, passiveXpGain);
         updatedSkills = passiveXp.skills;
-        const passiveName = updatedSkills.find((entry) => entry.id === usedSkill.linkedPassiveId)?.name;
+        const passiveSkill = updatedSkills.find((entry) => entry.id === usedSkill.linkedPassiveId);
+        const passiveName = passiveSkill?.name;
         if (passiveName) {
           updatedFloatTexts = pushFloatingText(
             updatedFloatTexts,
@@ -3511,6 +3573,15 @@ function resolveCompletedAction(state: GameState): GameState {
             state.now,
             { zone: "skills", skillId: usedSkill.linkedPassiveId }
           );
+          if (passiveSkill) {
+            nextPassiveProgressCues = pushPassiveProgressCue(
+              nextPassiveProgressCues,
+              passiveSkill,
+              passiveXpGain,
+              state.now,
+              passiveXp.levelUps
+            );
+          }
         }
         if (passiveXp.levelUps > 0 && passiveName) {
           updatedLog = appendLog(updatedLog, `${passiveName} reached Lv ${passiveXp.newLevel}.`);
@@ -4022,6 +4093,7 @@ function resolveCompletedAction(state: GameState): GameState {
     objectEmoteCues: nextObjectEmoteCues,
     destroyedObjectCues: nextDestroyedObjectCues,
     lootReceiptCues: nextLootReceiptCues,
+    passiveProgressCues: nextPassiveProgressCues,
     objectAttackCues: state.objectAttackCues,
   };
 
@@ -4067,6 +4139,213 @@ function clearSelectedObjectState(state: GameState): GameState {
     weaponAttackAnimateUntil: 0,
     energy: nextEnergy,
     log: nextLog,
+  };
+}
+
+function cancelActionsForCutscene(state: GameState): GameState {
+  const refundedActionEnergy = state.action ? state.action.energyCost : 0;
+  const refundedTravelEnergy = state.travelAction ? state.travelAction.energyCost : 0;
+
+  return {
+    ...state,
+    energy: Math.min(state.maxEnergy, state.energy + refundedActionEnergy + refundedTravelEnergy),
+    autoSkillId: null,
+    action: null,
+    exploreAction: null,
+    craftingAction: null,
+    travelAction: null,
+    hostileAction: null,
+    friendlyAction: null,
+    weaponAction: null,
+    weaponAutoEnabled: true,
+    weaponAttackAnimateUntil: 0,
+  };
+}
+
+function shiftTimestamp(value: number | undefined, deltaMs: number): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  return value + deltaMs;
+}
+
+function shiftFutureTimestamp(value: number, now: number, deltaMs: number): number {
+  return value > now ? value + deltaMs : value;
+}
+
+function shiftActiveEffectsForPause(
+  activeEffects: GameState["activeEffects"],
+  deltaMs: number
+): GameState["activeEffects"] {
+  return activeEffects.map((effect) => ({
+    ...effect,
+    appliedAt: effect.appliedAt + deltaMs,
+    intervalTimers: effect.intervalTimers
+      ? Object.fromEntries(
+          Object.entries(effect.intervalTimers).map(([hookId, lastTriggeredAt]) => [
+            hookId,
+            lastTriggeredAt + deltaMs,
+          ])
+        )
+      : undefined,
+  }));
+}
+
+function pauseStateForCutscene(state: GameState, now: number): GameState {
+  const deltaMs = Math.max(0, now - state.lastTickAt);
+  if (deltaMs <= 0) {
+    return {
+      ...state,
+      now,
+      lastTickAt: now,
+    };
+  }
+
+  return {
+    ...state,
+    now,
+    lastTickAt: now,
+    action: state.action
+      ? {
+          ...state.action,
+          startedAt: state.action.startedAt + deltaMs,
+          endsAt: state.action.endsAt + deltaMs,
+        }
+      : null,
+    exploreAction: state.exploreAction
+      ? {
+          ...state.exploreAction,
+          startedAt: state.exploreAction.startedAt + deltaMs,
+          endsAt: state.exploreAction.endsAt + deltaMs,
+        }
+      : null,
+    craftingAction: state.craftingAction
+      ? {
+          ...state.craftingAction,
+          startedAt: state.craftingAction.startedAt + deltaMs,
+          endsAt: state.craftingAction.endsAt + deltaMs,
+        }
+      : null,
+    travelAction: state.travelAction
+      ? {
+          ...state.travelAction,
+          startedAt: state.travelAction.startedAt + deltaMs,
+          endsAt: state.travelAction.endsAt + deltaMs,
+        }
+      : null,
+    hostileAction: state.hostileAction
+      ? {
+          ...state.hostileAction,
+          startedAt: state.hostileAction.startedAt + deltaMs,
+          endsAt: state.hostileAction.endsAt + deltaMs,
+        }
+      : null,
+    friendlyAction: state.friendlyAction
+      ? {
+          ...state.friendlyAction,
+          startedAt: state.friendlyAction.startedAt + deltaMs,
+          endsAt: state.friendlyAction.endsAt + deltaMs,
+        }
+      : null,
+    weaponAction: state.weaponAction
+      ? {
+          ...state.weaponAction,
+          startedAt: state.weaponAction.startedAt + deltaMs,
+          endsAt: state.weaponAction.endsAt + deltaMs,
+        }
+      : null,
+    quickSlotCooldowns: state.quickSlotCooldowns.map((cooldownAt) =>
+      shiftFutureTimestamp(cooldownAt, state.now, deltaMs)
+    ) as GameState["quickSlotCooldowns"],
+    chopBuffUntil: shiftFutureTimestamp(state.chopBuffUntil, state.now, deltaMs),
+    lastAction: state.lastAction
+      ? {
+          ...state.lastAction,
+          at: state.lastAction.at + deltaMs,
+        }
+      : null,
+    floatTexts: state.floatTexts.map((entry) => ({
+      ...entry,
+      createdAt: entry.createdAt + deltaMs,
+    })),
+    playerHitCue: state.playerHitCue
+      ? {
+          ...state.playerHitCue,
+          expiresAt: state.playerHitCue.expiresAt + deltaMs,
+        }
+      : null,
+    playerHitShakeUntil: shiftFutureTimestamp(state.playerHitShakeUntil, state.now, deltaMs),
+    weaponAttackAnimateUntil: shiftFutureTimestamp(state.weaponAttackAnimateUntil, state.now, deltaMs),
+    unlockCues: state.unlockCues.map((entry) => ({
+      ...entry,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    destroyedObjectCues: state.destroyedObjectCues.map((entry) => ({
+      ...entry,
+      createdAt: entry.createdAt + deltaMs,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    objectAttackCues: state.objectAttackCues.map((entry) => ({
+      ...entry,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    objectEmoteCues: state.objectEmoteCues.map((entry) => ({
+      ...entry,
+      createdAt: entry.createdAt + deltaMs,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    lootReceiptCues: state.lootReceiptCues.map((entry) => ({
+      ...entry,
+      appearsAt: entry.appearsAt + deltaMs,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    questReceiptCues: state.questReceiptCues.map((entry) => ({
+      ...entry,
+      appearsAt: entry.appearsAt + deltaMs,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    questProgressCues: state.questProgressCues.map((entry) => ({
+      ...entry,
+      appearsAt: entry.appearsAt + deltaMs,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    passiveProgressCues: state.passiveProgressCues.map((entry) => ({
+      ...entry,
+      appearsAt: entry.appearsAt + deltaMs,
+      expiresAt: entry.expiresAt + deltaMs,
+    })),
+    objectBatchStartedAt: state.objectBatchStartedAt + deltaMs,
+    activeEffects: shiftActiveEffectsForPause(state.activeEffects, deltaMs),
+    objects: state.objects.map((object) => ({
+      ...object,
+      abilityCooldowns: object.abilityCooldowns.map((cooldownAt) =>
+        shiftFutureTimestamp(cooldownAt, state.now, deltaMs)
+      ),
+      revealStartedAt: shiftTimestamp(object.revealStartedAt, deltaMs),
+      activeEffects: shiftActiveEffectsForPause(object.activeEffects ?? [], deltaMs),
+    })),
+  };
+}
+
+function enterDefeatState(state: GameState, logMessage = true): GameState {
+  const alreadyLogged = state.log[state.log.length - 1] === "You were defeated.";
+  return {
+    ...state,
+    health: 0,
+    isDefeated: true,
+    selectedObjectId: null,
+    activeDialogue: null,
+    action: null,
+    exploreAction: null,
+    craftingAction: null,
+    travelAction: null,
+    hostileAction: null,
+    friendlyAction: null,
+    weaponAction: null,
+    autoSkillId: null,
+    weaponAutoEnabled: false,
+    weaponAttackAnimateUntil: 0,
+    log: logMessage && !alreadyLogged ? appendLog(state.log, "You were defeated.") : state.log,
   };
 }
 
@@ -4235,6 +4514,9 @@ interface DialogueSessionSeed {
   objectId?: string | null;
   speakerName?: string;
   portraitImage?: string;
+  portraitImagePositionX?: number;
+  portraitImagePositionY?: number;
+  portraitImageFit?: "cover" | "contain";
   meterLabel?: string;
   integrity?: number;
   maxIntegrity?: number;
@@ -4319,6 +4601,9 @@ function enterDialogueNode(
       nodeId: node.id,
       speakerName: seed?.speakerName,
       portraitImage: seed?.portraitImage,
+      portraitImagePositionX: seed?.portraitImagePositionX,
+      portraitImagePositionY: seed?.portraitImagePositionY,
+      portraitImageFit: seed?.portraitImageFit,
       meterLabel: seed?.meterLabel,
       integrity: seed?.integrity,
       maxIntegrity: seed?.maxIntegrity,
@@ -4366,7 +4651,7 @@ function completeCutsceneState(state: GameState): GameState {
     });
   }
 
-  return {
+  const nextState: GameState = {
     ...clearedState,
     activeEffects: actionResult.activeEffects,
     objects: actionResult.objects,
@@ -4381,6 +4666,8 @@ function completeCutsceneState(state: GameState): GameState {
     objectEmoteCues: actionResult.objectEmoteCues,
     log: appendLog(actionResult.log, `Scene ended: ${cutscene.name}.`),
   };
+
+  return applyInteractableFormRules(nextState);
 }
 
 function enterCutsceneStep(state: GameState, cutsceneId: string, stepId: string): GameState {
@@ -4398,10 +4685,10 @@ function enterCutsceneStep(state: GameState, cutsceneId: string, stepId: string)
     activeDialogue: null,
   };
   if (step.ambientSound !== undefined) {
-    playAmbient(step.ambientSound);
+    playAmbient(step.ambientSound, step.ambientSoundVolume ?? 1);
   }
   if (step.soundEffect) {
-    playSound(step.soundEffect);
+    playSound(step.soundEffect, step.soundEffectVolume ?? 1);
   }
   const actionResult = applyDialogueActions(clearedState, step.onEnterEffects);
   if (actionResult.travelToRoomId || actionResult.startCutsceneId) {
@@ -4453,6 +4740,9 @@ function enterCutsceneStep(state: GameState, cutsceneId: string, stepId: string)
     objectId: null,
     speakerName: step.speakerName || cutscene.name,
     portraitImage: step.portraitImage,
+    portraitImagePositionX: step.portraitImagePositionX,
+    portraitImagePositionY: step.portraitImagePositionY,
+    portraitImageFit: step.portraitImageFit,
   });
 }
 
@@ -4465,11 +4755,11 @@ export function startCutsceneState(state: GameState, cutsceneId: string): GameSt
     };
   }
 
-  const clearedState: GameState = {
+  const clearedState: GameState = cancelActionsForCutscene({
     ...state,
     activeDialogue: null,
     activeCutscene: null,
-  };
+  });
   const actionResult = applyDialogueActions(clearedState, cutscene.onStartEffects);
   if (actionResult.travelToRoomId || actionResult.startCutsceneId) {
     return applyNarrativeActionResult(clearedState, actionResult, {
@@ -4710,6 +5000,7 @@ function applyHookResultState(
 export function reducer(state: GameState, action: GameAction): GameState {
   if (state.activeCutscene) {
     switch (action.type) {
+      case "LOAD_GAME":
       case "TICK":
       case "ADVANCE_CUTSCENE":
       case "ADVANCE_DIALOGUE":
@@ -4721,7 +5012,20 @@ export function reducer(state: GameState, action: GameAction): GameState {
     }
   }
 
+  if (state.isDefeated) {
+    switch (action.type) {
+      case "LOAD_GAME":
+      case "TICK":
+        break;
+      default:
+        return state;
+    }
+  }
+
   switch (action.type) {
+    case "LOAD_GAME":
+      return action.state;
+
     case "EXPLORE": {
       if (state.action) {
         return {
@@ -5358,6 +5662,9 @@ export function reducer(state: GameState, action: GameAction): GameState {
 
     case "TICK": {
       const now = action.now;
+      if (state.activeCutscene) {
+        return pauseStateForCutscene(state, now);
+      }
       const deltaSeconds = Math.max(0, (now - state.lastTickAt) / 1000);
       const gear = getEquipmentStats(state);
       const weatherMod = getWeatherModifiers(state.weather);
@@ -5379,7 +5686,18 @@ export function reducer(state: GameState, action: GameAction): GameState {
         lootReceiptCues: state.lootReceiptCues.filter((entry) => entry.expiresAt > now),
         questReceiptCues: state.questReceiptCues.filter((entry) => entry.expiresAt > now),
         questProgressCues: state.questProgressCues.filter((entry) => entry.expiresAt > now),
+        passiveProgressCues: state.passiveProgressCues.filter((entry) => entry.expiresAt > now),
       };
+
+      if (state.isDefeated) {
+        nextState = {
+          ...nextState,
+          health: 0,
+          energy: state.energy,
+          mana: state.mana,
+        };
+        return nextState;
+      }
 
       if (nextState.craftingAction && now >= nextState.craftingAction.endsAt) {
         const completedCraft = nextState.craftingAction;
@@ -5628,11 +5946,16 @@ export function reducer(state: GameState, action: GameAction): GameState {
 
       nextState = resolveDestroyedObjectsFromTickState(nextState);
 
+      if (nextState.activeCutscene) {
+        return nextState;
+      }
+
       if (healthBeforeIntervalHooks > 0 && nextState.health <= 0) {
-        nextState = {
-          ...nextState,
-          log: appendLog(nextState.log, "You were defeated."),
-        };
+        nextState = enterDefeatState(nextState);
+      }
+
+      if (nextState.isDefeated) {
+        return nextState;
       }
 
       if (tickBundle && (nextState.activeEffects ?? []).length > 0) {

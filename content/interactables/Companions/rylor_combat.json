@@ -13,12 +13,31 @@
   "barColor": "#3f627f",
   "accentColor": "#6e9fc8",
   "meterLabel": "HP",
-  "lootTable": [],
+  "lootTable": [
+    {
+      "id": "lt_1778019972510_0",
+      "dropType": "item",
+      "itemId": "genemaize_t_01",
+      "quantityMin": 5,
+      "quantityMax": 5,
+      "dropChance": 100,
+      "weight": 10
+    },
+    {
+      "id": "lt_1778019989333_1",
+      "dropType": "item",
+      "itemId": "rylor_s_broken_wing",
+      "quantityMin": 1,
+      "quantityMax": 1,
+      "dropChance": 100,
+      "weight": 10
+    }
+  ],
   "xpRewards": [],
   "formRules": [
     {
       "id": "rylor_returns_to_dialogue",
-      "condition": "player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5",
+      "condition": "player.counter(\"interactable_defeated:threadhorn_staglet\") >= 5 AND NOT player.flag(\"rylor_patriarch_started\")",
       "interactableId": "rylor"
     }
   ],
@@ -32,7 +51,17 @@
     }
   ],
   "onInteractEffects": [],
-  "onDestroyEffects": [],
+  "onDestroyEffects": [
+    {
+      "type": "start_cutscene",
+      "cutsceneId": "rylor_dies"
+    },
+    {
+      "type": "grant_item",
+      "itemId": "agri_farmer_s_blade",
+      "quantity": 1
+    }
+  ],
   "imagePositionX": 50,
   "imagePositionY": 25,
   "image": "/Interactable Images/Rylor.png"

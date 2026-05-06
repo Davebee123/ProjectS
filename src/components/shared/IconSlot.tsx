@@ -52,7 +52,7 @@ export function IconSlot({
       : "/icons/slots/equipment-shell.png";
 
   const [isHovered, setIsHovered] = useState(false);
-  const [tooltipStyle, setTooltipStyle] = useState<{ left: number; top: number } | null>(null);
+  const [tooltipStyle, setTooltipStyle] = useState<{ left: number; top: number; placement: "above" | "below" } | null>(null);
   const ref = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -61,9 +61,18 @@ export function IconSlot({
       return;
     }
     const rect = ref.current.getBoundingClientRect();
-    const left = Math.min(rect.left, window.innerWidth - 220);
-    const top = rect.bottom + 6;
-    setTooltipStyle({ left, top });
+    const tooltipWidth = 210;
+    const tooltipHeight = 190;
+    const viewportPadding = 12;
+    const left = Math.max(
+      viewportPadding,
+      Math.min(rect.left, window.innerWidth - tooltipWidth - viewportPadding)
+    );
+    const showAbove = rect.bottom + 8 + tooltipHeight > window.innerHeight - viewportPadding;
+    const top = showAbove
+      ? Math.max(viewportPadding, rect.top - tooltipHeight - 8)
+      : Math.min(rect.bottom + 8, window.innerHeight - tooltipHeight - viewportPadding);
+    setTooltipStyle({ left, top, placement: showAbove ? "above" : "below" });
   }, [isHovered, tooltipData]);
 
   return (
@@ -89,7 +98,7 @@ export function IconSlot({
 
       {isHovered && tooltipData && tooltipStyle
         ? createPortal(
-            <div className="icon-slot-tooltip" style={{ left: tooltipStyle.left, top: tooltipStyle.top }}>
+            <div className={`icon-slot-tooltip is-${tooltipStyle.placement}`} style={{ left: tooltipStyle.left, top: tooltipStyle.top }}>
               <div className="icon-slot-tooltip-header">
                 {tooltipData.image ? (
                   <img className="icon-slot-tooltip-image" src={tooltipData.image} alt={tooltipData.name} />

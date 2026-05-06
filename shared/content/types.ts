@@ -370,6 +370,8 @@ export interface StatModifier {
   stat: string;
   operation: "add" | "multiply";
   value: number;
+  skillIds?: string[];
+  abilityTags?: string[];
 }
 
 export type CombatSchool = "string" | "entropy" | "genesis" | "chaos";
@@ -499,6 +501,11 @@ export interface SkillTemplate {
   bioboardPrimaryText?: string;
   bioboardSecondaryText?: string;
   activityTags: string[];
+  /**
+   * Optional player-only manual targeting override.
+   * When omitted, the runtime falls back to activityTags.
+   */
+  playerTargetTags?: string[];
   abilityTags: string[];
   linkedPassiveId?: string;
   baseDurationMs: number;
@@ -520,6 +527,8 @@ export interface SkillTemplate {
   castSoundOnComplete?: boolean;
   hitSound?: string;
   hitSoundVolume?: number;
+  tickSound?: string;
+  tickSoundVolume?: number;
   /** If true, this skill cannot be toggled into auto-cast; it only fires single casts. */
   disableAutoCast?: boolean;
   usageProfile?: SkillUsageProfile;
@@ -584,6 +593,7 @@ export interface InteractableFormRule {
   id: string;
   condition: string;
   interactableId: string;
+  preserveIntegrity?: boolean;
 }
 
 export interface NpcDialogueRoute {
@@ -786,9 +796,14 @@ export interface CutsceneStep {
   dialogueId?: string;
   speakerName?: string;
   portraitImage?: string;
+  portraitImagePositionX?: number;
+  portraitImagePositionY?: number;
+  portraitImageFit?: "cover" | "contain";
   backgroundImage?: string;
   ambientSound?: string;
+  ambientSoundVolume?: number;
   soundEffect?: string;
+  soundEffectVolume?: number;
   continueLabel?: string;
   nextStepId?: string;
   onEnterEffects?: EventAction[];

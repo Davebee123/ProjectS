@@ -2,6 +2,7 @@ import { ConditionEditor } from "../shared/ConditionEditor";
 import { CollapsibleEditorSection } from "../shared/CollapsibleEditorSection";
 import { EventActionListEditor } from "../shared/EventActionListEditor";
 import { FilePathInput } from "../shared/FilePathInput";
+import { VolumeSlider } from "../shared/VolumeSlider";
 import type { InventoryCategory, ItemEventHook } from "../../schema/types";
 
 const CONSUMABLE_PRESETS = [
@@ -128,27 +129,12 @@ export function ConsumableUsePanel({
           pathPrefix="Sound Files"
         />
 
-        <label className="field">
-          <span className="field-label">Consume Volume</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={consumeSoundVolume ?? 1}
-              disabled={!consumeSound}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                onConsumeSoundVolumeChange(Number.isFinite(value) ? value : undefined);
-              }}
-              style={{ flex: 1 }}
-            />
-            <span style={{ minWidth: 36, textAlign: "right", fontSize: "0.85rem", color: "var(--text-soft)" }}>
-              {Math.round((consumeSoundVolume ?? 1) * 100)}%
-            </span>
-          </div>
-        </label>
+        <VolumeSlider
+          label="Consume Volume"
+          value={consumeSoundVolume ?? 1}
+          disabled={!consumeSound}
+          onChange={(value) => onConsumeSoundVolumeChange(Number.isFinite(value) ? value : undefined)}
+        />
       </div>
 
       {hooks.length === 0 ? (

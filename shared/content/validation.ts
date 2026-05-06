@@ -29,6 +29,19 @@ function checkDupes(list: { id: string }[], label: string, issues: ValidationIss
   }
 }
 
+function checkDuplicateStrings(list: string[], label: string, issues: ValidationIssue[]): void {
+  const seen = new Set<string>();
+  for (const value of list) {
+    if (seen.has(value)) {
+      issues.push({
+        severity: "warning",
+        message: `${label} contains duplicate entry "${value}"`,
+      });
+    }
+    seen.add(value);
+  }
+}
+
 function validateCondition(source: unknown, label: string, issues: ValidationIssue[]): void {
   if (source === undefined || source === null || source === "") {
     return;
@@ -313,10 +326,19 @@ export function validateBundle(bundle: GameContentBundle): ValidationIssue[] {
 
   for (const skill of bundle.skills) {
     validateCondition(skill.unlockCondition, `Skill "${skill.name}"`, issues);
+    checkDuplicateStrings(skill.activityTags, `Skill "${skill.name}" activity tags`, issues);
+    checkDuplicateStrings(skill.abilityTags, `Skill "${skill.name}" ability tags`, issues);
+    checkDuplicateStrings(skill.playerTargetTags ?? [], `Skill "${skill.name}" player target tags`, issues);
     if (skill.combatSchool && !VALID_COMBAT_SCHOOLS.has(skill.combatSchool)) {
       issues.push({
         severity: "error",
         message: `Skill "${skill.name}" has invalid combat school "${skill.combatSchool}"`,
+      });
+    }
+    if (skill.kind !== "active" && skill.playerTargetTags !== undefined) {
+      issues.push({
+        severity: "warning",
+        message: `Passive skill "${skill.name}" should not define player target tags`,
       });
     }
     for (const tagId of skill.activityTags) {
@@ -324,6 +346,14 @@ export function validateBundle(bundle: GameContentBundle): ValidationIssue[] {
         issues.push({
           severity: "warning",
           message: `Skill "${skill.name}" references unknown activity tag "${tagId}"`,
+        });
+      }
+    }
+    for (const tagId of skill.playerTargetTags ?? []) {
+      if (!activityTagIds.has(tagId)) {
+        issues.push({
+          severity: "warning",
+          message: `Skill "${skill.name}" references unknown player target tag "${tagId}"`,
         });
       }
     }
@@ -455,6 +485,24 @@ export function validateBundle(bundle: GameContentBundle): ValidationIssue[] {
 
   for (const effect of bundle.statusEffects) {
     validateCondition(effect.removeCondition, `Status effect "${effect.name}"`, issues);
+    for (const modifier of effect.statModifiers) {
+      for (const skillId of modifier.skillIds ?? []) {
+        if (!skillIds.has(skillId)) {
+          issues.push({
+            severity: "error",
+            message: `Status effect "${effect.name}" modifier references unknown skill "${skillId}"`,
+          });
+        }
+      }
+      for (const abilityTagId of modifier.abilityTags ?? []) {
+        if (!abilityTagIds.has(abilityTagId)) {
+          issues.push({
+            severity: "error",
+            message: `Status effect "${effect.name}" modifier references unknown ability tag "${abilityTagId}"`,
+          });
+        }
+      }
+    }
     if (effect.eventHooks?.length) {
       checkDupes(effect.eventHooks, `status effect "${effect.name}" hook`, issues);
       for (const hook of effect.eventHooks) {
@@ -868,6 +916,38 @@ export function validateBundle(bundle: GameContentBundle): ValidationIssue[] {
           severity: "error",
           message: `Cutscene "${cutscene.name}" dialogue step "${step.id}" references unknown dialogue "${step.dialogueId ?? ""}"`,
         });
+      }
+      for (const [axis, value] of [
+        ["X", step.portraitImagePositionX],
+        ["Y", step.portraitImagePositionY],
+      ] as const) {
+        if (value !== undefined && (!Number.isFinite(value) || value < 0 || value > 100)) {
+          issues.push({
+            severity: "error",
+            message: `Cutscene "${cutscene.name}" step "${step.id}" has invalid portrait position ${axis.toLowerCase()} "${value}". Expected 0-100.`,
+          });
+        }
+      }
+      if (
+        step.portraitImageFit !== undefined &&
+        step.portraitImageFit !== "cover" &&
+        step.portraitImageFit !== "contain"
+      ) {
+        issues.push({
+          severity: "error",
+          message: `Cutscene "${cutscene.name}" step "${step.id}" has invalid portrait fit "${step.portraitImageFit}".`,
+        });
+      }
+      for (const [label, value] of [
+        ["ambient sound volume", step.ambientSoundVolume],
+        ["sound effect volume", step.soundEffectVolume],
+      ] as const) {
+        if (value !== undefined && (!Number.isFinite(value) || value < 0 || value > 1)) {
+          issues.push({
+            severity: "error",
+            message: `Cutscene "${cutscene.name}" step "${step.id}" has invalid ${label} "${value}". Expected 0-1.`,
+          });
+        }
       }
       for (const effect of step.onEnterEffects ?? []) {
         validateEventAction(effect, `Cutscene "${cutscene.name}" step "${step.id}" enter action`, actionRefs, issues);

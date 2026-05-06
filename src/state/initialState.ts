@@ -84,6 +84,7 @@ export function createInitialState(): GameState {
     energy: 100,
     maxEnergy: 100,
     baseEnergyRegen: 3,
+    isDefeated: false,
     // Weather
     weather,
     // Player progression
@@ -125,6 +126,7 @@ export function createInitialState(): GameState {
     lootReceiptCues: [],
     questReceiptCues: [],
     questProgressCues: [],
+    passiveProgressCues: [],
     questProgressSeen: {},
     objectBatchStartedAt: now - 10000,
     openWindow: null,

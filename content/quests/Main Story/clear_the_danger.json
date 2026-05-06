@@ -18,6 +18,20 @@
         },
         "requiredValue": 5
       }
+    },
+    {
+      "id": "clear_the_danger_objective_2",
+      "title": "Speak to Rylor",
+      "description": "",
+      "progress": {
+        "kind": "freeform",
+        "text": "Speak to Rylor"
+      },
+      "highlightTargets": {
+        "interactableIds": [
+          "rylor"
+        ]
+      }
     }
   ],
   "completedDescription": "You have successfully dispatched of the threatened Threadhorns."

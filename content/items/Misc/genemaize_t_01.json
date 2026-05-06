@@ -1,0 +1,10 @@
+{
+  "id": "genemaize_t_01",
+  "name": "GeneMaize_T.01",
+  "description": "The main export of Sylorin-Beta. This corn product has been genetically modified with fae magic to possess healing properties once cooked.",
+  "rarity": "common",
+  "inventoryCategory": "misc",
+  "stackable": true,
+  "stats": {},
+  "eventHooks": []
+}

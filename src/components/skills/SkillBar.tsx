@@ -74,7 +74,7 @@ export function SkillBar({
     () => [...perkMilestones].sort((a, b) => a.level - b.level),
     [perkMilestones]
   );
-  const hasPerkTooltip = sortedPerkMilestones.length > 0;
+  const hasLevelTooltip = Boolean((tooltip && tooltip.trim()) || sortedPerkMilestones.length > 0);
 
   useEffect(() => {
     const nextXp = Math.floor(xp);
@@ -105,7 +105,7 @@ export function SkillBar({
   }, [xp, level, xpToNext]);
 
   useEffect(() => {
-    if (!isPerkTooltipOpen || !hasPerkTooltip) {
+    if (!isPerkTooltipOpen || !hasLevelTooltip) {
       return;
     }
 
@@ -115,9 +115,13 @@ export function SkillBar({
       const rect = trigger.getBoundingClientRect();
       const viewportPadding = 16;
       const gap = 12;
+      const milestoneColumns = Math.max(1, sortedPerkMilestones.length);
       const idealWidth =
-        sortedPerkMilestones.length * 198 + Math.max(0, sortedPerkMilestones.length - 1) * 8;
-      const width = Math.min(Math.max(188, idealWidth), window.innerWidth - viewportPadding * 2);
+        milestoneColumns * 198 + Math.max(0, milestoneColumns - 1) * 8;
+      const width = Math.min(
+        Math.max(260, tooltip ? 320 : 188, sortedPerkMilestones.length > 0 ? idealWidth : 0),
+        window.innerWidth - viewportPadding * 2
+      );
       const placement = rect.top >= 190 ? "above" : "below";
       const left = Math.max(
         viewportPadding,
@@ -134,7 +138,7 @@ export function SkillBar({
       window.removeEventListener("resize", updatePerkTooltipPosition);
       window.removeEventListener("scroll", updatePerkTooltipPosition, true);
     };
-  }, [hasPerkTooltip, isPerkTooltipOpen, sortedPerkMilestones]);
+  }, [hasLevelTooltip, isPerkTooltipOpen, sortedPerkMilestones, tooltip]);
 
   return (
     <>
@@ -175,9 +179,9 @@ export function SkillBar({
                 <div className="meter-primary">
                   <span
                     ref={perkTriggerRef}
-                    className={`meter-level-trigger ${hasPerkTooltip ? "has-perks" : ""}`}
-                    onMouseEnter={hasPerkTooltip ? () => setIsPerkTooltipOpen(true) : undefined}
-                    onMouseLeave={hasPerkTooltip ? () => setIsPerkTooltipOpen(false) : undefined}
+                    className={`meter-level-trigger ${hasLevelTooltip ? "has-perks" : ""}`}
+                    onMouseEnter={hasLevelTooltip ? () => setIsPerkTooltipOpen(true) : undefined}
+                    onMouseLeave={hasLevelTooltip ? () => setIsPerkTooltipOpen(false) : undefined}
                   >
                     <span className="meter-level-label">Lvl</span>
                     <span className="meter-level">{level}</span>
@@ -193,7 +197,7 @@ export function SkillBar({
         </div>
       </button>
 
-      {hasPerkTooltip && isPerkTooltipOpen && perkTooltipStyle && typeof document !== "undefined"
+      {hasLevelTooltip && isPerkTooltipOpen && perkTooltipStyle && typeof document !== "undefined"
         ? createPortal(
             <div
               className={`skill-perk-tooltip is-${perkTooltipStyle.placement}`}
@@ -203,26 +207,32 @@ export function SkillBar({
                 width: perkTooltipStyle.width,
               }}
               role="dialog"
-              aria-label={`${name} perk milestones`}
+              aria-label={`${name} details`}
             >
-              <div
-                className="skill-perk-tooltip-grid"
-                style={{ gridTemplateColumns: `repeat(${sortedPerkMilestones.length}, minmax(0, 1fr))` }}
-              >
-                {sortedPerkMilestones.map((milestone) => (
-                  <article
-                    key={`${name}_${milestone.level}`}
-                    className={`skill-perk-card ${level >= milestone.level ? "is-unlocked" : "is-locked"}`}
-                    style={level >= milestone.level ? { borderColor: accent } : undefined}
-                  >
-                    <div className="skill-perk-card-level">
-                      <span className="skill-perk-card-level-label">LVL</span>
-                      <span className="skill-perk-card-level-value">{milestone.level}</span>
-                    </div>
-                    <p className="skill-perk-card-description">{milestone.description}</p>
-                  </article>
-                ))}
+              <div className="skill-perk-tooltip-header">
+                <p className="skill-perk-tooltip-name">{name}</p>
+                {tooltip ? <p className="skill-perk-tooltip-description">{tooltip}</p> : null}
               </div>
+              {sortedPerkMilestones.length > 0 ? (
+                <div
+                  className="skill-perk-tooltip-grid"
+                  style={{ gridTemplateColumns: `repeat(${sortedPerkMilestones.length}, minmax(0, 1fr))` }}
+                >
+                  {sortedPerkMilestones.map((milestone) => (
+                    <article
+                      key={`${name}_${milestone.level}`}
+                      className={`skill-perk-card ${level >= milestone.level ? "is-unlocked" : "is-locked"}`}
+                      style={level >= milestone.level ? { borderColor: accent } : undefined}
+                    >
+                      <div className="skill-perk-card-level">
+                        <span className="skill-perk-card-level-label">LVL</span>
+                        <span className="skill-perk-card-level-value">{milestone.level}</span>
+                      </div>
+                      <p className="skill-perk-card-description">{milestone.description}</p>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
             </div>,
             document.body
           )

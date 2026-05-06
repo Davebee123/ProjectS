@@ -5,6 +5,7 @@ import { EventActionListEditor } from "../shared/EventActionListEditor";
 import { CollapsibleEditorSection } from "../shared/CollapsibleEditorSection";
 import { FilePathInput } from "../shared/FilePathInput";
 import { ReferencePicker } from "../shared/ReferencePicker";
+import { VolumeSlider } from "../shared/VolumeSlider";
 import { useCutsceneStore } from "../../stores/cutsceneStore";
 import { useDialogueStore } from "../../stores/dialogueStore";
 import type { CutsceneStep, EventAction } from "../../schema/types";
@@ -44,6 +45,9 @@ function describeStepMedia(step: CutsceneStep): string {
   const parts: string[] = [];
   if (step.backgroundImage) parts.push("background");
   if (step.portraitImage) parts.push("portrait");
+  if (step.portraitImageFit || step.portraitImagePositionX !== undefined || step.portraitImagePositionY !== undefined) {
+    parts.push("portrait framing");
+  }
   if (step.ambientSound) parts.push("ambient");
   if (step.soundEffect) parts.push("sfx");
   return parts.length > 0 ? parts.join(" • ") : "none";
@@ -413,16 +417,63 @@ export function CutsceneEditPage() {
                   >
                     <div className="form-grid">
                       {selectedStep.kind === "dialogue" ? (
-                        <div className="form-field">
-                          <FilePathInput
-                            label="Portrait Image"
-                            value={selectedStep.portraitImage || ""}
-                            onChange={(value) => updateStep(selectedStep.id, { portraitImage: value || undefined })}
-                            placeholder="images/portrait.png"
-                            accept="image/*"
-                            pathPrefix="images"
-                          />
-                        </div>
+                        <>
+                          <div className="form-field">
+                            <FilePathInput
+                              label="Portrait Image"
+                              value={selectedStep.portraitImage || ""}
+                              onChange={(value) => updateStep(selectedStep.id, { portraitImage: value || undefined })}
+                              placeholder="images/portrait.png"
+                              accept="image/*"
+                              pathPrefix="images"
+                            />
+                          </div>
+                          <div className="form-field">
+                            <label className="field-label">Portrait Fit</label>
+                            <select
+                              className="input"
+                              value={selectedStep.portraitImageFit || "cover"}
+                              onChange={(e) =>
+                                updateStep(selectedStep.id, {
+                                  portraitImageFit: (e.target.value || "cover") as "cover" | "contain",
+                                })
+                              }
+                            >
+                              <option value="cover">Cover</option>
+                              <option value="contain">Contain</option>
+                            </select>
+                          </div>
+                          <div className="form-field">
+                            <label className="field-label">Portrait Position X</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={100}
+                              className="input"
+                              value={selectedStep.portraitImagePositionX ?? 50}
+                              onChange={(e) =>
+                                updateStep(selectedStep.id, {
+                                  portraitImagePositionX: Number(e.target.value),
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="form-field">
+                            <label className="field-label">Portrait Position Y</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={100}
+                              className="input"
+                              value={selectedStep.portraitImagePositionY ?? 50}
+                              onChange={(e) =>
+                                updateStep(selectedStep.id, {
+                                  portraitImagePositionY: Number(e.target.value),
+                                })
+                              }
+                            />
+                          </div>
+                        </>
                       ) : null}
                       <div className="form-field">
                         <FilePathInput
@@ -445,6 +496,14 @@ export function CutsceneEditPage() {
                         />
                       </div>
                       <div className="form-field">
+                        <VolumeSlider
+                          label="Ambient Volume"
+                          value={selectedStep.ambientSoundVolume ?? 1}
+                          disabled={!selectedStep.ambientSound}
+                          onChange={(value) => updateStep(selectedStep.id, { ambientSoundVolume: value })}
+                        />
+                      </div>
+                      <div className="form-field">
                         <FilePathInput
                           label="One-shot Sound"
                           value={selectedStep.soundEffect || ""}
@@ -452,6 +511,14 @@ export function CutsceneEditPage() {
                           placeholder="audio/sfx/sting.ogg"
                           accept="audio/*"
                           pathPrefix="audio"
+                        />
+                      </div>
+                      <div className="form-field">
+                        <VolumeSlider
+                          label="SFX Volume"
+                          value={selectedStep.soundEffectVolume ?? 1}
+                          disabled={!selectedStep.soundEffect}
+                          onChange={(value) => updateStep(selectedStep.id, { soundEffectVolume: value })}
                         />
                       </div>
                     </div>

@@ -1,0 +1,26 @@
+{
+  "id": "boar_charge",
+  "name": "Boar Charge",
+  "kind": "active",
+  "system": "combat",
+  "usableByInteractables": true,
+  "activityTags": [
+    "friendly"
+  ],
+  "abilityTags": [],
+  "baseDurationMs": 3000,
+  "baseEnergyCost": 10,
+  "basePower": 43,
+  "powerPerLevel": 1,
+  "baseXpToNext": 25,
+  "xpScaling": 1.18,
+  "barColor": "#ff3d3d",
+  "accentColor": "#ff1414",
+  "description": "A mechanical charge used by the Ironbriar Patriarchs",
+  "perkMilestones": [],
+  "usageProfile": {
+    "castMode": "cast",
+    "targetPattern": "single",
+    "usageContext": "combat"
+  }
+}

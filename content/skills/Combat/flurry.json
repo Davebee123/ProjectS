@@ -1,0 +1,45 @@
+{
+  "id": "flurry",
+  "name": "Flurry",
+  "kind": "active",
+  "system": "combat",
+  "usableByInteractables": false,
+  "activityTags": [
+    "enemy"
+  ],
+  "abilityTags": [
+    "one_hand_sword"
+  ],
+  "baseDurationMs": 3000,
+  "baseEnergyCost": 35,
+  "basePower": 10,
+  "powerPerLevel": 1,
+  "baseXpToNext": 25,
+  "xpScaling": 1.18,
+  "barColor": "#555555",
+  "accentColor": "#777777",
+  "description": "Rapidly attack with your sword.",
+  "linkedPassiveId": "one_hand_swords",
+  "unlockCondition": "player.skillLevel(\"one_hand_swords\") >= 2",
+  "perkMilestones": [],
+  "usageProfile": {
+    "castMode": "channel",
+    "targetPattern": "single",
+    "weaponRequirement": "One-Handed Sword",
+    "castTickIntervalMs": 1000,
+    "usageContext": "combat",
+    "hitCount": 3
+  },
+  "effects": [
+    {
+      "id": "GainFlurry",
+      "trigger": "on_tick",
+      "target": "self",
+      "type": "apply_status",
+      "statusEffectId": "flurry"
+    }
+  ],
+  "hitSoundVolume": 0,
+  "tickSound": "/Sound Files/Skills/Weapon Skills/OneHandSword_WeaponSkill_ForwardSlash.wav",
+  "tickSoundVolume": 0.2
+}

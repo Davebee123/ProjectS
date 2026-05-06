@@ -3,6 +3,8 @@ import { PageShell } from "../layout/PageShell";
 import { useStatusEffectStore } from "../../stores/statusEffectStore";
 import { useItemStore } from "../../stores/itemStore";
 import { useSkillStore } from "../../stores/skillStore";
+import { useTagStore } from "../../stores/tagStore";
+import { TagPicker } from "../shared/TagPicker";
 import { ColorPicker } from "../shared/ColorPicker";
 import { ConditionEditor } from "../shared/ConditionEditor";
 import { EditorUsagePanel } from "../shared/EditorUsagePanel";
@@ -53,6 +55,7 @@ export function StatusEffectEditPage() {
   const { statusEffects, updateStatusEffect } = useStatusEffectStore();
   const { items } = useItemStore();
   const { skills } = useSkillStore();
+  const { abilityTags } = useTagStore();
   const fx = statusEffects.find((e) => e.id === id);
 
   if (!fx) {
@@ -368,7 +371,8 @@ export function StatusEffectEditPage() {
         <h3 className="section-title">Stat Modifiers</h3>
         <p className="section-desc">
           How this effect changes player stats while active. "Add" adds a flat
-          value; "Multiply" multiplies the stat (1.2 = +20%).
+          value; "Multiply" multiplies the stat (1.2 = +20%). Leave the ability
+          filters empty to affect all abilities.
         </p>
         <table className="editor-table">
           <thead>
@@ -418,7 +422,7 @@ export function StatusEffectEditPage() {
                     onChange={(e) =>
                       updateModifier(idx, { value: Number(e.target.value) })
                     }
-                  />
+                    />
                 </td>
                 <td>
                   <button
@@ -427,6 +431,26 @@ export function StatusEffectEditPage() {
                   >
                     Remove
                   </button>
+                </td>
+              </tr>
+            ))}
+            {fx.statModifiers.map((mod, idx) => (
+              <tr key={`scope_${idx}`}>
+                <td colSpan={4}>
+                  <div className="stack-sm">
+                    <TagPicker
+                      label="Specific Skills"
+                      tags={skills.map((skill) => ({ id: skill.id, label: skill.name }))}
+                      selected={mod.skillIds ?? []}
+                      onChange={(skillIds) => updateModifier(idx, { skillIds })}
+                    />
+                    <TagPicker
+                      label="Ability Tags"
+                      tags={abilityTags.map((tag) => ({ id: tag.id, label: tag.label }))}
+                      selected={mod.abilityTags ?? []}
+                      onChange={(selectedAbilityTags) => updateModifier(idx, { abilityTags: selectedAbilityTags })}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
